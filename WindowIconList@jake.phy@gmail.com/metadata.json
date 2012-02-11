@@ -1,0 +1,8 @@
+{ 
+	"cinnamon-version": ["1.2.0"],
+	"description": "Adds a window icon list to the panel", 
+	"localedir": "/usr/share/locale", 
+	"name": "Window Icon List", 
+	"url": "", 
+	"uuid": "WindowIconList@jake.phy@gmail.com"
+}
