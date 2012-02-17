@@ -11,107 +11,18 @@ const PopupMenu = imports.ui.popupMenu;
 const PanelMenu = imports.ui.panelMenu;
 const Signals = imports.signals;
 const Meta = imports.gi.Meta;
-const AppDisplay = imports.ui.appDisplay;
 const AltTab = imports.ui.altTab;
 const Gio = imports.gi.Gio;
 
 const Gettext = imports.gettext.domain('cinnamon-extensions');
 const _ = Gettext.gettext;
 
+const Extension = imports.ui.extensionSystem.extensions['WindowIconList@jake.phy@gmail.com'];
+const SpecialMenus = Extension.specialMenus;
+
+
 const PANEL_ICON_SIZE = 24;
 const SPINNER_ANIMATION_TIME = 1;
-
-
-function AppMenuButtonRightClickMenu(actor, app, metaWindow) {
-    this._init(actor, app, metaWindow);
-}
-
-AppMenuButtonRightClickMenu.prototype = {
-    __proto__: PopupMenu.PopupMenu.prototype,
-
-    _init: function(actor, app, metaWindow) {
-        //take care of menu initialization
-        if (bottomPosition)
-            PopupMenu.PopupMenu.prototype._init.call(this, actor, 0.0, St.Side.BOTTOM, 0);
-        else
-            PopupMenu.PopupMenu.prototype._init.call(this, actor, 0.0, St.Side.TOP, 0);
-        Main.uiGroup.add_actor(this.actor);
-        //Main.chrome.addActor(this.actor, { visibleInOverview: true,
-        //                                   affectsStruts: false });
-        this.actor.hide();
-        actor.connect('key-press-event', Lang.bind(this, this._onSourceKeyPress));
-
-        this.metaWindow = metaWindow;
-        this.app = app;
-
-        this.itemCloseWindow = new PopupMenu.PopupMenuItem('Close');
-        this.itemCloseWindow.connect('activate', Lang.bind(this, this._onCloseWindowActivate));        
-        if (metaWindow.minimized)
-            this.itemMinimizeWindow = new PopupMenu.PopupMenuItem('Restore');
-        else
-            this.itemMinimizeWindow = new PopupMenu.PopupMenuItem('Minimize');
-        this.itemMinimizeWindow.connect('activate', Lang.bind(this, this._onMinimizeWindowActivate));        
-        if (metaWindow.get_maximized())
-            this.itemMaximizeWindow = new PopupMenu.PopupMenuItem(_("Unmaximize"));
-        else
-            this.itemMaximizeWindow = new PopupMenu.PopupMenuItem(_('Maximize'));
-        this.itemMaximizeWindow.connect('activate', Lang.bind(this, this._onMaximizeWindowActivate));        
-        
-        if (bottomPosition) {
-            this.addMenuItem(this.itemMinimizeWindow);
-            this.addMenuItem(this.itemMaximizeWindow);
-            this.addMenuItem(this.itemCloseWindow);                        
-        }
-        else {
-            this.addMenuItem(this.itemCloseWindow);
-            this.addMenuItem(this.itemMaximizeWindow);
-            this.addMenuItem(this.itemMinimizeWindow);
-        }            
-    },
-    
-    _onWindowMinimized: function(actor, event){
-    },
-
-    _onCloseWindowActivate: function(actor, event){
-        this.metaWindow.delete(global.get_current_time());
-    },
-
-    _onMinimizeWindowActivate: function(actor, event){
-        if (this.metaWindow.minimized)
-            this.metaWindow.unminimize(global.get_current_time());
-        else
-            this.metaWindow.minimize(global.get_current_time());
-    },
-
-    _onMaximizeWindowActivate: function(actor, event){      
-        // 3 = 1 | 2 for both horizontally and vertically (didn't find where the META_MAXIMIZE_HORIZONTAL and META_MAXIMIZE_VERTICAL constants were defined for the JS wrappers)
-        if (this.metaWindow.get_maximized()){
-            this.metaWindow.unmaximize(3);
-            this.itemMaximizeWindow.label.set_text(_("Maximize"));
-        }else{
-            this.metaWindow.maximize(3);
-            this.itemMaximizeWindow.label.set_text(_("Unmaximize"));
-        }
-    },
-
-    _onSourceKeyPress: function(actor, event) {
-        let symbol = event.get_key_symbol();
-        if (symbol == Clutter.KEY_space || symbol == Clutter.KEY_Return) {
-            this.menu.toggle();
-            return true;
-        } else if (symbol == Clutter.KEY_Escape && this.menu.isOpen) {
-            this.menu.close();
-            return true;
-        } else if (symbol == Clutter.KEY_Down) {
-            if (!this.menu.isOpen)
-                this.menu.toggle();
-            this.menu.actor.navigate_focus(this.actor, Gtk.DirectionType.DOWN, false);
-            return true;
-        } else
-            return false;
-    }
-
-};
 
 function AppMenuButton(app, metaWindow, animation) {
     this._init(app, metaWindow, animation);
@@ -121,25 +32,15 @@ AppMenuButton.prototype = {
 //    __proto__ : AppMenuButton.prototype,
 
     
-    _init: function(app, metaWindow, animation) {
-
-        if (bottomPosition) {        
-            this.actor = new St.Bin({ style_class: 'window-list-item-box-bottom',
-                                      reactive: true,
-                                      can_focus: true,
-                                      x_fill: true,
-                                      y_fill: false,
-                                      track_hover: true });
-        }
-        else {
+    _init: function(app, metaWindow, animation, jumpList) {
             this.actor = new St.Bin({ style_class: 'window-list-item-box',
                                       reactive: true,
                                       can_focus: true,
                                       x_fill: true,
                                       y_fill: false,
                                       track_hover: true });
-        }
         
+
         this.actor._delegate = this;
         this.actor.connect('button-release-event', Lang.bind(this, this._onButtonRelease));
 
@@ -200,8 +101,12 @@ AppMenuButton.prototype = {
         
         //set up the right click menu
         this._menuManager = new PopupMenu.PopupMenuManager(this);
-        this.rightClickMenu = new AppMenuButtonRightClickMenu(this.actor, this.app, this.metaWindow);
+	let AppMenuButtonRightClickMenu = SpecialMenus.AppMenuButtonRightClickMenu; 
+        this.rightClickMenu = new AppMenuButtonRightClickMenu(this.actor, app, this.metaWindow);
         this._menuManager.addMenu(this.rightClickMenu);
+        // Set up the hover menu
+        this.hoverMenu = new Extension.specialMenus.AppThumbnailHoverMenu(this.actor, this.metaWindow, this.app)
+        this.hoverController = new Extension.specialMenus.HoverMenuController(this.actor, this.hoverMenu);
     },
     
     _onDestroy: function() {
@@ -236,7 +141,10 @@ AppMenuButton.prototype = {
                 this.metaWindow.activate(global.get_current_time());
                 this.actor.add_style_pseudo_class('focus');	    
             }
-        } else if (Cinnamon.get_event_state(event) & Clutter.ModifierType.BUTTON3_MASK) {
+        } else if (Cinnamon.get_event_state(event) & Clutter.ModifierType.BUTTON2_MASK) {
+            this.metaWindow.delete(global.get_current_time());
+            this.rightClickMenu.destroy();
+        }  else if (Cinnamon.get_event_state(event) & Clutter.ModifierType.BUTTON3_MASK) {
             if (!this.rightClickMenu.isOpen) {
                 // Setting the max-height won't do any good if the minimum height of the
                 // menu is higher then the screen; it's useful if part of the menu is
@@ -246,6 +154,7 @@ AppMenuButton.prototype = {
                 //                         Math.round(200) +
                 //                         'px;');
             }
+            this.rightClickMenu.mouseEvent = event;
             this.rightClickMenu.toggle();   
         }   
     },
@@ -554,86 +463,15 @@ WindowList.prototype = {
 		}
 		this._rightBox.allocate(childBox, flags);
     },
-     
-    setBottomPosition: function(value){
-        bottomPosition = value;
-        this._refreshItems();
-    }
 };
 
-function ShowDesktopButton() {
-    this._init();
-}
-
-ShowDesktopButton.prototype = {
-//    __proto__ : ShowDesktopButton.prototype,
-
-    _init: function() {
-        this.actor = new St.Button();
-        let icon = new St.Icon({icon_name: "desktop", icon_size: 24, icon_type: St.IconType.FULLCOLOR});             
-        this.actor.add_actor(icon);
-        
-        this.actor.connect("clicked", Lang.bind(this, this._toggleShowDesktop));
-        
-        this._tracker = Cinnamon.WindowTracker.get_default();
-        
-        this._desktopShown = false;
-        
-        this._alreadyMinimizedWindows = [];
-    },
-      
-    _toggleShowDesktop: function() {
-        let metaWorkspace = global.screen.get_active_workspace();
-        let windows = metaWorkspace.list_windows();
-        
-        if (this._desktopShown) {
-            for ( let i = 0; i < windows.length; ++i ) {
-                if (this._tracker.is_window_interesting(windows[i])){                   
-                    let shouldrestore = true;
-                    for (let j = 0; j < this._alreadyMinimizedWindows.length; j++) {
-                        if (windows[i] == this._alreadyMinimizedWindows[j]) {
-                            shouldrestore = false;
-                            break;
-                        }                        
-                    }    
-                    if (shouldrestore) {
-                        windows[i].unminimize();                                  
-                    }
-                }
-            }
-            this._alreadyMinimizedWindows.length = []; //Apparently this is better than this._alreadyMinimizedWindows = [];
-        }
-        else {
-            for ( let i = 0; i < windows.length; ++i ) {
-                if (this._tracker.is_window_interesting(windows[i])){                   
-                    if (!windows[i].minimized) {
-                        windows[i].minimize();
-                    }
-                    else {
-                        this._alreadyMinimizedWindows.push(windows[i]);
-                    }                    
-                }
-            }
-        }
-        this._desktopShown = !this._desktopShown;
-    }
-};
 let windowList;
-let bottomPosition;
 let wdList;
 let appMenu;
 
 function init(extensionMeta) {
-    if (Main.desktop_layout == Main.LAYOUT_FLIPPED){
-        bottomPosition = false;
-	}
 
-    else
-{
-	bottomPosition = true; 
-}
-
-    imports.gettext.bindtextdomain('gnome-shell-extensions', extensionMeta.localedir);        
+    imports.gettext.bindtextdomain('cinnamon-extensions', extensionMeta.localedir);        
     windowList = new WindowList();  
     appMenu = Main.appMenu;   
 }
@@ -652,17 +490,9 @@ function enable() {
 
     	Main.panel._leftBox.add(windowList.actor, { x_fill: true, y_fill: true });
     }
-
-    if (!bottomPosition) {                        
-        /* Remove Application Menu */  
-//        Main.panel._leftBox.remove_actor(appMenu.actor);        
-    }
 }
 
 function disable() {            
-    if (!bottomPosition) {
-        // Place back the Application Menu
-    }
     // Remove the window list
     wdList = Main.windowList;
     if (Main.desktop_layout == Main.LAYOUT_CLASSIC){

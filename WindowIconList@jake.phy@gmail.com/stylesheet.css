@@ -59,3 +59,12 @@
      border-radius: 2px 2px 0px 0px;
 }
 
+.window-thumbnail {
+    margin-left: 4px;
+    padding: 6px;
+    border-radius: 4px;
+}
+
+.window-thumbnail:hover {
+    background-color: #4c4c4c;
+}
