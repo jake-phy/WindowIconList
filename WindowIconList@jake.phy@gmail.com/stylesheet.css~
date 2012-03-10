@@ -59,12 +59,12 @@
      border-radius: 2px 2px 0px 0px;
 }
 
-.window-thumbnail {
+.switcher-list {
     margin-left: 4px;
     padding: 6px;
     border-radius: 4px;
 }
 
-.window-thumbnail:hover {
+.switcher-list:hover {
     background-color: #4c4c4c;
 }
