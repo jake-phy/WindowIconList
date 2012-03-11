@@ -1,1 +1,8 @@
 install to ~/.local/share/cinnamon/extensions
+
+things to do: {
+make favorites act like window buttons,
+group window buttons,
+add right click menu to favorites,
+add zeitigiest right click menu,
+}
