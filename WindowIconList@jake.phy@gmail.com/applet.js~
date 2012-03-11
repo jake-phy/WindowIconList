@@ -898,9 +898,6 @@ MyApplet.prototype = {
         
             this.myactor = new St.BoxLayout({ name: 'windowList',
                                        	style_class: 'window-list-box' });
-            this.myfavorites = new St.BoxLayout({ name: 'windowList',
-                                       	style_class: 'window-list-box' });
-            this.actor.add(this.myfavorites);
             this.actor.add(this.myactor);
             this.actor.reactive = false;
                                        	
@@ -973,7 +970,7 @@ MyApplet.prototype = {
             }
 	
             this._buttons[j] = new PanelFavorites(app);
-            this.myfavorites.add(this._buttons[j].actor);
+            this.myactor.add(this._buttons[j].actor);
             ++j;
         }
     },
