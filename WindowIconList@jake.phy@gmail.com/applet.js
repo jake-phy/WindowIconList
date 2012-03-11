@@ -1,5 +1,4 @@
-// version#1.4.1x
-onst Applet = imports.ui.applet;
+const Applet = imports.ui.applet;
 const Clutter = imports.gi.Clutter;
 const Lang = imports.lang;
 const Cinnamon = imports.gi.Cinnamon;
