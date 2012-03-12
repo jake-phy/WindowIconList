@@ -174,7 +174,7 @@ AppMenuButton.prototype = {
 		let app = tracker.get_window_app(this.metaWindow);
 		let icon = app.create_icon_texture(PANEL_ICON_SIZE);
 		//let icon = this.app.get_faded_icon(1.15 * PANEL_ICON_SIZE);		        
-        this._label.set_text('');
+        this._label.set_text(this.metaWindow.get_title());
         this._iconBox.set_child(icon);
         
         if(animation){
