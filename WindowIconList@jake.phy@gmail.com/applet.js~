@@ -22,7 +22,7 @@ const PANEL_ICON_SIZE = 24;
 const SPINNER_ANIMATION_TIME = 2;
 
 const AppletDir = imports.ui.appletManager.applets['WindowIconList@jake.phy@gmail.com'];
-const ThumbnailPreview = AppletDir.thumbnailPreview
+const WindowPreview = AppletDir.windowPreview
 const RightClickMenu = AppletDir.rightClickMenu
 
 const OPTIONS = {
@@ -187,8 +187,8 @@ AppMenuButton.prototype = {
         this.rightClickMenu = new RightClickMenu.AppMenuButtonRightClickMenu(this.actor, this.metaWindow, orientation);
         this._menuManager.addMenu(this.rightClickMenu);
         // Set up the hover menu
-        this.hoverMenu = new ThumbnailPreview.AppThumbnailHoverMenu(this.actor, this.metaWindow, orientation)
-        this.hoverController = new ThumbnailPreview.HoverMenuController(this.actor, this.hoverMenu);
+        this.hoverMenu = new WindowPreview.AppThumbnailHoverMenu(this.actor, this.metaWindow, orientation)
+        this.hoverController = new WindowPreview.HoverMenuController(this.actor, this.hoverMenu);
     },
     
     _onDestroy: function() {
