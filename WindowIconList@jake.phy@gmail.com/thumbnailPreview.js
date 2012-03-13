@@ -9,7 +9,7 @@ const St = imports.gi.St;
 
 const HOVER_MENU_TIMEOUT = 500;
 /*size of thumbnail less is bigger*/ 
-const THUMBNAIL_SIZE = 6
+const THUMBNAIL_SIZE = 7
 const THUMBNAIL_HEIGHT = Math.max(150, Main.layoutManager.primaryMonitor.height / THUMBNAIL_SIZE);
 const THUMBNAIL_WIDTH = Math.max(200, Main.layoutManager.primaryMonitor.width / THUMBNAIL_SIZE);
 
