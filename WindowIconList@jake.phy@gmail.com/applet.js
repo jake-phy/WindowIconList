@@ -22,14 +22,16 @@ const PANEL_ICON_SIZE = 24;
 const SPINNER_ANIMATION_TIME = 2;
 
 const AppletDir = imports.ui.appletManager.applets['WindowIconList@jake.phy@gmail.com'];
-const ThumbnailPreview = AppletDir.thumbnailPreview
-const RightClickMenu = AppletDir.rightClickMenu
+const ThumbnailPreview = AppletDir.thumbnailPreview;
+const RightClickMenu = AppletDir.rightClickMenu;
 
 const OPTIONS = {
+		    // THUMBNAIL_SIZE is in thumbnailPreview.js
+
                     // GROUP_BY_APP
                     //     true: only one button is shown for each application (all windows are grouped)
                     //     false: every window has its own button
-                    // GROUP_BY_APP: true,
+                    //GROUP_BY_APP: true,
 
 		    // SHOW_PINNED_APPS
                     //     true: show the favorites
@@ -43,7 +45,7 @@ function PanelFavorites(app, orientation) {
 
 PanelFavorites.prototype = {
     _init: function(app, orientation) {
-        this.actor = new St.Bin({ style_class: 'panel-launcher',
+        this.actor = new St.Bin({ style_class: 'appMenu',
 								  reactive: true,
 								  can_focus: true,
 								  x_fill: true,
@@ -381,9 +383,11 @@ MyApplet.prototype = {
         
             this.myactor = new St.BoxLayout({ name: 'windowList',
                                        	style_class: 'window-list-box' });
-            this.myfavorites = new St.BoxLayout({ name: 'windowList',
+	    this.myfavorites = new St.BoxLayout({ name: 'windowList',
                                        	style_class: 'window-list-box' });
-            this.actor.add(this.myfavorites);
+	    if (OPTIONS['SHOW_PINNED_APPS']) {
+            	this.actor.add(this.myfavorites);
+	    }
             this.actor.add(this.myactor);
             this.actor.reactive = false;
                                        	
@@ -451,7 +455,7 @@ MyApplet.prototype = {
         for ( let i=0; i<launchers.length; ++i ) {
             let app = Cinnamon.AppSystem.get_default().lookup_app(launchers[i]);
 
-            if ( app == null || !OPTIONS['SHOW_PINNED_APPS'] ) {
+            if ( app == null ) {
                 continue;
             }
 	

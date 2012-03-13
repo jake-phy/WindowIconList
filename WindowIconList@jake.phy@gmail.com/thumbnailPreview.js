@@ -8,10 +8,9 @@ const Cinnamon = imports.gi.Cinnamon;
 const St = imports.gi.St;
 
 const HOVER_MENU_TIMEOUT = 500;
-/*size of thumbnail less is bigger*/ 
-const THUMBNAIL_SIZE = 6
-const THUMBNAIL_HEIGHT = Math.max(150, Main.layoutManager.primaryMonitor.height / THUMBNAIL_SIZE);
-const THUMBNAIL_WIDTH = Math.max(200, Main.layoutManager.primaryMonitor.width / THUMBNAIL_SIZE);
+const THUMBNAIL_SIZE = 7;
+/*const THUMBNAIL_HEIGHT = Math.max(150, Main.layoutManager.primaryMonitor.height / ThumbnailSize);
+const THUMBNAIL_WIDTH = Math.max(200, Main.layoutManager.primaryMonitor.width / ThumbnailSize);*/
 
 function HoverMenuController() {
     this._init.apply(this, arguments);
@@ -187,7 +186,7 @@ PopupMenuAppSwitcherItem.prototype = {
         this.app = tracker.get_window_app(this.metaWindow);
         
 
-        this.appContainer = new St.BoxLayout({ style_class: 'thumbnail-list',
+        this.appContainer = new St.BoxLayout({ style_class: 'switcher-list',
                                                reactive: true,
                                                track_hover: true,
                                                can_focus: true,
@@ -280,14 +279,17 @@ WindowThumbnail.prototype = {
         this.app = app
 
         // Inherit the theme from the alt-tab menu
-        this.actor = new St.BoxLayout({ style_class: 'item_box',
+        this.actor = new St.BoxLayout({ style_class: 'item-box',
                                         reactive: true,
                                         can_focus: true,
                                         vertical: true });
         this.thumbnailActor = new St.Bin();
-        let bin = new St.Bin();
-        this.thumbnailActor.height = THUMBNAIL_HEIGHT;
-        this.thumbnailActor.width = THUMBNAIL_WIDTH;
+	this.ThumbnailHeight = Math.max(150, Main.layoutManager.primaryMonitor.height / THUMBNAIL_SIZE);
+	this.ThumbnailWidth = Math.max(200, Main.layoutManager.primaryMonitor.width / THUMBNAIL_SIZE);
+        this.thumbnailActor.height = this.ThumbnailHeight;
+        this.thumbnailActor.width = this.ThumnailWidth;
+
+        let bin = new St.Bin({ name: 'appMenu' });
         this._container = new Cinnamon.GenericContainer();
         bin.set_child(this._container);
         this._container.connect('get-preferred-width',
@@ -346,13 +348,12 @@ WindowThumbnail.prototype = {
         if (this.thumbnail) {
             return this.thumbnail;
         }
-
         let thumbnail = null;
         let mutterWindow = this.metaWindow.get_compositor_private();
         if (mutterWindow) {
             let windowTexture = mutterWindow.get_texture();
             let [width, height] = windowTexture.get_size();
-            let scale = Math.min(1.0, THUMBNAIL_WIDTH / width, THUMBNAIL_HEIGHT / height);
+            let scale = Math.min(1.0, this.ThumbnailWidth / width, this.ThumbnailHeight / height);
             thumbnail = new Clutter.Clone ({ source: windowTexture,
                                              reactive: true,
                                              width: width * scale,
@@ -391,7 +392,7 @@ WindowThumbnail.prototype = {
 //        alloc.min_size = alloc.min_size + Math.max(0, minSize - Math.floor(alloc.min_size / 2));
         alloc.min_size = alloc.min_size + Math.max(0, minSize);
 //        alloc.natural_size = alloc.natural_size + Math.max(0, naturalSize - Math.floor(alloc.natural_size / 2));
-        alloc.natural_size = THUMBNAIL_WIDTH; // FIX ME --> This was set to 75 originally, we need some calculation.. we want this to be as big as possible for the window list to take all available space
+        alloc.natural_size = this.ThumbnailWidth; // FIX ME --> This was set to 75 originally, we need some calculation.. we want this to be as big as possible for the window list to take all available space
     },
 
     _getContentPreferredHeight: function(actor, forWidth, alloc) {

@@ -12,7 +12,7 @@ const Gettext = imports.gettext.domain('cinnamon-extensions');
 const _ = Gettext.gettext;
 
 const AppletDir = imports.ui.appletManager.applets['WindowIconList@jake.phy@gmail.com'];
-const MainApplet = AppletDir.applet
+const MainApplet = AppletDir.applet;
 
 function AppMenuButtonRightClickMenu(actor, metaWindow, orientation) {
     this._init(actor, metaWindow, orientation);
