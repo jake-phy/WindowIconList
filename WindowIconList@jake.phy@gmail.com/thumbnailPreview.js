@@ -187,7 +187,7 @@ PopupMenuAppSwitcherItem.prototype = {
         this.app = tracker.get_window_app(this.metaWindow);
         
 
-        this.appContainer = new St.BoxLayout({ style_class: 'thumbnail-list',
+        this.appContainer = new St.BoxLayout({ style_class: 'switcher-list',
                                                reactive: true,
                                                track_hover: true,
                                                can_focus: true,
