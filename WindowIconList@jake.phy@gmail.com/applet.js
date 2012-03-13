@@ -26,6 +26,8 @@ const ThumbnailPreview = AppletDir.thumbnailPreview
 const RightClickMenu = AppletDir.rightClickMenu
 
 const OPTIONS = {
+		    // Thumbnail size is in thumbnailPreview.js
+		    
                     // GROUP_BY_APP
                     //     true: only one button is shown for each application (all windows are grouped)
                     //     false: every window has its own button
