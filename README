@@ -1,4 +1,4 @@
-install to ~/.local/share/cinnamon/extensions
+install to ~/.local/share/cinnamon/applets
 
 things to do: {
 make favorites act like window buttons,
