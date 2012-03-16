@@ -7,10 +7,10 @@ const PopupMenu = imports.ui.popupMenu;
 const Cinnamon = imports.gi.Cinnamon;
 const St = imports.gi.St;
 
+const THUMBNAIL_ICON_SIZE = 16;
+
 const HOVER_MENU_TIMEOUT = 500;
 const THUMBNAIL_SIZE = 7;
-/*const THUMBNAIL_HEIGHT = Math.max(150, Main.layoutManager.primaryMonitor.height / ThumbnailSize);
-const THUMBNAIL_WIDTH = Math.max(200, Main.layoutManager.primaryMonitor.width / ThumbnailSize);*/
 
 function HoverMenuController() {
     this._init.apply(this, arguments);
@@ -287,7 +287,7 @@ WindowThumbnail.prototype = {
 	this.ThumbnailHeight = Math.max(150, Main.layoutManager.primaryMonitor.height / THUMBNAIL_SIZE);
 	this.ThumbnailWidth = Math.max(200, Main.layoutManager.primaryMonitor.width / THUMBNAIL_SIZE);
         this.thumbnailActor.height = this.ThumbnailHeight;
-        this.thumbnailActor.width = this.ThumnailWidth;
+        this.thumbnailActor.width = this.ThumbnailWidth;
 
         let bin = new St.Bin({ name: 'appMenu' });
         this._container = new Cinnamon.GenericContainer();
@@ -307,10 +307,14 @@ WindowThumbnail.prototype = {
         this._container.add_actor(this._iconBox);
         this._label = new St.Label();
         this._container.add_actor(this._label);
+	this.button = new St.Bin({ style_class: 'window-close', reactive: true });
+	this.button.hide();
+	this.button.connect('button-release-event', Lang.bind(this, this._onButtonRelease));
+	this._container.add_actor(this.button);
 
         this._iconBottomClip = 0;
 
-	let icon = app.create_icon_texture(16);
+	let icon = app.create_icon_texture(THUMBNAIL_ICON_SIZE);
         this._iconBox.set_child(icon);
 
         //TODO: should probably do this in a smarter way in the get_size_request event or something...
@@ -328,10 +332,12 @@ WindowThumbnail.prototype = {
         this.actor.connect('enter-event', Lang.bind(this, function() {
                                                         this.actor.add_style_pseudo_class('outlined');
                                                         this.actor.add_style_pseudo_class('selected');
+							this.button.show();
                                                     }));
         this.actor.connect('leave-event', Lang.bind(this, function() {
                                                         this.actor.remove_style_pseudo_class('outlined');
                                                         this.actor.remove_style_pseudo_class('selected');
+							this.button.hide();
                                                     }));
     },
 
@@ -384,6 +390,12 @@ WindowThumbnail.prototype = {
         else
             this._iconBox.remove_clip();
     },
+    _onButtonRelease: function(actor, event) {
+        if ( Cinnamon.get_event_state(event) & Clutter.ModifierType.BUTTON1_MASK ) {
+        this.metaWindow.delete(global.get_current_time());
+        }
+	this._refresh
+    },
     _getContentPreferredWidth: function(actor, forHeight, alloc) {
         let [minSize, naturalSize] = this._iconBox.get_preferred_width(forHeight);
         alloc.min_size = minSize;
@@ -427,7 +439,7 @@ WindowThumbnail.prototype = {
         }
         this._iconBox.allocate(childBox, flags);
 
-        let iconWidth = 16;
+        let iconWidth = THUMBNAIL_ICON_SIZE;
 
         [minWidth, minHeight, naturalWidth, naturalHeight] = this._label.get_preferred_size();
 
@@ -443,5 +455,20 @@ WindowThumbnail.prototype = {
             childBox.x1 = Math.max(0, childBox.x2 - naturalWidth);
         }
         this._label.allocate(childBox, flags);
+
+	let buttonSize = THUMBNAIL_ICON_SIZE;
+        if (direction == St.TextDirection.LTR) {
+            childBox.x1 = this.ThumbnailWidth - THUMBNAIL_ICON_SIZE;
+            childBox.x2 = childBox.x1 + this.button.width;
+            childBox.y2 = 16;
+            childBox.y1 = -26;
+            this.button.allocate(childBox, flags);
+        } else {
+            childBox.x1 = -this.button.width;
+            childBox.x2 = childBox.x1 + this.button.width;
+            childBox.y1 = box.y1;
+            childBox.y2 = box.y2 - 1;
+            this.button.allocate(childBox, flags);
+        }
     }
 };
