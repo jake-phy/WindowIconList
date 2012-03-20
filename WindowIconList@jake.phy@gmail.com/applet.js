@@ -329,23 +329,27 @@ AppMenuButton.prototype = {
         }   
     },
 
-    _windowHandle: function(fromDrag){
-        if ( this.metaWindow.has_focus() ) {
-            if (fromDrag){
-                return;
-            }
-            
-            this.metaWindow.minimize(global.get_current_time());
-            this.actor.remove_style_pseudo_class('focus');
-        }
-        else {
-            if (this.metaWindow.minimized) {
-                this.metaWindow.unminimize(global.get_current_time()); 
-            }
-            this.metaWindow.activate(global.get_current_time());
-            this.actor.add_style_pseudo_class('focus');
-        }
-    },
+	_windowHandle: function(fromDrag) {
+	
+		if (this.metaWindow.minimized) {
+			this.metaWindow.unminimize(global.get_current_time());
+			this.metaWindow.activate(global.get_current_time());
+			this.actor.add_style_pseudo_class('focus');
+		}
+		else {
+			if (this.metaWindow.has_focus()) {
+				if (!fromDrag) {
+					this.metaWindow.minimize(global.get_current_time());
+					this.actor.remove_style_pseudo_class('focus');
+				}
+			}
+			else {
+				this.metaWindow.activate(global.get_current_time());
+				this.actor.add_style_pseudo_class('focus');		
+			}
+		}
+	
+	},
 
     handleDragOver: function(source, actor, x, y, time) {
         if (source instanceof AppMenuButton) return DND.DragMotionResult.CONTINUE;
