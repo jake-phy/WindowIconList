@@ -24,10 +24,9 @@ HoverMenuController.prototype = {
         params = Params.parse(params, { reactive: true,
                                         clickShouldImpede: true,
                                         clickShouldClose: true });
-
         this._parentActor = actor;
         this._parentMenu = menu;
-
+        
         this._parentActor.reactive = true;
         this._parentActor.connect('enter-event', Lang.bind(this, this._onEnter));
         this._parentActor.connect('leave-event', Lang.bind(this, this._onLeave));
@@ -64,7 +63,6 @@ HoverMenuController.prototype = {
             this.shouldOpen = true;
         }
         this.shouldClose = false;
-
         Mainloop.timeout_add(HOVER_MENU_TIMEOUT, Lang.bind(this, this.open));
     },
 
@@ -121,7 +119,7 @@ HoverMenu.prototype = {
     __proto__: PopupMenu.PopupMenu.prototype,
 
     _init: function(actor, params, orientation) {
-        PopupMenu.PopupMenu.prototype._init.call(this, actor, 0, orientation);
+        PopupMenu.PopupMenu.prototype._init.call(this, actor, 0.0, orientation, 0);
 	params = Params.parse(params, { reactive: true });
         this.actor.style_class = null;
 	this._arrowAlignment = 0.45;
@@ -144,7 +142,7 @@ AppThumbnailHoverMenu.prototype = {
     __proto__: HoverMenu.prototype,
 
     _init: function(actor, metaWindow, orientation) {
-        HoverMenu.prototype._init.call(this, actor, { reactive: true }, orientation);
+        HoverMenu.prototype._init.call(this, actor, { reactive: true } , orientation);
 
         this.metaWindow = metaWindow;
 	let tracker = Cinnamon.WindowTracker.get_default();
@@ -166,7 +164,7 @@ AppThumbnailHoverMenu.prototype = {
         this.metaWindow = metaWindow;
         this.appSwitcherItem.setMetaWindow(metaWindow);
     }
-}
+};
 
 // display a list of app thumbnails and allow
 // bringing any app to focus by clicking on its thumbnail
@@ -178,7 +176,7 @@ PopupMenuAppSwitcherItem.prototype = {
     __proto__: PopupMenu.PopupBaseMenuItem.prototype,
 
     _init: function (metaWindow, app, params) {
-        params = Params.parse(params, { hover: false });
+        params = Params.parse(params, { hover: false, reactive: true });
         PopupMenu.PopupBaseMenuItem.prototype._init.call(this, params);
 
         this.metaWindow = metaWindow;
@@ -192,9 +190,7 @@ PopupMenuAppSwitcherItem.prototype = {
                                                can_focus: true,
                                                vertical: false});
         this.appThumbnails = {};
-        this.divider = new St.Bin({ style_class: 'separator',
-                                    y_fill: true });
-        this.appContainer.add_actor(this.divider);
+
         this._refresh();
 
         this.addActor(this.appContainer);
@@ -257,14 +253,6 @@ PopupMenuAppSwitcherItem.prototype = {
                 this.appThumbnails[win].thumbnail.destroy();
                 delete this.appThumbnails[win];
             }
-        }
-
-        // Show the divider if there is more than one window belonging to this app
-        if (Object.keys(this.appThumbnails).length > 0) {
-            this.divider.show();
-	}
-         else {
-            this.divider.hide();
         }
     }
 };
@@ -392,9 +380,9 @@ WindowThumbnail.prototype = {
     },
     _onButtonRelease: function(actor, event) {
         if ( Cinnamon.get_event_state(event) & Clutter.ModifierType.BUTTON1_MASK ) {
-        this.metaWindow.delete(global.get_current_time());
-        }
-	this._refresh
+            this.metaWindow.delete(global.get_current_time());
+	}
+	this._refresh();
     },
     _getContentPreferredWidth: function(actor, forHeight, alloc) {
         let [minSize, naturalSize] = this._iconBox.get_preferred_width(forHeight);

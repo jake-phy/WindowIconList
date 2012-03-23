@@ -55,17 +55,18 @@ AppMenuButtonRightClickMenu.prototype = {
         this.itemOnAllWorkspaces = new PopupMenu.PopupMenuItem(_("Visible on all workspaces"));
         this.itemOnAllWorkspaces.connect('activate', Lang.bind(this, this._toggleOnAllWorkspaces));
 
-		let favs = AppFavorites.getAppFavorites(),
-		favId = this.app.get_id(),
-		isFav = favs.isFavorite(favId);
-	if (isFav && MainApplet.OPTIONS['SHOW_PINNED_APPS']) {
-	    this.itemtoggleFav = new PopupMenu.PopupMenuItem(_('Unpin'));
-            this.itemtoggleFav.connect('activate', Lang.bind(this, this._toggleFav));     
+		this.favs = AppFavorites.getAppFavorites(),
+		this.favId = this.app.get_id(),
+		this.isFav = this.favs.isFavorite(this.favId);
+	if (MainApplet.OPTIONS['SHOW_PINNED_APPS']) {
+		if (this.isFav) {
+		    this.itemtoggleFav = new PopupMenu.PopupMenuItem(_('Unpin'));
+        	    this.itemtoggleFav.connect('activate', Lang.bind(this, this._toggleFav));     
+		}else {
+		    this.itemtoggleFav = new PopupMenu.PopupMenuItem(_('Pin'));
+        	    this.itemtoggleFav.connect('activate', Lang.bind(this, this._toggleFav));
+		} 
 	}
-	else if (MainApplet.OPTIONS['SHOW_PINNED_APPS']) {
-	    this.itemtoggleFav = new PopupMenu.PopupMenuItem(_('Pin'));
-            this.itemtoggleFav.connect('activate', Lang.bind(this, this._toggleFav));
-	} 
 
         if (orientation == St.Side.BOTTOM) {
             this.addMenuItem(this.itemOnAllWorkspaces);
@@ -170,14 +171,11 @@ AppMenuButtonRightClickMenu.prototype = {
     },
 
     _toggleFav: function(actor, event){
-	let favs = AppFavorites.getAppFavorites(),
-		favId = this.app.get_id(),
-		isFav = favs.isFavorite(favId);
-	if (isFav){
-		favs.removeFavorite(favId)
+	if (this.isFav){
+		this.favs.removeFavorite(this.favId)
 		this.itemtoggleFav.label.set_text(_('Pin'));
 	}else{
-		favs.addFavorite(favId);
+		this.favs.addFavorite(this.favId);
 		this.itemtoggleFav.label.set_text(_('Unpin'));
 		}
     },
@@ -201,32 +199,37 @@ AppMenuButtonRightClickMenu.prototype = {
 
 };
 
-function FavoritesRightClickMenu(launcher, app, orientation) {
-    this._init(launcher, app, orientation);
+function FavoritesRightClickMenu(actor, app, orientation) {
+    this._init(actor, app, orientation);
 }
 
 FavoritesRightClickMenu.prototype = {
     __proto__: PopupMenu.PopupMenu.prototype,
 
-    _init: function(launcher, app, orientation) {
+    _init: function(actor, app, orientation) {
 	this.app = app
         //take care of menu initialization
-        PopupMenu.PopupMenu.prototype._init.call(this, launcher.actor, 0.0, orientation, 0);
+        PopupMenu.PopupMenu.prototype._init.call(this, actor, 0.0, orientation, 0);
         Main.uiGroup.add_actor(this.actor);
-        actor.connect('key-press-event', Lang.bind(this, this._onSourceKeyPress));
         this.actor.hide();
+        actor.connect('key-press-event', Lang.bind(this, this._onSourceKeyPress));
 
-	this.favMenu = new PopupMenu.PopupMenuItem(_('Unpin'));
-        this.favMenu.connect('activate', Lang.bind(this, this._toggleFavMenu));
-        this.addMenuItem(this.favMenu);
+	this.unpinItem = new PopupMenu.PopupMenuItem(_('Unpin'));
+        this.unpinItem.connect('activate', Lang.bind(this, this._toggleFavMenu));
+	this.launchItem = new PopupMenu.PopupMenuItem(_('Launch'));
+        this.launchItem.connect('activate', Lang.bind(this, this._launchMenu));
+        this.addMenuItem(this.launchItem);
+        this.addMenuItem(this.unpinItem);
     },
-    _toggleFavMenu: function(actor, event){
+    _toggleFavMenu: function(){
 	let favs = AppFavorites.getAppFavorites(),
-		favId = this.app.get_id(),
-		isFav = favs.isFavorite(favId);
-	if (isFav){
+		favId = this.app.get_id();
+
 		favs.removeFavorite(favId)
-	}
+    },
+
+    _launchMenu: function(){
+	this.app.open_new_window(-1);
     },
     _onSourceKeyPress: function(actor, event) {
         let symbol = event.get_key_symbol();
