@@ -199,11 +199,10 @@ PopupMenuAppSwitcherItem.prototype = {
         this.metaWindow = metaWindow;
 	let tracker = Cinnamon.WindowTracker.get_default();
         this.app = tracker.get_window_app(this.metaWindow);
-	this.actor.style_class = null;
         
 
         this.appContainer = new St.BoxLayout({ style_class: 'switcher-list'});
-	this.appContainer.set_style("padding: 10px;border-radius: 12px;");
+	this.appContainer.set_style("padding: 6px;border-radius: 12px;");
         this.appThumbnails = {};
 
         this._refresh();
