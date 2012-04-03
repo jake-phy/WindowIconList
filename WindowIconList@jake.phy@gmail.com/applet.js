@@ -23,9 +23,7 @@ const PANEL_ICON_SIZE = 24;
 const SPINNER_ANIMATION_TIME = 1;
 
 const OPTIONS = {
-		    // THUMBNAIL_SIZE is in thumbnailPreview.js
-
-		    //
+		    // THUMBNAIL OPTIONS are in thumbnailPreview.js
 
 		    SHOW_TITLE: false,
 
@@ -46,6 +44,7 @@ function FavoritesLauncher(applet, app, orientation) {
 
 FavoritesLauncher.prototype = {
     _init: function(applet, app, orientation) {
+        this._applet = applet;
 	this.app = app;
         this.actor = new St.Bin({ style_class: 'panel-launcher',
                                       reactive: true,
@@ -55,19 +54,21 @@ FavoritesLauncher.prototype = {
                                       track_hover: true });
         this.actor._delegate = this;
         this.actor.connect('button-release-event', Lang.bind(this, this._onButtonRelease));
-        
-        this._iconBox = new Cinnamon.Slicer({ name: 'panel-launcher-icon' });
-        this._iconBox.connect('style-changed',
-                              Lang.bind(this, this._onIconBoxStyleChanged));
-        this._iconBox.connect('notify::allocation',
-                              Lang.bind(this, this._updateIconBoxClip));
-        this.actor.add_actor(this._iconBox);
-        this._iconBottomClip = 0;
 
-        this.icon = this._getIconActor();
-        this._iconBox.set_child(this.icon);
+        this.icon = this.app.create_icon_texture(PANEL_ICON_SIZE);
+        this._container = new Cinnamon.GenericContainer();
+        this.actor.set_child(this._container);
+	this._container.add_actor(this.icon);
 
-        this._applet = applet;	
+        this._container.connect('get-preferred-width',
+								Lang.bind(this, this._getContentPreferredWidth));
+        this._container.connect('get-preferred-height',
+								Lang.bind(this, this._getContentPreferredHeight));
+        this._container.connect('allocate', Lang.bind(this, this._contentAllocate));	
+
+        /*this._spinner = new Panel.AnimatedIcon('process-working.svg', PANEL_ICON_SIZE);
+        this._container.add_actor(this._spinner.actor);
+        this._spinner.actor.lower_bottom();*/
         
         this._menuManager = new PopupMenu.PopupMenuManager(this);
         this._menu = new RightClickMenu.FavoritesRightClickMenu(this.actor, this.app, orientation);
@@ -79,13 +80,10 @@ FavoritesLauncher.prototype = {
         }
         this._tooltip = new Tooltips.PanelItemTooltip(this, tooltipText, orientation);
         
-        let settings = new Gio.Settings({ schema: 'org.cinnamon'});
-    	if (settings.get_boolean('panel-launchers-draggable')){
-    	    this._draggable = DND.makeDraggable(this.actor);
-            this._draggable.connect('drag-begin', Lang.bind(this, this._onDragBegin));
-            this._draggable.connect('drag-cancelled', Lang.bind(this, this._onDragCancelled));
-            this._draggable.connect('drag-end', Lang.bind(this, this._onDragEnd));
-    	}
+        this._draggable = DND.makeDraggable(this.actor);
+        this._draggable.connect('drag-begin', Lang.bind(this, this._onDragBegin));
+        this._draggable.connect('drag-cancelled', Lang.bind(this, this._onDragCancelled));
+        this._draggable.connect('drag-end', Lang.bind(this, this._onDragEnd));
         
         this.on_panel_edit_mode_changed();
         global.settings.connect('changed::panel-edit-mode', Lang.bind(this, this.on_panel_edit_mode_changed));
@@ -109,9 +107,20 @@ FavoritesLauncher.prototype = {
         this._applet.myactorbox._clearDragPlaceholder();
         this._tooltip.preventShow = false;
     },
+
+    _onButtonRelease: function(actor, event) {
+	    let button = event.get_button();
+            if (button==1) {
+		        if (this._menu.isOpen) this._menu.toggle();
+			this.app.open_new_window(-1);
+			this.animationStart();
+            }else if (button==3) {
+		        this._menu.toggle();
+            }
+    },
     
     handleDragOver: function(source, actor, x, y, time) {
-        if (source.isDraggableApp || (source instanceof FavoritesLauncher || AppMenuButton)) return DND.DragMotionResult.CONTINUE;
+        if (source instanceof FavoritesLauncher) return DND.DragMotionResult.CONTINUE;
         
         if (typeof(this._applet.dragEnterTime) == 'undefined') {
             this._applet.dragEnterTime = time;
@@ -126,51 +135,84 @@ FavoritesLauncher.prototype = {
     acceptDrop: function(source, actor, x, y, time) {
         return false;
     },
-    
-    _getIconActor: function() {
-	return this.icon = this.app.create_icon_texture(PANEL_ICON_SIZE);
+
+    animationStart: function() {
+	this.icon.set_z_rotation_from_gravity(0.0, Clutter.Gravity.CENTER)
+        Tweener.addTween(this.icon,
+                         { opacity: 70,
+			   time: 1.0,
+                           transition: "linear",
+                           onCompleteScope: this,
+                           onComplete: function() {
+       	 			Tweener.addTween(this.icon,
+                	        		 { opacity: 255,
+						   time: 0.5,
+                	        		   transition: "linear"
+                	        		 });
+                           }
+                         });
     },
-    
-    launch: function() {
-	this.app.open_new_window(-1);
-    },
-    
-    get_id: function() {
-	return this.app.get_id();
-    },
-   
-    _onButtonRelease: function(actor, event) {
-	    let button = event.get_button();
-            if (button==1) {
-		        if (this._menu.isOpen) this._menu.toggle();
-		        this.launch();
-            }else if (button==3) {
-		        this._menu.toggle();
-            }
-    },
-    
-    _onIconBoxStyleChanged: function() {
-        let node = this._iconBox.get_theme_node();
-        this._iconBottomClip = node.get_length('panel-launcher-bottom-clip');
-        this._updateIconBoxClip();
+    animationStop: function() {
     },
 
-    _updateIconBoxClip: function() {
-        let allocation = this._iconBox.allocation;
-        if (this._iconBottomClip > 0)
-            this._iconBox.set_clip(0, 0, allocation.x2 - allocation.x1, allocation.y2 - allocation.y1 - this._iconBottomClip);
-        else
-            this._iconBox.remove_clip();
+    _getContentPreferredWidth: function(actor, forHeight, alloc) {
+        let [minSize, naturalSize] = this.icon.get_preferred_width(forHeight);
+        alloc.min_size = minSize;
+        alloc.natural_size = naturalSize;
+    },
+
+    _getContentPreferredHeight: function(actor, forWidth, alloc) {
+        let [minSize, naturalSize] = this.icon.get_preferred_height(forWidth);
+        alloc.min_size = minSize;
+        alloc.natural_size = naturalSize;
+    },
+
+    _contentAllocate: function(actor, box, flags) {
+        let allocWidth = box.x2 - box.x1;
+        let allocHeight = box.y2 - box.y1;
+        let childBox = new Clutter.ActorBox();
+
+        let [minWidth, minHeight, naturalWidth, naturalHeight] = this.icon.get_preferred_size();
+
+        let direction = this.actor.get_direction();
+
+        let yPadding = Math.floor(Math.max(0, allocHeight - naturalHeight) / 2);
+        childBox.y1 = yPadding;
+        childBox.y2 = childBox.y1 + Math.min(naturalHeight, allocHeight);
+        if (direction == St.TextDirection.LTR) {
+            childBox.x1 = 0;
+            childBox.x2 = childBox.x1 + Math.min(naturalWidth, allocWidth);
+        } else {
+            childBox.x1 = Math.max(0, allocWidth - naturalWidth);
+            childBox.x2 = allocWidth;
+        }
+        this.icon.allocate(childBox, flags);
+
+        let iconWidth = PANEL_ICON_SIZE;
+
+        /*if (direction == St.TextDirection.LTR) {
+            childBox.x1 = Math.floor(iconWidth / 2);
+            childBox.x2 = childBox.x1 + this._spinner.actor.width;
+            childBox.y1 = box.y1;
+            childBox.y2 = box.y2 - 1;
+            this._spinner.actor.allocate(childBox, flags);
+        } else {
+            childBox.x1 = -this._spinner.actor.width;
+            childBox.x2 = childBox.x1 + this._spinner.actor.width;
+            childBox.y1 = box.y1;
+            childBox.y2 = box.y2 - 1;
+            this._spinner.actor.allocate(childBox, flags);
+        }*/
     },
 
     getDragActor: function() {
-        return this._getIconActor();
+        return new Clutter.Clone({ source: this.actor });
     },
 
     // Returns the original actor that should align with the actor
     // we show as the item is being dragged.
     getDragActorSource: function() {
-        return this.icon;
+        return this.actor;
     }
 };
 
@@ -272,10 +314,9 @@ AppMenuButton.prototype = {
         this._menuManager.addMenu(this.rightClickMenu);
 
        // Set up the hover menu
-        this.hoverMenu = new ThumbnailPreview.AppThumbnailHoverMenu(this.actor, this.metaWindow, orientation)
-        this.hoverController = new ThumbnailPreview.HoverMenuController(this.actor, this.hoverMenu);
-        
-        //this._tooltip = new Tooltips.PanelItemTooltip(this, title, orientation);
+        this._hoverMenuManager = new ThumbnailPreview.HoverMenuController(this);
+        this.hoverMenu = new ThumbnailPreview.AppThumbnailHoverMenu(this.actor, this.metaWindow, orientation);
+        this._hoverMenuManager.addMenu(this.hoverMenu);
         
         this._draggable = DND.makeDraggable(this.actor);
         this._draggable.connect('drag-begin', Lang.bind(this, this._onDragBegin));
@@ -291,18 +332,15 @@ AppMenuButton.prototype = {
     }, 
         
     _onDragBegin: function() {
-        //this._tooltip.hide();
-        //this._tooltip.preventShow = true;
+        this.hoverMenu.close(true);
     },
 
     _onDragEnd: function() {
         this._applet.myactorbox._clearDragPlaceholder();
-        //this._tooltip.preventShow = false;
     },
 
     _onDragCancelled: function() {
         this._applet.myactorbox._clearDragPlaceholder();
-        //this._tooltip.preventShow = false;
     },
 
     getDisplayTitle: function() {
@@ -313,7 +351,6 @@ AppMenuButton.prototype = {
 
     _onDestroy: function() {
         this.metaWindow.disconnect(this._updateCaptionId);
-        //this._tooltip.destroy();
     },
     
     doFocus: function() {
@@ -334,43 +371,43 @@ AppMenuButton.prototype = {
     },
     
     _onButtonRelease: function(actor, event) {
-        //this._tooltip.hide();
         if ( Cinnamon.get_event_state(event) & Clutter.ModifierType.BUTTON1_MASK ) {
             if ( this.rightClickMenu.isOpen ) {
-                this.rightClickMenu.toggle();                
+                this.rightClickMenu.toggle();
             }
-            this._windowHandle(false);
+            this._windowHandle(true);
         } else if (Cinnamon.get_event_state(event) & Clutter.ModifierType.BUTTON2_MASK) {
             this.metaWindow.delete(global.get_current_time());
             this.rightClickMenu.destroy();
+            this.hoverMenu.destroy();
         } else if (Cinnamon.get_event_state(event) & Clutter.ModifierType.BUTTON3_MASK) {
             this.rightClickMenu.mouseEvent = event;
-            this.rightClickMenu.toggle();   
+            this.rightClickMenu.toggle();
         }   
     },
 
     _windowHandle: function(fromDrag) {
-   
       if (this.metaWindow.minimized) {
         this.metaWindow.unminimize(global.get_current_time());
         this.metaWindow.activate(global.get_current_time());
         this.actor.add_style_pseudo_class('focus');
-      }else {
-	 if (this.metaWindow.has_focus()) {
+      }else if (this.metaWindow.has_focus()) {
             if (!fromDrag) {
                this.metaWindow.minimize(global.get_current_time());
      	       this.actor.remove_style_pseudo_class('focus');
-            }
-	 }else {
+            }else {
             this.metaWindow.activate(global.get_current_time());
             this.actor.add_style_pseudo_class('focus');    
             
-         }
+          }
+      }else {
+ 	    this.metaWindow.activate(global.get_current_time());
+            this.actor.add_style_pseudo_class('focus'); 
       }
     },
 
     handleDragOver: function(source, actor, x, y, time) {
-        if (source instanceof AppMenuButton || FavoritesLauncher) return DND.DragMotionResult.CONTINUE;
+        if (source instanceof AppMenuButton ) return DND.DragMotionResult.CONTINUE;
         
         if (typeof(this._applet.dragEnterTime) == 'undefined') {
             this._applet.dragEnterTime = time;
@@ -483,11 +520,7 @@ AppMenuButton.prototype = {
         }
         this._iconBox.allocate(childBox, flags);
 
-        let iconWidth;
-	if (!OPTIONS['SHOW_TITLE'])
-		iconWidth = PANEL_ICON_SIZE;
-	else
-		iconWidth = 16;
+        let iconWidth = PANEL_ICON_SIZE;
 
         [minWidth, minHeight, naturalWidth, naturalHeight] = this._label.get_preferred_size();
 
@@ -610,17 +643,17 @@ MyAppletBox.prototype = {
     
     acceptDrop: function(source, actor, x, y, time) {  
         if (!(source.isDraggableApp || (source instanceof AppMenuButton || FavoritesLauncher))) return false;
+	if (source instanceof AppMenuButton) {
+        this.actor.move_child(source.actor, this._dragPlaceholderPos);
+       
+        this._clearDragPlaceholder();
+        actor.destroy();
+	return true;
 
-        if (source instanceof AppMenuButton) {
-            this.actor.move_child(source.actor, this._dragPlaceholderPos);
-        
-            this._clearDragPlaceholder();
-            actor.destroy();
-
-            return true;
 	}else if (source.isDraggableApp || (source instanceof FavoritesLauncher)) {
 
         let app = source.app;
+
         // Don't allow favoriting of transient apps
         if (app == null || app.is_window_backed()) {
             return false;
@@ -650,7 +683,6 @@ MyAppletBox.prototype = {
 
         Meta.later_add(Meta.LaterType.BEFORE_REDRAW, Lang.bind(this,
             function () {
-        	if (!(source.isDraggableApp || (source instanceof FavoritesLauncher))) return false;
                 let appFavorites = AppFavorites.getAppFavorites();
                 if (srcIsFavorite)
                     appFavorites.moveFavoriteToPos(id, favPos);
@@ -658,10 +690,11 @@ MyAppletBox.prototype = {
                     appFavorites.addFavoriteAtPos(id, favPos);
                 return false;
             }));
-
+        this._clearDragPlaceholder();
+        actor.destroy
         return true;
 	}else
-        return false;
+	return false;
     },
     
     _clearDragPlaceholder: function() {        
@@ -711,12 +744,12 @@ MyApplet.prototype = {
         
             this._windows = new Array();
 	    this._favDisplay();
+
+            Cinnamon.AppSystem.get_default().connect('installed-changed', Lang.bind(this, this._refreshItems));
+            AppFavorites.getAppFavorites().connect('changed', Lang.bind(this, this._refreshItems));
                 
             let tracker = Cinnamon.WindowTracker.get_default();
             tracker.connect('notify::focus-app', Lang.bind(this, this._onFocus));
-        
-            Cinnamon.AppSystem.get_default().connect('installed-changed', Lang.bind(this, this._refreshItems));
-            AppFavorites.getAppFavorites().connect('changed', Lang.bind(this, this._refreshItems));
 
 
             this.switchWorkspaceHandler = global.window_manager.connect('switch-workspace',
@@ -791,19 +824,21 @@ MyApplet.prototype = {
     },*/
 
     _favDisplay: function() {
-        let launchers = global.settings.get_strv('favorite-apps');
-        let appSys = Cinnamon.AppSystem.get_default();
-	this._buttons = [];
-        let j = 0;
-        for ( let i = 0; i < launchers.length; ++i ) {
-            this.favapp = appSys.lookup_app(launchers[i]);
-            if (!this.favapp) this.favapp = appSys.lookup_settings_app(launchers[i]);
-            if (this.favapp) {
-            	this._buttons[j] = new FavoritesLauncher(this, this.favapp, this.orientation);
-            	this.myactor.add(this._buttons[j].actor);
-            	++j;
+	if (OPTIONS['SHOW_PINNED_APPS']) {
+            let launchers = global.settings.get_strv('favorite-apps'),
+            appSys = Cinnamon.AppSystem.get_default(),
+	    i = 0,
+	    launcher;
+	    this._buttons = [];
+	    while(i < launchers.length) {
+                launcher = appSys.lookup_app(launchers[i]);
+                if (!launcher) launcher = appSys.lookup_settings_app(launchers[i]);
+            	    this.favButton = new FavoritesLauncher(this, launcher, this.orientation);
+            	    this.myactor.add(this.favButton.actor);
+		    i++;
 	    }
-	}
+	}else 
+	return;
     }, 
     
     _refreshItems: function() {

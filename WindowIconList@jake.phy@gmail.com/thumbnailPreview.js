@@ -7,130 +7,68 @@ const PopupMenu = imports.ui.popupMenu;
 const Cinnamon = imports.gi.Cinnamon;
 const St = imports.gi.St;
 
+// THUMBNAIL OPTIONS
 const THUMBNAIL_ICON_SIZE = 16;
-
 const HOVER_MENU_TIMEOUT = 500;
 const THUMBNAIL_SIZE = 7;
+const GROUP_THUMBNAILS = true;
+//
 
-function HoverMenuController() {
-    this._init.apply(this, arguments);
+const AppletDir = imports.ui.appletManager.applets['WindowIconList@jake.phy@gmail.com'];
+
+function HoverMenuController(owner) {
+    this._init(owner);
 }
 
 HoverMenuController.prototype = {
-    _init: function(actor, menu, params) {
-        // reactive: should the menu stay open if your mouse is above the menu
-        // clickShouldImpede: if you click actor, should the menu be prevented from opening
-        // clickShouldClose: if you click actor, should the menu close
-        params = Params.parse(params, { reactive: true,
-                                        clickShouldImpede: true,
-                                        clickShouldClose: true });
-        this._parentActor = actor;
-        this._parentMenu = menu;
-        
-        this._parentActor.reactive = true;
-        this._parentActor.connect('enter-event', Lang.bind(this, this._onEnter));
-        this._parentActor.connect('leave-event', Lang.bind(this, this._onLeave));
+    __proto__ : PopupMenu.PopupMenuManager.prototype,
 
-        // If we're reactive, it means that we can move our mouse to the popup
-        // menu and interact with it.  It shouldn't close while we're interacting
-        // with it.
-        if (params.reactive) {
-            this._parentMenu.actor.connect('enter-event', Lang.bind(this, this._onParentMenuEnter));
-            this._parentMenu.actor.connect('leave-event', Lang.bind(this, this._onParentMenuLeave));
-        }
+    _grab: function() {
+        Main.pushModal(this._owner.actor);
 
-        if (params.clickShouldImpede || params.clickShouldClose) {
-            this.clickShouldImpede = params.clickShouldImpede;
-            this.clickShouldClose = params.clickShouldClose;
-            this._parentActor.connect('button-press-event', Lang.bind(this, this._onButtonPress));
-        }
+        this._eventCaptureId = global.stage.connect('captured-event', Lang.bind(this, this._onEventCapture));
+        // captured-event doesn't see enter/leave events
+        this._enterEventId = global.stage.connect('enter-event', Lang.bind(this, this._onEventCapture));
+        this._leaveEventId = global.stage.connect('leave-event', Lang.bind(this, this._onEventCapture));
+        this._keyFocusNotifyId = global.stage.connect('notify::key-focus', Lang.bind(this, this._onKeyFocusChanged));
+
+        this.grabbed = true;
     },
 
-    _onButtonPress: function() {
-        if (this.clickShouldImpede) {
-            this.shouldOpen = false;
+    _onEventCapture: function(actor, event) {
+        if (!this.grabbed)
+            return false;
+
+        if (this._owner.menuEventFilter &&
+            this._owner.menuEventFilter(event))
+            return true;
+
+        if (this._activeMenu != null && this._activeMenu.passEvents)
+            return false;
+
+        if (this._didPop) {
+            this._didPop = false;
+            return true;
         }
-        if (this.clickShouldClose) {
-            if (!this.impedeClose) {
-                this.shouldClose = true;
+
+        let activeMenuContains = this._eventIsOnActiveMenu(event);
+        let eventType = event.type();
+
+        if (eventType == Clutter.EventType.BUTTON_RELEASE) {
+            if (activeMenuContains) {
+                return false;
+            } else {
+                this._closeMenu();
+                return true;
             }
-            this.close();
+        } else if (eventType == Clutter.EventType.BUTTON_PRESS && !activeMenuContains) {
+            this._closeMenu();
+            return true;
+        } else if (!this._shouldBlockEvent(event)) {
+            return false;
         }
-    },
 
-    _onParentMenuEnter: function() {
-        if (!this.impedeOpen) {
-            this.shouldOpen = true;
-        }
-        this.shouldClose = false;
-        Mainloop.timeout_add(HOVER_MENU_TIMEOUT, Lang.bind(this, this.open));
-    },
-
-    _onParentMenuLeave: function() {
-        this.shouldClose = true;
-
-        Mainloop.timeout_add(HOVER_MENU_TIMEOUT, Lang.bind(this, this.close));
-    },
-
-    _onEnter: function() {
-        if (!this.impedeOpen) {
-            this.shouldOpen = true;
-        }
-        this.shouldClose = false;
-
-        Mainloop.timeout_add(HOVER_MENU_TIMEOUT, Lang.bind(this, this.open));
-    },
-
-    _onLeave: function() {
-        if (!this.impedeClose) {
-            this.shouldClose = true;
-        }
-        this.shouldOpen = false;
-
-        Mainloop.timeout_add(HOVER_MENU_TIMEOUT, Lang.bind(this, this.close));
-    },
-
-    open: function() {
-        if (this.shouldOpen && !this._parentMenu.isOpen) {
-            this._parentMenu.open(true);
-        }
-    },
-
-    close: function() {
-        if (this.shouldClose) {
-            this._parentMenu.close(true);
-        }
-    },
-
-    enable: function() {
-        this.impedeOpen = false;
-    },
-
-    disable: function() {
-        this.impedeOpen = true;
-    }
-};
-
-function HoverMenu() {
-    this._init.apply(this, arguments);
-}
-
-HoverMenu.prototype = {
-    __proto__: PopupMenu.PopupMenu.prototype,
-
-    _init: function(actor, params, orientation) {
-        PopupMenu.PopupMenu.prototype._init.call(this, actor, 0.0, orientation, 0);
-	params = Params.parse(params, { reactive: true });
-        this.actor.style_class = null;
-	this._arrowAlignment = 0.45;
-        this._parentActor = actor;
-        this.actor.hide();
-
-        if (params.reactive) {
-            Main.layoutManager.addChrome(this.actor, this.orientation);
-        } else {
-            Main.uiGroup.add_actor(this.actor, this.orientation);
-        }
+        return false;
     }
 };
 
@@ -139,17 +77,83 @@ function AppThumbnailHoverMenu() {
 }
 
 AppThumbnailHoverMenu.prototype = {
-    __proto__: HoverMenu.prototype,
+    __proto__: PopupMenu.PopupMenu.prototype,
 
-    _init: function(actor, metaWindow, orientation) {
-        HoverMenu.prototype._init.call(this, actor, { reactive: true } , orientation);
+    _init: function(actor, metaWindow, orientation, params) {
+       params = Params.parse (params, { reactive: false,
+                                         activate: false,
+                                         hover: false,
+                                         sensitive: false,
+                                         style_class: null,
+                                         focusOnHover: false
+                                       });
+        PopupMenu.PopupMenu.prototype._init.call(this, actor, 0.45, orientation);
 
         this.metaWindow = metaWindow;
 	let tracker = Cinnamon.WindowTracker.get_default();
-        this.app = tracker.get_window_app(this.metaWindow);
+        this.app = tracker.get_window_app(this.metaWindow);      
+  	this.actor.style_class = null;
+	this.actor.set_style("-arrow-background-color: rgba(80,80,80,0.0);-arrow-border-color: rgba(150,150,150,0.0);");
+        this.actor.hide();
 
-        this.appSwitcherItem = new PopupMenuAppSwitcherItem(this.metaWindow, this.app);
+        Main.layoutManager.addChrome(this.actor, this.orientation);
+
+        this.appSwitcherItem = new PopupMenuAppSwitcherItem(this.metaWindow, this.app, params);
         this.addMenuItem(this.appSwitcherItem);
+
+        actor.connect('enter-event', Lang.bind(this, this._onEnter));
+        actor.connect('leave-event', Lang.bind(this, this._onLeave));
+        actor.connect('button-press-event', Lang.bind(this, this._onButtonPress));
+
+        this.actor.connect('enter-event', Lang.bind(this, this._onMenuEnter));
+        this.actor.connect('leave-event', Lang.bind(this, this._onMenuLeave));
+        
+        this.actor.connect('button-press-event', Lang.bind(this, this._onButtonPress));
+    },
+
+    _onButtonPress: function(actor, event) {
+        this.shouldOpen = false;
+        this.shouldClose = true;
+        Mainloop.timeout_add(HOVER_MENU_TIMEOUT, Lang.bind(this, this.hoverClose));
+    },
+
+    _onMenuEnter: function() {
+        this.shouldOpen = true;
+        this.shouldClose = false;
+
+        Mainloop.timeout_add(HOVER_MENU_TIMEOUT, Lang.bind(this, this.hoverOpen));
+    },
+
+    _onMenuLeave: function() {
+        this.shouldOpen = false;
+        this.shouldClose = true;
+        Mainloop.timeout_add(HOVER_MENU_TIMEOUT, Lang.bind(this, this.hoverClose));
+    },
+
+    _onEnter: function() {
+        this.shouldOpen = true;
+        this.shouldClose = false;
+
+        Mainloop.timeout_add(HOVER_MENU_TIMEOUT, Lang.bind(this, this.hoverOpen));
+    },
+
+    _onLeave: function() {
+        this.shouldClose = true;
+        this.shouldOpen = false;
+
+        Mainloop.timeout_add(HOVER_MENU_TIMEOUT, Lang.bind(this, this.hoverClose));
+    },
+
+    hoverOpen: function() {
+        if (this.shouldOpen && !this.isOpen) {
+            this.open(true);
+        }
+    },
+
+    hoverClose: function() {
+        if (this.shouldClose) {
+            this.close(true);
+        }
     },
 
     open: function(animate) {
@@ -158,6 +162,13 @@ AppThumbnailHoverMenu.prototype = {
         // have not been created yet...
         this.appSwitcherItem._refresh();
         PopupMenu.PopupMenu.prototype.open.call(this, animate);
+    },
+
+    close: function(animate) {
+        // Refresh all the thumbnails, etc when the menu opens.  These cannot
+        // be created when the menu is initalized because a lot of the clutter window surfaces
+        // have not been created yet...
+        PopupMenu.PopupMenu.prototype.close.call(this, animate);
     },
 
     setMetaWindow: function(metaWindow) {
@@ -176,19 +187,23 @@ PopupMenuAppSwitcherItem.prototype = {
     __proto__: PopupMenu.PopupBaseMenuItem.prototype,
 
     _init: function (metaWindow, app, params) {
-        params = Params.parse(params, { hover: false, reactive: true });
+        params = Params.parse (params, { reactive: false,
+                                         activate: false,
+                                         hover: false,
+                                         sensitive: false,
+                                         style_class: null,
+                                         focusOnHover: false
+                                       });
         PopupMenu.PopupBaseMenuItem.prototype._init.call(this, params);
 
         this.metaWindow = metaWindow;
 	let tracker = Cinnamon.WindowTracker.get_default();
         this.app = tracker.get_window_app(this.metaWindow);
+	this.actor.style_class = null;
         
 
-        this.appContainer = new St.BoxLayout({ style_class: 'switcher-list',
-                                               reactive: true,
-                                               track_hover: true,
-                                               can_focus: true,
-                                               vertical: false});
+        this.appContainer = new St.BoxLayout({ style_class: 'switcher-list'});
+	this.appContainer.set_style("padding: 10px;border-radius: 12px;");
         this.appThumbnails = {};
 
         this._refresh();
@@ -200,12 +215,6 @@ PopupMenuAppSwitcherItem.prototype = {
         this.metaWindow = metaWindow;
     },
 
-    _connectToWindowOpen: function(actor, metaWindow) {
-        actor._button_release_signal_id = actor.connect('button-release-event', Lang.bind(this, function() {
-            metaWindow.activate(global.get_current_time());
-        }));
-    },
-
     _refresh: function() {
         // Check to see if this.metaWindow has changed.  If so, we need to recreate
         // our thumbnail, etc.
@@ -213,13 +222,11 @@ PopupMenuAppSwitcherItem.prototype = {
             this.metaWindowThumbnail._refresh();
         } else {
             if (this.metaWindowThumbnail) {
-                this.metaWindowThumbnail.actor.disconnect(this.metaWindowThumbnail.actor._button_release_signal_id);
                 this.metaWindowThumbnail.destroy();
             }
             // If our metaWindow is null, just move along
             if (this.metaWindow) {
                 this.metaWindowThumbnail = new WindowThumbnail(this.metaWindow, this.app);
-                this._connectToWindowOpen(this.metaWindowThumbnail.actor, this.metaWindow);
                 this.appContainer.insert_actor(this.metaWindowThumbnail.actor, 0);
             }
         }
@@ -237,12 +244,11 @@ PopupMenuAppSwitcherItem.prototype = {
         windows.forEach(Lang.bind(this, function(metaWindow) {
             if (this.appThumbnails[metaWindow]) {
                 this.appThumbnails[metaWindow].thumbnail._refresh();
-            } else {
+            } else if (GROUP_THUMBNAILS) {
                 let thumbnail = new WindowThumbnail(metaWindow, this.app);
                 this.appThumbnails[metaWindow] = { metaWindow: metaWindow,
                                                    thumbnail: thumbnail };
                 this.appContainer.add_actor(this.appThumbnails[metaWindow].thumbnail.actor);
-                this._connectToWindowOpen(this.appThumbnails[metaWindow].thumbnail.actor, metaWindow);
             }
         }));
 
@@ -269,8 +275,8 @@ WindowThumbnail.prototype = {
         // Inherit the theme from the alt-tab menu
         this.actor = new St.BoxLayout({ style_class: 'item-box',
                                         reactive: true,
-                                        can_focus: true,
-                                        vertical: true });
+                                        track_hover: true,
+                                        vertical: true});
         this.thumbnailActor = new St.Bin();
 	this.ThumbnailHeight = Math.max(150, Main.layoutManager.primaryMonitor.height / THUMBNAIL_SIZE);
 	this.ThumbnailWidth = Math.max(200, Main.layoutManager.primaryMonitor.width / THUMBNAIL_SIZE);
@@ -297,8 +303,8 @@ WindowThumbnail.prototype = {
         this._container.add_actor(this._label);
 	this.button = new St.Bin({ style_class: 'window-close', reactive: true });
 	this.button.hide();
-	this.button.connect('button-release-event', Lang.bind(this, this._onButtonRelease));
 	this._container.add_actor(this.button);
+        this.button.lower_bottom();
 
         this._iconBottomClip = 0;
 
@@ -321,12 +327,20 @@ WindowThumbnail.prototype = {
                                                         this.actor.add_style_pseudo_class('outlined');
                                                         this.actor.add_style_pseudo_class('selected');
 							this.button.show();
+							this.stopClick = false;
+							this.hoverPeek = true;
+							Mainloop.timeout_add(HOVER_MENU_TIMEOUT + 500, Lang.bind(this, this._hoverPeek));
                                                     }));
         this.actor.connect('leave-event', Lang.bind(this, function() {
                                                         this.actor.remove_style_pseudo_class('outlined');
                                                         this.actor.remove_style_pseudo_class('selected');
 							this.button.hide();
+							this.hoverPeek = false;
+							Mainloop.timeout_add(HOVER_MENU_TIMEOUT + 500, Lang.bind(this, this._hoverPeek));
                                                     }));
+        this.button.connect('button-release-event', Lang.bind(this, this._onButtonRelease));
+
+        this.actor.connect('button-release-event', Lang.bind(this, this._connectToWindow));
     },
 
     destroy: function() {
@@ -357,9 +371,32 @@ WindowThumbnail.prototype = {
         return thumbnail;
     },
 
+    _onButtonRelease: function(actor, event) {
+        if ( Cinnamon.get_event_state(event) & Clutter.ModifierType.BUTTON1_MASK ) {
+            this.metaWindow.delete(global.get_current_time());
+        }
+	this.stopClick = true;
+    },
+
+    _hoverPeek: function(actor, event) {
+        /*if ( this.hoverPeek ) {
+            this.metaWindow.opacity;
+        }else {
+            if ( !this.hoverPeek ) {
+            	this.metaWindow.opacity = 1;
+            }
+	}*/
+    },
+
+    _connectToWindow: function(actor, event) {
+        if ( Cinnamon.get_event_state(event) & Clutter.ModifierType.BUTTON1_MASK && !this.stopClick ) {
+            this.metaWindow.activate(global.get_current_time());
+        }
+    },
+
     _refresh: function() {
         // Replace the old thumbnail
-	this.thumbnail = null;
+        this.thumbnail = null;
         this.thumbnail = this._getThumbnail();
 
         this.thumbnailActor.child = this.thumbnail;
@@ -378,12 +415,7 @@ WindowThumbnail.prototype = {
         else
             this._iconBox.remove_clip();
     },
-    _onButtonRelease: function(actor, event) {
-        if ( Cinnamon.get_event_state(event) & Clutter.ModifierType.BUTTON1_MASK ) {
-            this.metaWindow.delete(global.get_current_time());
-	}
-	this._refresh();
-    },
+
     _getContentPreferredWidth: function(actor, forHeight, alloc) {
         let [minSize, naturalSize] = this._iconBox.get_preferred_width(forHeight);
         alloc.min_size = minSize;
@@ -447,9 +479,9 @@ WindowThumbnail.prototype = {
 	let buttonSize = THUMBNAIL_ICON_SIZE;
         if (direction == St.TextDirection.LTR) {
             childBox.x1 = this.ThumbnailWidth - THUMBNAIL_ICON_SIZE;
-            childBox.x2 = childBox.x1 + this.button.width;
-            childBox.y2 = 16;
-            childBox.y1 = -26;
+            childBox.x2 = childBox.x1 + 36;
+            childBox.y1 = iconWidth * (-1) - 3;
+            childBox.y2 = iconWidth;
             this.button.allocate(childBox, flags);
         } else {
             childBox.x1 = -this.button.width;

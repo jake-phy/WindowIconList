@@ -63,7 +63,7 @@ AppMenuButtonRightClickMenu.prototype = {
 		    this.itemtoggleFav = new PopupMenu.PopupMenuItem(_('Unpin'));
         	    this.itemtoggleFav.connect('activate', Lang.bind(this, this._toggleFav));     
 		}else {
-		    this.itemtoggleFav = new PopupMenu.PopupMenuItem(_('Pin'));
+		    this.itemtoggleFav = new PopupMenu.PopupMenuItem(_('Pin To Favorites'));
         	    this.itemtoggleFav.connect('activate', Lang.bind(this, this._toggleFav));
 		} 
 	}
@@ -173,7 +173,7 @@ AppMenuButtonRightClickMenu.prototype = {
     _toggleFav: function(actor, event){
 	if (this.isFav){
 		this.favs.removeFavorite(this.favId)
-		this.itemtoggleFav.label.set_text(_('Pin'));
+		this.itemtoggleFav.label.set_text(_('Pin To Favorites'));
 	}else{
 		this.favs.addFavorite(this.favId);
 		this.itemtoggleFav.label.set_text(_('Unpin'));
