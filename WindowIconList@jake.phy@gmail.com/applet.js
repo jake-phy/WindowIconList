@@ -375,7 +375,7 @@ AppMenuButton.prototype = {
             if ( this.rightClickMenu.isOpen ) {
                 this.rightClickMenu.toggle();
             }
-            this._windowHandle(true);
+            this._windowHandle(false);
         } else if (Cinnamon.get_event_state(event) & Clutter.ModifierType.BUTTON2_MASK) {
             this.metaWindow.delete(global.get_current_time());
             this.rightClickMenu.destroy();
@@ -386,24 +386,22 @@ AppMenuButton.prototype = {
         }   
     },
 
-    _windowHandle: function(fromDrag) {
-      if (this.metaWindow.minimized) {
-        this.metaWindow.unminimize(global.get_current_time());
-        this.metaWindow.activate(global.get_current_time());
-        this.actor.add_style_pseudo_class('focus');
-      }else if (this.metaWindow.has_focus()) {
-            if (!fromDrag) {
-               this.metaWindow.minimize(global.get_current_time());
-     	       this.actor.remove_style_pseudo_class('focus');
-            }else {
-            this.metaWindow.activate(global.get_current_time());
-            this.actor.add_style_pseudo_class('focus');    
+    _windowHandle: function(fromDrag){
+        if ( this.metaWindow.has_focus() ) {
+            if (fromDrag){
+                return;
+            }
             
-          }
-      }else {
- 	    this.metaWindow.activate(global.get_current_time());
-            this.actor.add_style_pseudo_class('focus'); 
-      }
+            this.metaWindow.minimize(global.get_current_time());
+            this.actor.remove_style_pseudo_class('focus');
+        }
+        else {
+            if (this.metaWindow.minimized) {
+                this.metaWindow.unminimize(global.get_current_time()); 
+            }
+            this.metaWindow.activate(global.get_current_time());
+            this.actor.add_style_pseudo_class('focus');
+        }
     },
 
     handleDragOver: function(source, actor, x, y, time) {
