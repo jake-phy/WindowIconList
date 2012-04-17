@@ -4,17 +4,261 @@ const Main = imports.ui.main;
 const Mainloop = imports.mainloop;
 const Params = imports.misc.params;
 const PopupMenu = imports.ui.popupMenu;
+const Meta = imports.gi.Meta;
 const Cinnamon = imports.gi.Cinnamon;
 const St = imports.gi.St;
+const AppFavorites = imports.ui.appFavorites;
+const Tweener = imports.tweener.tweener;
 
 // THUMBNAIL OPTIONS
 const THUMBNAIL_ICON_SIZE = 16;
 const HOVER_MENU_TIMEOUT = 500;
 const THUMBNAIL_SIZE = 7;
 const GROUP_THUMBNAILS = true;
+
+var opacity_transparent = 128;
+var opacity_opaque = 255;
+var transition_time = 0.2;
 //
 
-const AppletDir = imports.ui.appletManager.applets['WindowIconList@jake.phy@gmail.com'];
+const AppletDir = imports.ui.appletManager.applets['WindowListGroup@jake.phy@gmail.com'];
+const MainApplet = AppletDir.applet;
+
+function AppMenuButtonRightClickMenu() {
+    this._init.apply(this, arguments);
+}
+
+AppMenuButtonRightClickMenu.prototype = {
+    __proto__: PopupMenu.PopupMenu.prototype,
+
+    _init: function(actor, metaWindow, app, isFavapp, orientation) {
+        //take care of menu initialization        
+        PopupMenu.PopupMenu.prototype._init.call(this, actor, 0.0, orientation, 0);        
+        Main.uiGroup.add_actor(this.actor);
+        //Main.chrome.addActor(this.actor, { visibleInOverview: true,
+        //                                   affectsStruts: false });
+        this.actor.hide();
+        this.metaWindow = metaWindow;
+	this._parentActor = actor;
+        this._parentActor.connect('button-release-event', Lang.bind(this, this._onParentActorButtonRelease));
+
+        actor.connect('key-press-event', Lang.bind(this, this._onSourceKeyPress));        
+        this.connect('open-state-changed', Lang.bind(this, this._onToggled));        
+
+	this.orientation = orientation;
+	this.app = app;
+        this.isFavapp = isFavapp;
+
+        this.itemCloseWindow = new PopupMenu.PopupMenuItem(_("Close"));
+        this.itemCloseWindow.connect('activate', Lang.bind(this, this._onCloseWindowActivate));        
+
+        this.itemMinimizeWindow = new PopupMenu.PopupMenuItem(_("Minimize"));
+        this.itemMinimizeWindow.connect('activate', Lang.bind(this, this._onMinimizeWindowActivate));        
+        
+        this.itemMaximizeWindow = new PopupMenu.PopupMenuItem(_("Maximize"));
+        this.itemMaximizeWindow.connect('activate', Lang.bind(this, this._onMaximizeWindowActivate));  
+        
+        this.itemMoveToLeftWorkspace = new PopupMenu.PopupMenuItem(_("Move to left workspace"));
+        this.itemMoveToLeftWorkspace.connect('activate', Lang.bind(this, this._onMoveToLeftWorkspace));
+        
+        this.itemMoveToRightWorkspace = new PopupMenu.PopupMenuItem(_("Move to right workspace"));
+        this.itemMoveToRightWorkspace.connect('activate', Lang.bind(this, this._onMoveToRightWorkspace));      
+        
+        this.itemOnAllWorkspaces = new PopupMenu.PopupMenuItem(_("Visible on all workspaces"));
+        this.itemOnAllWorkspaces.connect('activate', Lang.bind(this, this._toggleOnAllWorkspaces));
+	
+	this.launchItem = new PopupMenu.PopupMenuItem(_('New Window'));
+        this.launchItem.connect('activate', Lang.bind(this, this._launchMenu));
+
+		this.favs = AppFavorites.getAppFavorites(),
+		this.favId = this.app.get_id(),
+		this.isFav = this.favs.isFavorite(this.favId);
+	if (MainApplet.OPTIONS['SHOW_FAVORITES']) {
+		if (this.isFav) {
+		    this.itemtoggleFav = new PopupMenu.PopupMenuItem(_('Unpin Favorite'));
+        	    this.itemtoggleFav.connect('activate', Lang.bind(this, this._toggleFav));     
+		}else {
+		    this.itemtoggleFav = new PopupMenu.PopupMenuItem(_('Pin To Favorites'));
+        	    this.itemtoggleFav.connect('activate', Lang.bind(this, this._toggleFav));
+		} 
+	}
+	if (isFavapp) {
+	    this._makeFavapp();
+	    return;
+	}
+	this._makeNormalapp();
+    },
+
+    _makeFavapp: function() {
+        this.addMenuItem(this.launchItem);
+        this.addMenuItem(this.itemtoggleFav);
+    },
+
+    _makeNormalapp: function() {
+        if (this.orientation == St.Side.BOTTOM) {
+            //this.addMenuItem(this.itemOnAllWorkspaces);
+            this.addMenuItem(this.itemMoveToLeftWorkspace);
+            this.addMenuItem(this.itemMoveToRightWorkspace);
+            this.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+	    if (MainApplet.OPTIONS['SHOW_FAVORITES'])
+            	this.addMenuItem(this.itemtoggleFav);
+       	    this.addMenuItem(this.launchItem);
+            this.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+            this.addMenuItem(this.itemMinimizeWindow);
+            //this.addMenuItem(this.itemMaximizeWindow);
+            this.addMenuItem(this.itemCloseWindow);                        
+        }
+        else {
+            this.addMenuItem(this.itemCloseWindow);
+            //this.addMenuItem(this.itemMaximizeWindow);
+            this.addMenuItem(this.itemMinimizeWindow);
+            this.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+       	    this.addMenuItem(this.launchItem);
+	    if (MainApplet.OPTIONS['SHOW_FAVORITES'])
+            	this.addMenuItem(this.itemtoggleFav);
+            this.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+            this.addMenuItem(this.itemMoveToLeftWorkspace);
+            this.addMenuItem(this.itemMoveToRightWorkspace);
+            //this.addMenuItem(this.itemOnAllWorkspaces);
+        }
+    },
+
+    _onParentActorButtonRelease: function(actor, event) {
+        if ( Cinnamon.get_event_state(event) & Clutter.ModifierType.BUTTON1_MASK ) {
+            if ( this.isOpen ) {
+                this.toggle();
+            }
+        } else if (Cinnamon.get_event_state(event) & Clutter.ModifierType.BUTTON3_MASK) {
+            this.mouseEvent = event;
+            this.toggle();
+        }   
+    },
+
+     _onToggled: function(actor, event){
+	if (!event)
+            return;
+
+	if (this.metaWindow.is_on_all_workspaces()) {
+            this.itemOnAllWorkspaces.label.set_text(_("Only on this workspace"));
+            this.itemMoveToLeftWorkspace.actor.hide();
+            this.itemMoveToRightWorkspace.actor.hide();
+        } else {
+            this.itemOnAllWorkspaces.label.set_text(_("Visible on all workspaces"));
+            if (this.metaWindow.get_workspace().get_neighbor(Meta.MotionDirection.LEFT) != this.metaWindow.get_workspace())
+                this.itemMoveToLeftWorkspace.actor.show();
+            else
+                this.itemMoveToLeftWorkspace.actor.hide();
+            
+            if (this.metaWindow.get_workspace().get_neighbor(Meta.MotionDirection.RIGHT) != this.metaWindow.get_workspace())
+                this.itemMoveToRightWorkspace.actor.show();
+            else
+                this.itemMoveToRightWorkspace.actor.hide();
+        }
+        if (this.metaWindow.get_maximized()) {
+            this.itemMaximizeWindow.label.set_text(_("Unmaximize"));
+        }else{
+            this.itemMaximizeWindow.label.set_text(_("Maximize"));
+        }
+        if (this.metaWindow.minimized)
+            this.itemMinimizeWindow.label.set_text(_("Restore"));
+        else
+            this.itemMinimizeWindow.label.set_text(_("Minimize"));
+    },
+    
+    _onWindowMinimized: function(actor, event){
+    },
+
+    _onCloseWindowActivate: function(actor, event){
+        this.metaWindow.delete(global.get_current_time());
+        this.destroy();
+    },
+
+    _onMinimizeWindowActivate: function(actor, event){
+        if (this.metaWindow.minimized) {
+            this.metaWindow.unminimize(global.get_current_time());
+            this.metaWindow.activate(global.get_current_time());
+        }
+        else {
+            this.metaWindow.minimize(global.get_current_time());
+        }
+    },
+
+    _onMaximizeWindowActivate: function(actor, event){      
+        if (this.metaWindow.get_maximized()){
+            this.metaWindow.unmaximize(Meta.MaximizeFlags.HORIZONTAL | Meta.MaximizeFlags.VERTICAL);
+        }else{
+            this.metaWindow.maximize(Meta.MaximizeFlags.HORIZONTAL | Meta.MaximizeFlags.VERTICAL);
+        }
+    },
+    
+    _onMoveToLeftWorkspace: function(actor, event){
+        let workspace = this.metaWindow.get_workspace().get_neighbor(Meta.MotionDirection.LEFT); 
+        if (workspace) {
+            this.actor.destroy();
+            this.metaWindow.change_workspace(workspace);
+            Main._checkWorkspaces();
+        }
+    },
+
+    _onMoveToRightWorkspace: function(actor, event){
+        let workspace = this.metaWindow.get_workspace().get_neighbor(Meta.MotionDirection.RIGHT); 
+        if (workspace) {
+            this.actor.destroy();
+            this.metaWindow.change_workspace(workspace);
+            Main._checkWorkspaces();
+        }
+    },
+
+    _toggleOnAllWorkspaces: function(actor, event) {
+        if (this.metaWindow.is_on_all_workspaces())
+            this.metaWindow.unstick();
+        else
+            this.metaWindow.stick();
+    },
+
+    _toggleFav: function(actor, event){
+	if (this.isFav){
+		this.favs.removeFavorite(this.favId)
+		this.itemtoggleFav.label.set_text(_('Pin To Favorites'));
+	}else{
+		this.favs.addFavorite(this.favId);
+		this.itemtoggleFav.label.set_text(_('Unpin Favorite'));
+		}
+    },
+
+    _launchMenu: function(){
+	this.app.open_new_window(-1);
+    },
+
+    removeAll: function() {
+        let children = this._getMenuItems();
+        for (let i = 0; i < children.length; i++) {
+            let item = children[i];
+            this.box.remove_actor(item.actor);
+        }
+    },
+
+    _onSourceKeyPress: function(actor, event) {
+        let symbol = event.get_key_symbol();
+        if (symbol == Clutter.KEY_space || symbol == Clutter.KEY_Return) {
+            this.menu.toggle();
+            return true;
+        } else if (symbol == Clutter.KEY_Escape && this.menu.isOpen) {
+            this.menu.close();
+            return true;
+        } else if (symbol == Clutter.KEY_Down) {
+            if (!this.menu.isOpen)
+                this.menu.toggle();
+            this.menu.actor.navigate_focus(this.actor, Gtk.DirectionType.DOWN, false);
+            return true;
+        } else
+            return false;
+    },
+
+    setMetaWindow: function(metaWindow) {
+        this.metaWindow = metaWindow;
+    }
+};
 
 function HoverMenuController(owner) {
     this._init(owner);
@@ -79,31 +323,25 @@ function AppThumbnailHoverMenu() {
 AppThumbnailHoverMenu.prototype = {
     __proto__: PopupMenu.PopupMenu.prototype,
 
-    _init: function(actor, metaWindow, orientation, params) {
-       params = Params.parse (params, { reactive: false,
-                                         activate: false,
-                                         hover: false,
-                                         sensitive: false,
-                                         style_class: null,
-                                         focusOnHover: false
-                                       });
+    _init: function(actor, metaWindow, app, isFavapp, orientation) {
         PopupMenu.PopupMenu.prototype._init.call(this, actor, 0.45, orientation);
 
         this.metaWindow = metaWindow;
-	let tracker = Cinnamon.WindowTracker.get_default();
-        this.app = tracker.get_window_app(this.metaWindow);      
+	this.app = app     
+        this.isFavapp = isFavapp;
   	this.actor.style_class = null;
 	this.actor.set_style("-arrow-background-color: rgba(80,80,80,0.0);-arrow-border-color: rgba(150,150,150,0.0);");
         this.actor.hide();
+	this.parentActor = actor;
 
         Main.layoutManager.addChrome(this.actor, this.orientation);
 
-        this.appSwitcherItem = new PopupMenuAppSwitcherItem(this.metaWindow, this.app, params);
+        this.appSwitcherItem = new PopupMenuAppSwitcherItem(this.metaWindow, this.app, isFavapp);
         this.addMenuItem(this.appSwitcherItem);
 
-        actor.connect('enter-event', Lang.bind(this, this._onEnter));
-        actor.connect('leave-event', Lang.bind(this, this._onLeave));
-        actor.connect('button-press-event', Lang.bind(this, this._onButtonPress));
+        this.parentActor.connect('enter-event', Lang.bind(this, this._onEnter));
+        this.parentActor.connect('leave-event', Lang.bind(this, this._onLeave));
+        this.parentActor.connect('button-press-event', Lang.bind(this, this._onButtonPress));
 
         this.actor.connect('enter-event', Lang.bind(this, this._onMenuEnter));
         this.actor.connect('leave-event', Lang.bind(this, this._onMenuLeave));
@@ -160,6 +398,7 @@ AppThumbnailHoverMenu.prototype = {
         // Refresh all the thumbnails, etc when the menu opens.  These cannot
         // be created when the menu is initalized because a lot of the clutter window surfaces
         // have not been created yet...
+	this.appSwitcherItem.actor.show();
         this.appSwitcherItem._refresh();
         PopupMenu.PopupMenu.prototype.open.call(this, animate);
     },
@@ -168,6 +407,7 @@ AppThumbnailHoverMenu.prototype = {
         // Refresh all the thumbnails, etc when the menu opens.  These cannot
         // be created when the menu is initalized because a lot of the clutter window surfaces
         // have not been created yet...
+	this.appSwitcherItem.actor.hide();
         PopupMenu.PopupMenu.prototype.close.call(this, animate);
     },
 
@@ -186,19 +426,13 @@ function PopupMenuAppSwitcherItem() {
 PopupMenuAppSwitcherItem.prototype = {
     __proto__: PopupMenu.PopupBaseMenuItem.prototype,
 
-    _init: function (metaWindow, app, params) {
-        params = Params.parse (params, { reactive: false,
-                                         activate: false,
-                                         hover: false,
-                                         sensitive: false,
-                                         style_class: null,
-                                         focusOnHover: false
-                                       });
+    _init: function (metaWindow, app, isFavapp, params) {
+        params = Params.parse(params, { hover: false });
         PopupMenu.PopupBaseMenuItem.prototype._init.call(this, params);
 
         this.metaWindow = metaWindow;
-	let tracker = Cinnamon.WindowTracker.get_default();
-        this.app = tracker.get_window_app(this.metaWindow);
+        this.app = app;
+        this.isFavapp = isFavapp;
         
 
         this.appContainer = new St.BoxLayout({ style_class: 'switcher-list'});
@@ -214,18 +448,29 @@ PopupMenuAppSwitcherItem.prototype = {
         this.metaWindow = metaWindow;
     },
 
+    _makeFavapp: function() {
+	this.isFavapp = true;
+    },
+
+    _makeNormalapp: function() {
+	this.isFavapp = false;
+    },
+
     _refresh: function() {
         // Check to see if this.metaWindow has changed.  If so, we need to recreate
         // our thumbnail, etc.
         if (this.metaWindowThumbnail && this.metaWindowThumbnail.metaWindow == this.metaWindow) {
-            this.metaWindowThumbnail._refresh();
+	    if (this.isFavapp)
+                this.metaWindowThumbnail._makeFavapp();
+	    else
+                this.metaWindowThumbnail._refresh();
         } else {
             if (this.metaWindowThumbnail) {
                 this.metaWindowThumbnail.destroy();
             }
             // If our metaWindow is null, just move along
-            if (this.metaWindow) {
-                this.metaWindowThumbnail = new WindowThumbnail(this.metaWindow, this.app);
+            if (this.metaWindow || this.isFavapp) {
+                this.metaWindowThumbnail = new WindowThumbnail(this.metaWindow, this.app, this.isFavapp);
                 this.appContainer.insert_actor(this.metaWindowThumbnail.actor, 0);
             }
         }
@@ -242,8 +487,11 @@ PopupMenuAppSwitcherItem.prototype = {
         // Update appThumbnails to include new programs
         windows.forEach(Lang.bind(this, function(metaWindow) {
             if (this.appThumbnails[metaWindow]) {
-                this.appThumbnails[metaWindow].thumbnail._refresh();
-            } else if (GROUP_THUMBNAILS) {
+		if (this.isFavapp)
+		    this.appThumbnails[metaWindow].thumbnail._makeFavapp();
+		else
+                    this.appThumbnails[metaWindow].thumbnail._refresh();
+            } else {
                 let thumbnail = new WindowThumbnail(metaWindow, this.app);
                 this.appThumbnails[metaWindow] = { metaWindow: metaWindow,
                                                    thumbnail: thumbnail };
@@ -267,20 +515,20 @@ function WindowThumbnail() {
 }
 
 WindowThumbnail.prototype = {
-    _init: function (metaWindow, app, params) {
+    _init: function (metaWindow, app, isFavapp) {
         this.metaWindow = metaWindow
         this.app = app
+        this.isFavapp = isFavapp;
 
         // Inherit the theme from the alt-tab menu
         this.actor = new St.BoxLayout({ style_class: 'item-box',
                                         reactive: true,
                                         track_hover: true,
                                         vertical: true});
+
         this.thumbnailActor = new St.Bin();
-	this.ThumbnailHeight = Math.max(150, Main.layoutManager.primaryMonitor.height / THUMBNAIL_SIZE);
-	this.ThumbnailWidth = Math.max(200, Main.layoutManager.primaryMonitor.width / THUMBNAIL_SIZE);
-        this.thumbnailActor.height = this.ThumbnailHeight;
-        this.thumbnailActor.width = this.ThumbnailWidth;
+	this.ThumbnailHeight = Math.max(100, Main.layoutManager.primaryMonitor.height / MainApplet.OPTIONS['THUMBNAIL_SIZE']);
+	this.ThumbnailWidth = Math.max(120, Main.layoutManager.primaryMonitor.width / MainApplet.OPTIONS['THUMBNAIL_SIZE']);
 
         let bin = new St.Bin({ name: 'appMenu' });
         this._container = new Cinnamon.GenericContainer();
@@ -301,13 +549,13 @@ WindowThumbnail.prototype = {
         this._label = new St.Label();
         this._container.add_actor(this._label);
 	this.button = new St.Bin({ style_class: 'window-close', reactive: true });
-	this.button.hide();
 	this._container.add_actor(this.button);
-        this.button.lower_bottom();
+	this.button.hide();
+        this.button.raise_top();
 
         this._iconBottomClip = 0;
 
-	let icon = app.create_icon_texture(THUMBNAIL_ICON_SIZE);
+	let icon = this.app.create_icon_texture(THUMBNAIL_ICON_SIZE);
         this._iconBox.set_child(icon);
 
         //TODO: should probably do this in a smarter way in the get_size_request event or something...
@@ -315,31 +563,39 @@ WindowThumbnail.prototype = {
         //this.titleActor.width = THUMBNAIL_WIDTH;
 	this.actor.add_actor(bin);
         this.actor.add_actor(this.thumbnailActor);
-        this._refresh();
+	if (isFavapp)
+	    this._makeFavapp();
+	else
+            this._refresh();
 
-        // the thumbnail actor will automatically reflect changes in the window
-        // (since it is a clone), but we need to update the title when it changes
-        this.metaWindow.connect('notify::title', Lang.bind(this, function(){
-                                                    this._label.text = this.metaWindow.get_title();
-                                }));
+        if (this.metaWindow)
+	    this.metaWindow.connect('notify::title', Lang.bind(this, function(){
+                                    this._label.text = this.metaWindow.get_title()}));	
         this.actor.connect('enter-event', Lang.bind(this, function() {
                                                         this.actor.add_style_pseudo_class('outlined');
                                                         this.actor.add_style_pseudo_class('selected');
-							this.button.show();
-							this.stopClick = false;
-							this.hoverPeek = true;
-							Mainloop.timeout_add(HOVER_MENU_TIMEOUT + 500, Lang.bind(this, this._hoverPeek));
-                                                    }));
+							if (!this.button.stopShow)
+							    this.button.show();
+							this.stopClick = false}));
         this.actor.connect('leave-event', Lang.bind(this, function() {
                                                         this.actor.remove_style_pseudo_class('outlined');
                                                         this.actor.remove_style_pseudo_class('selected');
 							this.button.hide();
-							this.hoverPeek = false;
-							Mainloop.timeout_add(HOVER_MENU_TIMEOUT + 500, Lang.bind(this, this._hoverPeek));
-                                                    }));
+							}));
         this.button.connect('button-release-event', Lang.bind(this, this._onButtonRelease));
 
         this.actor.connect('button-release-event', Lang.bind(this, this._connectToWindow));
+    },
+
+    _makeFavapp: function() {
+	this.thumbnailActor.height = 0;
+ 	this.thumbnailActor.width = 0;
+        this.thumbnailActor.child = null;
+	this.apptext = this.app.get_name();
+	this._label.text = this.apptext;
+	this.ThumbnailWidth = Math.floor(this.apptext.length * 9);
+	this.button.stopShow = true;
+	this.isFavapp = true;
     },
 
     destroy: function() {
@@ -373,34 +629,34 @@ WindowThumbnail.prototype = {
     _onButtonRelease: function(actor, event) {
         if ( Cinnamon.get_event_state(event) & Clutter.ModifierType.BUTTON1_MASK ) {
             this.metaWindow.delete(global.get_current_time());
+	    this.stopClick = true;
         }
-	this.stopClick = true;
-    },
-
-    _hoverPeek: function(actor, event) {
-        /*if ( this.hoverPeek ) {
-            this.metaWindow.opacity;
-        }else {
-            if ( !this.hoverPeek ) {
-            	this.metaWindow.opacity = 1;
-            }
-	}*/
     },
 
     _connectToWindow: function(actor, event) {
-        if ( Cinnamon.get_event_state(event) & Clutter.ModifierType.BUTTON1_MASK && !this.stopClick ) {
+        if (Cinnamon.get_event_state(event) & Clutter.ModifierType.BUTTON1_MASK && this.isFavapp) {
+	        this.app.open_new_window(-1);
+                return;
+        }
+        if ( Cinnamon.get_event_state(event) & Clutter.ModifierType.BUTTON1_MASK && !this.stopClick) {
             this.metaWindow.activate(global.get_current_time());
         }
     },
 
     _refresh: function() {
         // Replace the old thumbnail
+	this.ThumbnailWidth = Math.max(200, Main.layoutManager.primaryMonitor.width / MainApplet.OPTIONS['THUMBNAIL_SIZE']);
+        this.thumbnailActor.height = this.ThumbnailHeight;
+        this.thumbnailActor.width = this.ThumbnailWidth;
+	this.button.stopShow = false;
+	this.isFavapp = false;
+
         this.thumbnail = null;
         this.thumbnail = this._getThumbnail();
-
         this.thumbnailActor.child = this.thumbnail;
         this._label.text = this.metaWindow.get_title();
     },
+
     _onIconBoxStyleChanged: function() {
         let node = this._iconBox.get_theme_node();
         this._iconBottomClip = node.get_length('panel-launcher-bottom-clip');
@@ -423,7 +679,7 @@ WindowThumbnail.prototype = {
 //        alloc.min_size = alloc.min_size + Math.max(0, minSize - Math.floor(alloc.min_size / 2));
         alloc.min_size = alloc.min_size + Math.max(0, minSize);
 //        alloc.natural_size = alloc.natural_size + Math.max(0, naturalSize - Math.floor(alloc.natural_size / 2));
-        alloc.natural_size = this.ThumbnailWidth; // FIX ME --> This was set to 75 originally, we need some calculation.. we want this to be as big as possible for the window list to take all available space
+        alloc.natural_size = Math.max(this.ThumbnailWidth, 50); // FIX ME --> This was set to 75 originally, we need some calculation.. we want this to be as big as possible for the window list to take all available space
     },
 
     _getContentPreferredHeight: function(actor, forWidth, alloc) {
