@@ -356,15 +356,18 @@ AppGroup.prototype = {
     }, 
         
     _onDragBegin: function() {
+        this.rightClickMenu.close(false);
         this.hoverMenu.close(false);
     },
 
     _onDragEnd: function() {
+        this.rightClickMenu.close(false);
         this.hoverMenu.close(false);
         this._applet.myactorbox._clearDragPlaceholder();
     },
 
     _onDragCancelled: function() {
+        this.rightClickMenu.close(false);
         this.hoverMenu.close(false);
         this._applet.myactorbox._clearDragPlaceholder();
     },
@@ -456,7 +459,7 @@ AppGroup.prototype = {
         if (!this.lastFocused)
             return;
 
-        if (event.get_button() == 1) {
+        if (Cinnamon.get_event_state(event) & Clutter.ModifierType.BUTTON1_MASK) {
             if (this.rightClickMenu && this.rightClickMenu.isOpen) {
                 this.rightClickMenu.toggle();
             }
@@ -756,10 +759,10 @@ AppList.prototype = {
         this.signals.push(this.metaWorkspace.connect_after('window-added', Lang.bind(this, this._windowAdded)));
         this.signals.push(this.metaWorkspace.connect_after('window-removed', Lang.bind(this, this._windowRemoved)));
 
-        this.signals.push(Cinnamon.AppSystem.get_default().connect_after('installed-changed', Lang.bind(this, function() {
-                                                        Mainloop.timeout_add(200, Lang.bind(this, this._refreshList))})));
+        this.signals.push(Cinnamon.AppSystem.get_default().connect('installed-changed', Lang.bind(this, function() {
+                                                        Mainloop.timeout_add(0, Lang.bind(this, this._refreshList))})));
         this.signals.push(AppFavorites.getAppFavorites().connect('changed', Lang.bind(this, function() {
-                                                        Mainloop.timeout_add(200, Lang.bind(this, this._refreshList))})));
+                                                        Mainloop.timeout_add(0, Lang.bind(this, this._refreshList))})));
 
         global.settings.connect('changed::panel-edit-mode', Lang.bind(this, this.on_panel_edit_mode_changed)); 
     },

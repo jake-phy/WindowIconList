@@ -448,7 +448,7 @@ ButtonBox.prototype = {
         params = Params.parse(params, {});
         this.actor = new St.BoxLayout({ style_class: 'window-list-box' });
         this.actor.set_style('padding-left: 2px');
-        this.actor._delegate = this;
+        //this.actor._delegate = this;
     },
 
     show: function(animate, targetWidth) {

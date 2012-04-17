@@ -128,6 +128,8 @@ AppMenuButtonRightClickMenu.prototype = {
             if ( this.isOpen ) {
                 this.toggle();
             }
+        } else if ( Cinnamon.get_event_state(event) & Clutter.ModifierType.BUTTON2_MASK ) {
+	    this.close(false);
         } else if (Cinnamon.get_event_state(event) & Clutter.ModifierType.BUTTON3_MASK) {
             this.mouseEvent = event;
             this.toggle();
