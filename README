@@ -1,8 +1,8 @@
-install to ~/.local/share/cinnamon/applets
+install:
+	cp -r WindowListGroup@jake.phy@gmail.com ~/.local/share/cinnamon/applets/
 
-things to do: {
-make favorites act like window buttons,
-group window buttons,
-add right click menu to favorites,
-add zeitigiest right click menu,
-}
+website:
+	https://github.com/siefkenj/gnome-shell-windowlist
+	https://extensions.gnome.org/extension/25/window-list/
+
+	Original code can be found at http://www.o2net.cl/gnome/windowlist.html
