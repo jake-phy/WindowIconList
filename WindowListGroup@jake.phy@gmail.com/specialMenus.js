@@ -96,7 +96,7 @@ AppMenuButtonRightClickMenu.prototype = {
 
     _makeNormalapp: function() {
         if (this.orientation == St.Side.BOTTOM) {
-            this.addMenuItem(this.itemOnAllWorkspaces);
+           // this.addMenuItem(this.itemOnAllWorkspaces);
             this.addMenuItem(this.itemMoveToLeftWorkspace);
             this.addMenuItem(this.itemMoveToRightWorkspace);
             this.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
@@ -119,7 +119,7 @@ AppMenuButtonRightClickMenu.prototype = {
             this.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
             this.addMenuItem(this.itemMoveToLeftWorkspace);
             this.addMenuItem(this.itemMoveToRightWorkspace);
-            this.addMenuItem(this.itemOnAllWorkspaces);
+           // this.addMenuItem(this.itemOnAllWorkspaces);
         }
     },
 
