@@ -51,7 +51,8 @@ const OPTIONS = {
                     GROUP_BY_APP: true,
                     // DISPLAY_APP_NUMBER
                     //     SMART: show a number if there is more than one window in a app-group
-                    //     NORM: show the number of window in a app-group
+                    //     NORM: show the number of windows in a app-group if app is not a favorite
+                    //     FAV: show the number of windows in a app-group
                     //     NONE: Don't display number
                     DISPLAY_APP_NUMBER: 'NORM',
                     // SHOW_FAVORITES
@@ -314,7 +315,6 @@ AppGroup.prototype = {
                                   y_fill: false,
                                   track_hover: true });
         this.actor._delegate = this;
-        this.actor.isFav = isFavapp;
 
         this._windowButtonBox = new SpecialButtons.ButtonBox();
         this._appButton = new SpecialButtons.AppButton({ isFavapp: this.isFavapp,     
@@ -370,6 +370,23 @@ AppGroup.prototype = {
         this.rightClickMenu.close(false);
         this.hoverMenu.close(false);
         this._applet.myactorbox._clearDragPlaceholder();
+    },
+    
+    handleDragOver: function(source, actor, x, y, time) {
+        if (source instanceof AppGroup) return DND.DragMotionResult.CONTINUE;
+        
+        if (typeof(this._applet.dragEnterTime) == 'undefined') {
+            this._applet.dragEnterTime = time;
+        } else {
+            if (time > (this._applet.dragEnterTime + 3000))
+            {
+                this._applet.dragEnterTime = time;
+            }
+        }
+    },
+    
+    acceptDrop: function(source, actor, x, y, time) {
+        return false;
     },
 
     getDragActor: function() {
@@ -533,7 +550,6 @@ AppGroup.prototype = {
                                                            isFavapp: false,
                                                            metaWindow: metaWindow,
                                                            iconSize: PANEL_ICON_SIZE,
-                                                           textOffsetFactor: 1,
                                                            orientation: this.orientation});
             if (this.isFavapp){
                 this._makeNormalapp();
@@ -548,8 +564,8 @@ AppGroup.prototype = {
             this.metaWindows.sort(function(w1, w2) {
                 return w1.get_stable_sequence() - w2.get_stable_sequence();
             });
+            this._calcWindowNumber();
         }
-        this._calcWindowNumber();
     },
 
     _windowRemoved: function(metaWorkspace, metaWindow) {
@@ -571,7 +587,7 @@ AppGroup.prototype = {
                 this.hoverMenu.setMetaWindow(this.lastFocused);
                 this.rightClickMenu.setMetaWindow(this.lastFocused);
             }
-        this._calcWindowNumber();
+            this._calcWindowNumber();
         }
     },
 
@@ -631,35 +647,36 @@ AppGroup.prototype = {
                                                            isFavapp: true,
                                                            metaWindow: null,
                                                            iconSize: PANEL_ICON_SIZE,
-                                                           textOffsetFactor: 1,
                                                            orientation: this.orientation});
             this._windowButtonBox.add(button);
         }
     },
     
     _makeNormalapp: function() {
-        this.wasFavapp = true;
-        this.isFavapp = false;
-        this._appButton.actor.set_style_class_name('window-list-item-box');
-	this.rightClickMenu.removeAll();
-        this.rightClickMenu._makeNormalapp();
-        this.hoverMenu.appSwitcherItem._makeNormalapp();
+        if (this.isFavapp) {
+            this.isFavapp = false;
+            this.wasFavapp = true;
+            this._appButton.actor.set_style_class_name('window-list-item-box');
+	    this.rightClickMenu.removeAll();
+            this.rightClickMenu._makeNormalapp();
+            this.hoverMenu.appSwitcherItem._makeNormalapp();
+        }
     },
     
     _makeFavapp: function() {
-        this.wasFavapp = false;
-        this.isFavapp = true;
-        this._appButton.actor.set_style_class_name('panel-launcher')
-        this._appButton.setText('');
-	this.rightClickMenu.removeAll();
-        this.rightClickMenu._makeFavapp();
-        this.hoverMenu.appSwitcherItem._makeFavapp();
+        if (this.wasFavapp) {
+            this.wasFavapp = false;
+            this.isFavapp = true;
+            this._appButton.actor.set_style_class_name('panel-launcher')
+            this._appButton.setText('');
+	    this.rightClickMenu.removeAll();
+            this.rightClickMenu._makeFavapp();
+            this.hoverMenu.appSwitcherItem._makeFavapp();
+        }
     },
 
     _calcWindowNumber: function() {
         let windowNum = this.app.get_windows().length;
-        if (!windowNum)
-           windowNum = 0;
 	this._appButton._numLabel.set_text(windowNum.toString());
         switch(OPTIONS['DISPLAY_APP_NUMBER']) {
             case 'SMART':
@@ -671,10 +688,16 @@ AppGroup.prototype = {
                     break;
                 }
             case 'NORM':
-                if (windowNum) {
+                if (windowNum <= 0) {
+                        this._appButton._numLabel.hide();
+                    break;
+                }else{
                         this._appButton._numLabel.show();
                     break;
                 }
+            case 'FAV':
+                this._appButton._numLabel.show();
+                break;
             case 'NONE':
             default:
                 this._appButton._numLabel.hide();
@@ -711,9 +734,13 @@ AppGroup.prototype = {
         this._appButton.destroy();
         this._windowButtonBox.destroy();
         this.actor.destroy();
+        this.rightClickMenu.destroy();
+        this.hoverMenu.destroy();
         this._appButton = null;
         this._windowButtonBox = null;
         this.actor = null;
+        this.rightClickMenu = null;
+        this.hoverMenu = null;
     }
 };
 Signals.addSignalMethods(AppGroup.prototype)
@@ -955,6 +982,14 @@ MyApplet.prototype = {
                                        callback: this._onOverviewShow,
                                        bind: this });
                 this.signals.connect({ object: Main.overview,
+                                       signalName: 'hiding',
+                                       callback: this._onOverviewHide,
+                                       bind: this });
+                this.signals.connect({ object: Main.expo,
+                                       signalName: 'showing',
+                                       callback: this._onOverviewShow,
+                                       bind: this });
+                this.signals.connect({ object: Main.expo,
                                        signalName: 'hiding',
                                        callback: this._onOverviewHide,
                                        bind: this });

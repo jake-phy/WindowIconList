@@ -96,13 +96,13 @@ AppMenuButtonRightClickMenu.prototype = {
 
     _makeNormalapp: function() {
         if (this.orientation == St.Side.BOTTOM) {
-            //this.addMenuItem(this.itemOnAllWorkspaces);
+            this.addMenuItem(this.itemOnAllWorkspaces);
             this.addMenuItem(this.itemMoveToLeftWorkspace);
             this.addMenuItem(this.itemMoveToRightWorkspace);
             this.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+       	    this.addMenuItem(this.launchItem);
 	    if (MainApplet.OPTIONS['SHOW_FAVORITES'])
             	this.addMenuItem(this.itemtoggleFav);
-       	    this.addMenuItem(this.launchItem);
             this.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
             this.addMenuItem(this.itemMinimizeWindow);
             //this.addMenuItem(this.itemMaximizeWindow);
@@ -113,13 +113,13 @@ AppMenuButtonRightClickMenu.prototype = {
             //this.addMenuItem(this.itemMaximizeWindow);
             this.addMenuItem(this.itemMinimizeWindow);
             this.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-       	    this.addMenuItem(this.launchItem);
 	    if (MainApplet.OPTIONS['SHOW_FAVORITES'])
             	this.addMenuItem(this.itemtoggleFav);
+       	    this.addMenuItem(this.launchItem);
             this.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
             this.addMenuItem(this.itemMoveToLeftWorkspace);
             this.addMenuItem(this.itemMoveToRightWorkspace);
-            //this.addMenuItem(this.itemOnAllWorkspaces);
+            this.addMenuItem(this.itemOnAllWorkspaces);
         }
     },
 
@@ -128,6 +128,8 @@ AppMenuButtonRightClickMenu.prototype = {
             if ( this.isOpen ) {
                 this.toggle();
             }
+        } else if ( Cinnamon.get_event_state(event) & Clutter.ModifierType.BUTTON2_MASK ) {
+	    this.close(false);
         } else if (Cinnamon.get_event_state(event) & Clutter.ModifierType.BUTTON3_MASK) {
             this.mouseEvent = event;
             this.toggle();
@@ -267,18 +269,6 @@ function HoverMenuController(owner) {
 HoverMenuController.prototype = {
     __proto__ : PopupMenu.PopupMenuManager.prototype,
 
-    _grab: function() {
-        Main.pushModal(this._owner.actor);
-
-        this._eventCaptureId = global.stage.connect('captured-event', Lang.bind(this, this._onEventCapture));
-        // captured-event doesn't see enter/leave events
-        this._enterEventId = global.stage.connect('enter-event', Lang.bind(this, this._onEventCapture));
-        this._leaveEventId = global.stage.connect('leave-event', Lang.bind(this, this._onEventCapture));
-        this._keyFocusNotifyId = global.stage.connect('notify::key-focus', Lang.bind(this, this._onKeyFocusChanged));
-
-        this.grabbed = true;
-    },
-
     _onEventCapture: function(actor, event) {
         if (!this.grabbed)
             return false;
@@ -398,8 +388,8 @@ AppThumbnailHoverMenu.prototype = {
         // Refresh all the thumbnails, etc when the menu opens.  These cannot
         // be created when the menu is initalized because a lot of the clutter window surfaces
         // have not been created yet...
-	this.appSwitcherItem.actor.show();
         this.appSwitcherItem._refresh();
+	this.appSwitcherItem.actor.show();
         PopupMenu.PopupMenu.prototype.open.call(this, animate);
     },
 
@@ -407,8 +397,8 @@ AppThumbnailHoverMenu.prototype = {
         // Refresh all the thumbnails, etc when the menu opens.  These cannot
         // be created when the menu is initalized because a lot of the clutter window surfaces
         // have not been created yet...
-	this.appSwitcherItem.actor.hide();
         PopupMenu.PopupMenu.prototype.close.call(this, animate);
+	this.appSwitcherItem.actor.hide();
     },
 
     setMetaWindow: function(metaWindow) {
@@ -593,7 +583,7 @@ WindowThumbnail.prototype = {
         this.thumbnailActor.child = null;
 	this.apptext = this.app.get_name();
 	this._label.text = this.apptext;
-	this.ThumbnailWidth = Math.floor(this.apptext.length * 9);
+	this.ThumbnailWidth = this.apptext.length * 9;
 	this.button.stopShow = true;
 	this.isFavapp = true;
     },

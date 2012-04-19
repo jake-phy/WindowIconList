@@ -28,16 +28,14 @@ const AppletDir = imports.ui.appletManager.applets['WindowListGroup@jake.phy@gma
 // Creates a button with an icon and a label.
 // The label text must be set with setText
 // @icon: the icon to be displayed
-// @textOffsetFactor: a number between 0 and 1.  The label will be positioned at iconWidth*textOffsetFactor
 function IconLabelButton() {
     this._init.apply(this, arguments);
 }
 
 IconLabelButton.prototype = {
-    _init: function(icon, textOffsetFactor) {
+    _init: function(icon) {
         if (icon == null)
             throw 'IconLabelButton icon argument must be non-null';
-        this.textOffsetFactor = textOffsetFactor || 1;
 
         this.actor = new St.Bin({ style_class: 'window-list-item-box',
                                   reactive: true,
@@ -99,7 +97,7 @@ IconLabelButton.prototype = {
         let [labelMinSize, labelNaturalSize] = this._label.get_preferred_width(forHeight);
         // The label text is starts in the center of the icon, so we should allocate the space
         // needed for the icon plus the space needed for(label - icon/2)
-        alloc.min_size = iconMinSize + Math.max(0, labelMinSize - Math.floor(iconMinSize * this.textOffsetFactor));
+        alloc.min_size = iconMinSize + Math.max(0, labelMinSize - iconMinSize);
         alloc.natural_size = Math.min(iconNaturalSize + Math.max(0, labelNaturalSize), MAX_BUTTON_WIDTH);
     },
 
@@ -135,15 +133,15 @@ IconLabelButton.prototype = {
         this._iconBox.allocate(childBox, flags);
 //        log('allocateA ' + [childBox.x1<0, childBox.x2<0, childBox.y1, childBox.y2] + ' ' + [childBox.x2-childBox.x1, childBox.y2-childBox.y1])
 
-        // Set the label to start its text in the center (well, at a this.textOffsetFactor*iconWidth offset) of the icon
+        // Set the label to start its text in the left of the icon
         let iconWidth = childBox.x2 - childBox.x1;
         [minWidth, minHeight, naturalWidth, naturalHeight] = this._label.get_preferred_size();
         [childBox.y1, childBox.y2] = center(allocHeight, naturalHeight);
         if (direction == St.TextDirection.LTR) {
-            childBox.x1 = Math.floor(iconWidth * this.textOffsetFactor);
+            childBox.x1 = iconWidth;
             childBox.x2 = Math.min(childBox.x1 + naturalWidth, allocWidth, MAX_BUTTON_WIDTH);
         } else {
-            childBox.x2 = Math.min(allocWidth - Math.floor(iconWidth * this.textOffsetFactor), MAX_BUTTON_WIDTH);
+            childBox.x2 = Math.min(allocWidth - iconWidth, MAX_BUTTON_WIDTH);
             childBox.x1 = Math.max(0, childBox.x2 - naturalWidth);
         }
         this._label.allocate(childBox, flags);
@@ -256,11 +254,10 @@ AppButton.prototype = {
     _init: function(params) {
         params = Params.parse(params, { isFavapp: false,     
                                         app: null,
-                                        iconSize: 24,
-                                        textOffsetFactor: 1 });
+                                        iconSize: 24});
         this.app = params.app;
         this.icon = this.app.create_icon_texture(params.iconSize)
-        IconLabelButton.prototype._init.call(this, this.icon, params.textOffsetFactor);
+        IconLabelButton.prototype._init.call(this, this.icon);
         if (params.isFavapp)
                 this.actor.set_style_class_name('panel-launcher');
 
@@ -303,7 +300,6 @@ WindowButton.prototype = {
                                         isFavapp: false,
                                         metaWindow: null,
                                         iconSize: 24,
-                                        textOffsetFactor: 1, 
                                         orientation: St.Side.TOP});
         this.metaWindow = params.metaWindow;
         this.app = params.app;
@@ -313,7 +309,7 @@ WindowButton.prototype = {
             this.app = tracker.get_window_app(metaWindow);
         }
         this.icon = this.app.create_icon_texture(params.iconSize)
-        IconLabelButton.prototype._init.call(this, this.icon, params.textOffsetFactor);
+        IconLabelButton.prototype._init.call(this, this.icon);
         this.signals = [];
         this._numLabel.hide();
         if (params.isFavapp)
@@ -343,6 +339,7 @@ WindowButton.prototype = {
         }));
         this._container.destroy_children();
         this.actor.destroy();
+        this.rightClickMenu.destroy();
     },
 
     _onAttentionRequest: function() {
