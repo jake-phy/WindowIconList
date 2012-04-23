@@ -331,12 +331,12 @@ AppGroup.prototype = {
         this._appButton.actor.connect('button-release-event', Lang.bind(this, this._onAppButtonRelease));
         // Set up the right click menu for this._appButton
         this.rightClickMenu = new AppletDir.specialMenus.AppMenuButtonRightClickMenu(this._appButton.actor, this.metaWindow, this.app, isFavapp, orientation);
-        this._menuManager = new PopupMenu.PopupMenuManager({actor: this.actor});
+        this._menuManager = new PopupMenu.PopupMenuManager(this);
         this._menuManager.addMenu(this.rightClickMenu);
 
        // Set up the hover menu for this._appButton
         this.hoverMenu = new AppletDir.specialMenus.AppThumbnailHoverMenu(this.actor, this.metaWindow, this.app, isFavapp, orientation)
-        this._hoverMenuManager = new SpecialMenus.HoverMenuController({actor: this.actor});
+        this._hoverMenuManager = new SpecialMenus.HoverMenuController(this);
         this._hoverMenuManager.addMenu(this.hoverMenu);
 
         this._calcWindowNumber();
@@ -373,7 +373,7 @@ AppGroup.prototype = {
     },
     
     handleDragOver: function(source, actor, x, y, time) {
-        if (source instanceof AppGroup) return DND.DragMotionResult.CONTINUE;
+        if (source.isDraggableApp || source instanceof AppGroup) return DND.DragMotionResult.CONTINUE;
         
         if (typeof(this._applet.dragEnterTime) == 'undefined') {
             this._applet.dragEnterTime = time;
@@ -657,6 +657,7 @@ AppGroup.prototype = {
             this.isFavapp = false;
             this.wasFavapp = true;
             this._appButton.actor.set_style_class_name('window-list-item-box');
+            this._appButton._onFavoriteChange(false, true);
 	    this.rightClickMenu.removeAll();
             this.rightClickMenu._makeNormalapp();
             this.hoverMenu.appSwitcherItem._makeNormalapp();
@@ -667,8 +668,7 @@ AppGroup.prototype = {
         if (this.wasFavapp) {
             this.wasFavapp = false;
             this.isFavapp = true;
-            this._appButton.actor.set_style_class_name('panel-launcher')
-            this._appButton.setText('');
+            this._appButton._onFavoriteChange(true);
 	    this.rightClickMenu.removeAll();
             this.rightClickMenu._makeFavapp();
             this.hoverMenu.appSwitcherItem._makeFavapp();
@@ -779,8 +779,7 @@ AppList.prototype = {
         this._appList = new OrderedHash();
         // We need a backup database of the associated app for each metaWindow since something get_window_app will return null
         this._tracker = new AppTracker(Cinnamon.WindowTracker.get_default());
-        this._refreshApps();
-        this._loadFavorites();
+        this._refreshList();
         this.signals = [];
         // We use connect_after so that the window-tracker time to identify the app
         this.signals.push(this.metaWorkspace.connect_after('window-added', Lang.bind(this, this._windowAdded)));
@@ -810,7 +809,9 @@ AppList.prototype = {
     },
 
     _refreshList: function () {
-        this.myactor.destroy_children();
+        this._appList.forEach(function(app, data) {
+            data['appGroup'].destroy();
+        });
         this._appList = new OrderedHash();
         this._loadFavorites();
         this._refreshApps();
@@ -1038,7 +1039,8 @@ MyApplet.prototype = {
         // this.actor can only have one child, so setting the child
         // will automatically unparent anything that was previously there, which
         // is exactly what we want.
-        this._box.set_child(this.metaWorkspaces.get(metaWorkspace)['appList'].actor);
+        this._box.child = this.metaWorkspaces.get(metaWorkspace)['appList'].actor;
+        this.metaWorkspaces.get(metaWorkspace)['appList']._refreshApps();
     },
 
     _onOverviewShow: function() {

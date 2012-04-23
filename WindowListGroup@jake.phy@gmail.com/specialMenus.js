@@ -96,7 +96,7 @@ AppMenuButtonRightClickMenu.prototype = {
 
     _makeNormalapp: function() {
         if (this.orientation == St.Side.BOTTOM) {
-           // this.addMenuItem(this.itemOnAllWorkspaces);
+            this.addMenuItem(this.itemOnAllWorkspaces);
             this.addMenuItem(this.itemMoveToLeftWorkspace);
             this.addMenuItem(this.itemMoveToRightWorkspace);
             this.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
@@ -119,7 +119,7 @@ AppMenuButtonRightClickMenu.prototype = {
             this.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
             this.addMenuItem(this.itemMoveToLeftWorkspace);
             this.addMenuItem(this.itemMoveToRightWorkspace);
-           // this.addMenuItem(this.itemOnAllWorkspaces);
+            this.addMenuItem(this.itemOnAllWorkspaces);
         }
     },
 
@@ -196,7 +196,7 @@ AppMenuButtonRightClickMenu.prototype = {
     _onMoveToLeftWorkspace: function(actor, event){
         let workspace = this.metaWindow.get_workspace().get_neighbor(Meta.MotionDirection.LEFT); 
         if (workspace) {
-            this.actor.destroy();
+            //this.actor.destroy();
             this.metaWindow.change_workspace(workspace);
             Main._checkWorkspaces();
         }
@@ -205,7 +205,7 @@ AppMenuButtonRightClickMenu.prototype = {
     _onMoveToRightWorkspace: function(actor, event){
         let workspace = this.metaWindow.get_workspace().get_neighbor(Meta.MotionDirection.RIGHT); 
         if (workspace) {
-            this.actor.destroy();
+            //this.actor.destroy();
             this.metaWindow.change_workspace(workspace);
             Main._checkWorkspaces();
         }

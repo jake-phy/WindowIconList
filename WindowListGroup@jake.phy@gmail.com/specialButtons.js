@@ -259,7 +259,7 @@ AppButton.prototype = {
         this.icon = this.app.create_icon_texture(params.iconSize)
         IconLabelButton.prototype._init.call(this, this.icon);
         if (params.isFavapp)
-                this.actor.set_style_class_name('panel-launcher');
+           this._onFavoriteChange(true);
 
         let tracker = Cinnamon.WindowTracker.get_default();
         this._trackerSignal = tracker.connect('notify::focus-app', Lang.bind(this, this._onFocusChange));
@@ -276,6 +276,15 @@ AppButton.prototype = {
             this.actor.remove_style_pseudo_class('focus');
         }
     },
+
+    _onFavoriteChange: function(isFav, wasFav) {
+        if (isFav) {
+            this.actor.set_style_class_name('panel-launcher')
+            this.setText('');
+        }else if (wasFav)
+            this.actor.set_style_class_name('window-list-item-box');
+    },
+
 
     destroy: function() {
         let tracker = Cinnamon.WindowTracker.get_default();
@@ -329,7 +338,7 @@ WindowButton.prototype = {
         this._onTitleChange();
         // Set up the right click menu
         this.rightClickMenu = new AppletDir.specialMenus.AppMenuButtonRightClickMenu(this.actor, this.metaWindow, this.app, params.isFavapp, params.orientation);
-        this._menuManager = new PopupMenu.PopupMenuManager({actor: this.actor});
+        this._menuManager = new PopupMenu.PopupMenuManager(this);
         this._menuManager.addMenu(this.rightClickMenu);
     },
 
@@ -583,8 +592,8 @@ MyAppletBox.prototype = {
                 fadeIn = true;
             }
 
-            let childWidth,
-                childHeight;
+            let childWidth;
+            let childHeight;
             if (source.isDraggableApp) {
                 childWidth = 30;
                 childHeight = 24;
@@ -646,7 +655,7 @@ MyAppletBox.prototype = {
                 return false;
             }));
         this._clearDragPlaceholder();
-        actor.destroy
+        actor.destroy();
         return true;
         }
 
