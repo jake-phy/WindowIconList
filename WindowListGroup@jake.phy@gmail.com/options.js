@@ -23,12 +23,16 @@ const OPTIONS = {
                     //     Float or Integer; A lower number means a bigger thumbnail
                     THUMBNAIL_SIZE: 7,
                     // THUMBNAIL_MENU_TIMEOUT
-                    //     Integer;
+                    //     Integer; goes by milliSeconds
                     THUMBNAIL_MENU_TIMEOUT: 500,
+                    // HOVER_PEEK
+                    //     true: enable hover peek
+                    //     false: disable hover peek
+		    HOVER_PEEK: true,
                     // HOVER_PEEK_OPACITY
                     //     Integer from 0 to 255;
                     HOVER_PEEK_OPACITY: 15,
                     //  HOVER_PEEK_TIME
-                    //     Float from 0 to 1;
+                    //     Float;  goes by seconds
                     HOVER_PEEK_TIME: 0.2
 };

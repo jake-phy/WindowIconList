@@ -612,6 +612,8 @@ WindowThumbnail.prototype = {
     },
 
     _hoverPeek: function(opacity, metaWin) {
+	if (!OPTIONS['HOVER_PEEK'])
+	    return;
 	function setOpacity(window_actor, target_opacity) {
         //if (window_actor.opacity != target_opacity) {
                 Tweener.addTween(window_actor, {
@@ -626,13 +628,11 @@ WindowThumbnail.prototype = {
 
         global.get_window_actors().forEach(function(wa) {
             var meta_win = wa.get_meta_window();
-            if (!meta_win) {
-                return;
-            }
 	    if (metaWin == meta_win)
 		return;
-            //var wksp = meta_win.get_workspace();
-            //var wksp_index = wksp.index();
+
+	    if (metaWin.minimized)
+            	metaWin.unminimize(global.get_current_time());
 
             setOpacity(wa, opacity);
         });
