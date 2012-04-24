@@ -30,39 +30,12 @@ const AppFavorites = imports.ui.appFavorites;
 
 const PANEL_ICON_SIZE = 24;
 const SPINNER_ANIMATION_TIME = 1;
-const THUMBNAIL_DEFAULT_SIZE = 150;
-const HOVER_MENU_DELAY = 1; // seconds
 
 // Load our extension so we can access other files in our extensions dir as libraries
 const AppletDir = imports.ui.appletManager.applets['WindowListGroup@jake.phy@gmail.com'];
 const SpecialMenus = AppletDir.specialMenus;
 const SpecialButtons = AppletDir.specialButtons;
-
-const OPTIONS = {
-                    // DISPLAY_TITLE
-                    //     TITLE: display the app title next to each icon
-                    //     APP: display the app name next to each icon
-                    //     NONE: display no text next to each icon
-                    // Note, this option only applies when app grouping is enabled
-                    DISPLAY_TITLE: 'NONE',
-                    // GROUP_BY_APP
-                    //     true: only one button is shown for each application (all windows are grouped)
-                    //     false: every window has its own button
-                    GROUP_BY_APP: true,
-                    // DISPLAY_APP_NUMBER
-                    //     SMART: show a number if there is more than one window in a app-group
-                    //     NORM: show the number of windows in a app-group if app is not a favorite
-                    //     FAV: show the number of windows in a app-group
-                    //     NONE: Don't display number
-                    DISPLAY_APP_NUMBER: 'NORM',
-                    // SHOW_FAVORITES
-                    //     true: show
-                    //     false: hide
-                    SHOW_FAVORITES: true,
-                    // THUMBNAIL_SIZE
-                    //     Float or Integer; A lower number means a bigger thumbnail
-                    THUMBNAIL_SIZE: 7
-                };
+const OPTIONS = AppletDir.options.OPTIONS
 
 // Globally variables needed for disabling the extension
 let windowListManager, restoreState={}, clockWrapper, appTracker;
@@ -356,19 +329,14 @@ AppGroup.prototype = {
     }, 
         
     _onDragBegin: function() {
-        this.rightClickMenu.close(false);
-        this.hoverMenu.close(false);
+        this.hoverMenu.close(true);
     },
 
     _onDragEnd: function() {
-        this.rightClickMenu.close(false);
-        this.hoverMenu.close(false);
         this._applet.myactorbox._clearDragPlaceholder();
     },
 
     _onDragCancelled: function() {
-        this.rightClickMenu.close(false);
-        this.hoverMenu.close(false);
         this._applet.myactorbox._clearDragPlaceholder();
     },
     
@@ -552,7 +520,7 @@ AppGroup.prototype = {
                                                            iconSize: PANEL_ICON_SIZE,
                                                            orientation: this.orientation});
             if (this.isFavapp){
-                this._makeNormalapp();
+                this._isFavorite(false);
             }
             this._windowButtonBox.add(button);
             let signals = [];
@@ -577,6 +545,7 @@ AppGroup.prototype = {
             });
             this._windowButtonBox.remove(deleted['windowButton']);
             deleted['windowButton'].destroy();
+
 
             // Make sure we don't leave our appButton hanging!
             // That is, we should no longer display the old app in our title
@@ -652,27 +621,13 @@ AppGroup.prototype = {
         }
     },
     
-    _makeNormalapp: function() {
-        if (this.isFavapp) {
-            this.isFavapp = false;
-            this.wasFavapp = true;
-            this._appButton.actor.set_style_class_name('window-list-item-box');
-            this._appButton._onFavoriteChange(false, true);
-	    this.rightClickMenu.removeAll();
-            this.rightClickMenu._makeNormalapp();
-            this.hoverMenu.appSwitcherItem._makeNormalapp();
-        }
-    },
-    
-    _makeFavapp: function() {
-        if (this.wasFavapp) {
-            this.wasFavapp = false;
-            this.isFavapp = true;
-            this._appButton._onFavoriteChange(true);
-	    this.rightClickMenu.removeAll();
-            this.rightClickMenu._makeFavapp();
-            this.hoverMenu.appSwitcherItem._makeFavapp();
-        }
+    _isFavorite: function(isFav) {
+            this.isFavapp = isFav;
+            this.wasFavapp = !(isFav);
+            this._appButton._isFavorite(isFav);
+	    this.rightClickMenu.removeItems();
+            this.rightClickMenu._isFavorite(isFav);
+            this.hoverMenu.appSwitcherItem._isFavorite(isFav);
     },
 
     _calcWindowNumber: function() {
@@ -871,7 +826,7 @@ AppList.prototype = {
         let appGroup = this._appList.get(app);
         if (appGroup) {
             if (appGroup['appGroup'].wasFavapp || appGroup['appGroup'].isFavapp) {
-               appGroup['appGroup']._makeFavapp();
+               appGroup['appGroup']._isFavorite(true);
                return;
             }
             this._appList.remove(app);

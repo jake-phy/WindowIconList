@@ -23,6 +23,7 @@ const MAX_BUTTON_WIDTH = 150; // Pixels
 const ICON_PADDING_TOP = 0;
 
 const AppletDir = imports.ui.appletManager.applets['WindowListGroup@jake.phy@gmail.com'];
+const OPTIONS = AppletDir.options.OPTIONS
 
 
 // Creates a button with an icon and a label.
@@ -259,7 +260,7 @@ AppButton.prototype = {
         this.icon = this.app.create_icon_texture(params.iconSize)
         IconLabelButton.prototype._init.call(this, this.icon);
         if (params.isFavapp)
-           this._onFavoriteChange(true);
+           this._isFavorite(true);
 
         let tracker = Cinnamon.WindowTracker.get_default();
         this._trackerSignal = tracker.connect('notify::focus-app', Lang.bind(this, this._onFocusChange));
@@ -277,11 +278,11 @@ AppButton.prototype = {
         }
     },
 
-    _onFavoriteChange: function(isFav, wasFav) {
+    _isFavorite: function(isFav) {
         if (isFav) {
             this.actor.set_style_class_name('panel-launcher')
             this.setText('');
-        }else if (wasFav)
+        }else
             this.actor.set_style_class_name('window-list-item-box');
     },
 
