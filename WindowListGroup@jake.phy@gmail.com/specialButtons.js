@@ -8,7 +8,6 @@ const Clutter = imports.gi.Clutter;
 const Lang = imports.lang;
 const Main = imports.ui.main;
 const Mainloop = imports.mainloop;
-const Panel = imports.ui.panel;
 const Params = imports.misc.params;
 const PopupMenu = imports.ui.popupMenu;
 const Cinnamon = imports.gi.Cinnamon;
@@ -421,7 +420,7 @@ WindowButton.prototype = {
            [title, appName] = ['', ''];
         else
            [title, appName] = [this.metaWindow.get_title(), this.app.get_name()];
-        switch(AppletDir.applet.OPTIONS['DISPLAY_TITLE']) {
+        switch(OPTIONS['DISPLAY_TITLE']) {
             case 'TITLE':
                 // Some apps take a long time to set a valid title.  We don't want to error
                 // if title is null

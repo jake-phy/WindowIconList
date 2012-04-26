@@ -19,11 +19,7 @@ const St = imports.gi.St;
 const Main = imports.ui.main;
 const Mainloop = imports.mainloop;
 const Tweener = imports.ui.tweener;
-const Overview = imports.ui.overview;
-const Panel = imports.ui.panel;
-//const AppIcon = imports.ui.appIcon;
 const PopupMenu = imports.ui.popupMenu;
-const PanelMenu = imports.ui.panelMenu;
 const Signals = imports.signals;
 const DND = imports.ui.dnd;
 const AppFavorites = imports.ui.appFavorites;
@@ -31,16 +27,11 @@ const AppFavorites = imports.ui.appFavorites;
 const PANEL_ICON_SIZE = 24;
 const SPINNER_ANIMATION_TIME = 1;
 
-// Load our extension so we can access other files in our extensions dir as libraries
+// Load our applet so we can access other files in our extensions dir as libraries
 const AppletDir = imports.ui.appletManager.applets['WindowListGroup@jake.phy@gmail.com'];
 const SpecialMenus = AppletDir.specialMenus;
 const SpecialButtons = AppletDir.specialButtons;
-const OPTIONS = AppletDir.options.OPTIONS
-
-// Globally variables needed for disabling the extension
-let windowListManager, restoreState={}, clockWrapper, appTracker;
-
-
+const OPTIONS = AppletDir.options.OPTIONS;
 
 // Some functional programming tools
 const dir = function(obj){
@@ -303,12 +294,12 @@ AppGroup.prototype = {
 
         this._appButton.actor.connect('button-release-event', Lang.bind(this, this._onAppButtonRelease));
         // Set up the right click menu for this._appButton
-        this.rightClickMenu = new AppletDir.specialMenus.AppMenuButtonRightClickMenu(this._appButton.actor, this.metaWindow, this.app, isFavapp, orientation);
+        this.rightClickMenu = new SpecialMenus.AppMenuButtonRightClickMenu(this._appButton.actor, this.metaWindow, this.app, isFavapp, orientation);
         this._menuManager = new PopupMenu.PopupMenuManager(this);
         this._menuManager.addMenu(this.rightClickMenu);
 
        // Set up the hover menu for this._appButton
-        this.hoverMenu = new AppletDir.specialMenus.AppThumbnailHoverMenu(this.actor, this.metaWindow, this.app, isFavapp, orientation)
+        this.hoverMenu = new SpecialMenus.AppThumbnailHoverMenu(this.actor, this.metaWindow, this.app, isFavapp, orientation)
         this._hoverMenuManager = new SpecialMenus.HoverMenuController(this);
         this._hoverMenuManager.addMenu(this.hoverMenu);
 
@@ -345,11 +336,11 @@ AppGroup.prototype = {
         
         if (typeof(this._applet.dragEnterTime) == 'undefined') {
             this._applet.dragEnterTime = time;
-        } else {
-            if (time > (this._applet.dragEnterTime + 3000))
-            {
+        }else {
+            if (time > (this._applet.dragEnterTime + 3000)) {
                 this._applet.dragEnterTime = time;
-            }
+            }else
+                return;
         }
     },
     

@@ -1,3 +1,4 @@
+const Cinnamon = imports.gi.Cinnamon;
 const Clutter = imports.gi.Clutter;
 const Lang = imports.lang;
 const Main = imports.ui.main;
@@ -5,7 +6,6 @@ const Mainloop = imports.mainloop;
 const Params = imports.misc.params;
 const PopupMenu = imports.ui.popupMenu;
 const Meta = imports.gi.Meta;
-const Cinnamon = imports.gi.Cinnamon;
 const St = imports.gi.St;
 const AppFavorites = imports.ui.appFavorites;
 const Tweener = imports.ui.tweener;
@@ -481,6 +481,7 @@ WindowThumbnail.prototype = {
         let bin = new St.Bin({ name: 'appMenu' });
         this._container = new Cinnamon.GenericContainer();
         bin.set_child(this._container);
+	// Stick the icon, lable and button in a container
         this._container.connect('get-preferred-width',
 								Lang.bind(this, this._getContentPreferredWidth));
         this._container.connect('get-preferred-height',
@@ -505,9 +506,6 @@ WindowThumbnail.prototype = {
 	let icon = this.app.create_icon_texture(THUMBNAIL_ICON_SIZE);
         this._iconBox.set_child(icon);
 
-        //TODO: should probably do this in a smarter way in the get_size_request event or something...
-        //fixing this should also allow the text to be centered
-        //this.titleActor.width = THUMBNAIL_WIDTH;
 	this.actor.add_actor(bin);
         this.actor.add_actor(this.thumbnailActor);
 
@@ -520,33 +518,35 @@ WindowThumbnail.prototype = {
 	    this.metaWindow.connect('notify::title', Lang.bind(this, function(){
                                     this._label.text = this.metaWindow.get_title()}));	
         this.actor.connect('enter-event', Lang.bind(this, function() {
-                                                        this.actor.add_style_pseudo_class('outlined');
-                                                        this.actor.add_style_pseudo_class('selected');
-							if (!this.isFavThumbnail) {
+							if (!this.isFavapp) {
+                                                            this.actor.add_style_pseudo_class('outlined');
+                                                            this.actor.add_style_pseudo_class('selected');
 							    this._hoverPeek(OPACITY_TRANSPARENT, this.metaWindow);
 							    this.button.show();
 							}
 							this.stopClick = false}));
         this.actor.connect('leave-event', Lang.bind(this, function() {
-							this._hoverPeek(OPACITY_OPAQUE, this.metaWindow);
-                                                        this.actor.remove_style_pseudo_class('outlined');
-                                                        this.actor.remove_style_pseudo_class('selected');
-							this.button.hide();
-							}));
+							if (!this.isFavapp) {
+							    this._hoverPeek(OPACITY_OPAQUE, this.metaWindow);
+                                                            this.actor.remove_style_pseudo_class('outlined');
+                                                            this.actor.remove_style_pseudo_class('selected');
+							    this.button.hide();
+							}}));
         this.button.connect('button-release-event', Lang.bind(this, this._onButtonRelease));
 
         this.actor.connect('button-release-event', Lang.bind(this, this._connectToWindow));
     },
 
     _isFavorite: function(isFav) {
+	// Whether we create a favorite tooltip or a window thumbnail
 	if (isFav) {
 	    this.thumbnailActor.height = 0;
  	    this.thumbnailActor.width = 0;
             this.thumbnailActor.child = null;
 	    let apptext = this.app.get_name();
-	    this.setText(apptext);
-	    this.ThumbnailWidth = apptext.length * 9;
-	    this.isFavThumbnail = true;
+	    // not sure why it's 7
+	    this.ThumbnailWidth = THUMBNAIL_ICON_SIZE + Math.floor(apptext.length * 7.0);
+            this._label.text = apptext;
 	    this.isFavapp = true;
 	}else
 	    this._refresh();
@@ -583,28 +583,25 @@ WindowThumbnail.prototype = {
     _onButtonRelease: function(actor, event) {
         if ( Cinnamon.get_event_state(event) & Clutter.ModifierType.BUTTON1_MASK ) {
             this.metaWindow.delete(global.get_current_time());
+	    // Stop the _connectToWindow from receiving the signal
 	    this.stopClick = true;
         }
     },
 
     _connectToWindow: function(actor, event) {
-        if (Cinnamon.get_event_state(event) & Clutter.ModifierType.BUTTON1_MASK && this.isFavapp) {
-	        this.app.open_new_window(-1);
-                return;
-        }
-        if ( Cinnamon.get_event_state(event) & Clutter.ModifierType.BUTTON1_MASK && !this.stopClick) {
+        if ( Cinnamon.get_event_state(event) & Clutter.ModifierType.BUTTON1_MASK && !this.stopClick && !this.isFavapp) {
             this.metaWindow.activate(global.get_current_time());
         }
     },
 
     _refresh: function() {
-        // Replace the old thumbnail
+	// Turn favorite tooltip into a normal thumbnail
 	this.ThumbnailWidth = Math.max(200, Main.layoutManager.primaryMonitor.width / THUMBNAIL_SIZE);
         this.thumbnailActor.height = this.ThumbnailHeight;
         this.thumbnailActor.width = this.ThumbnailWidth;
-	this.isFavThumbnail = false;
 	this.isFavapp = false;
 
+        // Replace the old thumbnail
         this.thumbnail = null;
         this.thumbnail = this._getThumbnail();
         this.thumbnailActor.child = this.thumbnail;
@@ -615,13 +612,11 @@ WindowThumbnail.prototype = {
 	if (!OPTIONS['HOVER_PEEK'])
 	    return;
 	function setOpacity(window_actor, target_opacity) {
-        //if (window_actor.opacity != target_opacity) {
-                Tweener.addTween(window_actor, {
-                    time: TRANSITION_TIME,
-                    transition: 'easeOutQuad',
-                    opacity: target_opacity,
-                });
-          //  }
+           Tweener.addTween(window_actor, {
+                time: TRANSITION_TIME,
+                transition: 'easeOutQuad',
+                opacity: target_opacity,
+            });
         }
 
         let above_current = new Array();
@@ -633,8 +628,8 @@ WindowThumbnail.prototype = {
 
 	    if (metaWin.minimized)
             	metaWin.unminimize(global.get_current_time());
-
-            setOpacity(wa, opacity);
+	    if (meta_win.get_window_type() != Meta.WindowType.DESKTOP)
+                setOpacity(wa, opacity);
         });
     },
 
@@ -687,7 +682,7 @@ WindowThumbnail.prototype = {
         childBox.y1 = yPadding;
         childBox.y2 = childBox.y1 + Math.min(naturalHeight, allocHeight);
         if (direction == St.TextDirection.LTR) {
-            childBox.x1 = 3;
+            childBox.x1 = 0;
             childBox.x2 = childBox.x1 + Math.min(naturalWidth, allocWidth);
         } else {
             childBox.x1 = Math.max(0, allocWidth - naturalWidth);
@@ -704,7 +699,7 @@ WindowThumbnail.prototype = {
         childBox.y2 = childBox.y1 + Math.min(naturalHeight, allocHeight);
 
         if (direction == St.TextDirection.LTR) {
-            childBox.x1 = Math.floor(iconWidth + 5);
+            childBox.x1 = Math.floor(iconWidth + 3);
             childBox.x2 = Math.min(childBox.x1 + naturalWidth, allocWidth);
         } else {
             childBox.x2 = allocWidth - Math.floor(iconWidth + 3);

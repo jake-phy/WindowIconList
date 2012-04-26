@@ -34,5 +34,5 @@ const OPTIONS = {
                     HOVER_PEEK_OPACITY: 15,
                     //  HOVER_PEEK_TIME
                     //     Float;  goes by seconds
-                    HOVER_PEEK_TIME: 0.2
+                    HOVER_PEEK_TIME: 0.3
 };
