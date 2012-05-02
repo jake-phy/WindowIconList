@@ -835,15 +835,12 @@ AppList.prototype = {
                 return;
         let launchers = global.settings.get_strv('favorite-apps'),
             appSys = Cinnamon.AppSystem.get_default(),
-	    i = 0,
 	    app;
-	while(i < launchers.length) {
+        for ( let i = 0; i < launchers.length; ++i ) {
 		app = appSys.lookup_app(launchers[i]);
                 if(!app) app = appSys.lookup_settings_app(launchers[i]);
-		if(!app)
-			continue;
-                this._windowAdded(this.metaWorkspace, null, app, true)
-                i++;
+                if(app)
+                    this._windowAdded(this.metaWorkspace, null, app, true);
 	}
     },
 

@@ -17,7 +17,7 @@ const Meta = imports.gi.Meta;
 const DND = imports.ui.dnd;
 const AppFavorites = imports.ui.appFavorites;
 
-const BUTTON_BOX_ANIMATION_TIME = .5;
+const BUTTON_BOX_ANIMATION_TIME = 0.5;
 const MAX_BUTTON_WIDTH = 150; // Pixels
 const ICON_PADDING_TOP = 0;
 
@@ -120,12 +120,12 @@ IconLabelButton.prototype = {
         let allocWidth = box.x2 - box.x1;
         let allocHeight = box.y2 - box.y1;
         let childBox = new Clutter.ActorBox();
-        let direction = this.actor.get_direction();
+        let direction = this.actor.get_text_direction();
 
         // Set the icon to be left-justified (or right-justified) and centered vertically
         let [iconMinWidth, iconMinHeight, iconNaturalWidth, iconNaturalHeight] = this._iconBox.get_preferred_size();
         [childBox.y1, childBox.y2] = center(allocHeight, iconNaturalHeight);
-        if (direction == St.TextDirection.LTR) {
+        if (direction == Clutter.TextDirection.LTR) {
             [childBox.x1, childBox.x2] = [0, Math.min(iconNaturalWidth, allocWidth)];
         } else {
             [childBox.x1, childBox.x2] = [Math.max(0, allocWidth - iconNaturalWidth), allocWidth];
@@ -137,7 +137,7 @@ IconLabelButton.prototype = {
         let iconWidth = childBox.x2 - childBox.x1;
         [minWidth, minHeight, naturalWidth, naturalHeight] = this._label.get_preferred_size();
         [childBox.y1, childBox.y2] = center(allocHeight, naturalHeight);
-        if (direction == St.TextDirection.LTR) {
+        if (direction == Clutter.TextDirection.LTR) {
             childBox.x1 = iconWidth;
             childBox.x2 = Math.min(childBox.x1 + naturalWidth, allocWidth, MAX_BUTTON_WIDTH);
         } else {
@@ -147,7 +147,7 @@ IconLabelButton.prototype = {
         this._label.allocate(childBox, flags);
 //        log('allocateB ' + [childBox.x1<0, childBox.x2<0, childBox.y1, childBox.y2] + ' ' + [childBox.x2-childBox.x1, childBox.y2-childBox.y1])
 
-       if (direction == St.TextDirection.LTR) {
+       if (direction == Clutter.TextDirection.LTR) {
             childBox.x1 = -3;
             childBox.x2 = childBox.x1 + this._numLabel.width;
             childBox.y1 = box.y1 - 2;
@@ -398,7 +398,7 @@ WindowButton.prototype = {
     },
 
     _animate: function() {
-	this.actor.set_z_rotation_from_gravity(0.0, Clutter.Gravity.CENTER)
+	//this.actor.set_z_rotation_from_gravity(0.0, Clutter.Gravity.CENTER)
         Tweener.addTween(this.actor,
                          { opacity: 70,
 			   time: 1.0,

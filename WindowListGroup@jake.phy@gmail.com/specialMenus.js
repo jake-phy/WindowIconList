@@ -676,12 +676,12 @@ WindowThumbnail.prototype = {
 
         let [minWidth, minHeight, naturalWidth, naturalHeight] = this._iconBox.get_preferred_size();
 
-        let direction = this.actor.get_direction();
+        let direction = this.actor.get_text_direction();
 
         let yPadding = Math.floor(Math.max(0, allocHeight - naturalHeight) / 2);
         childBox.y1 = yPadding;
         childBox.y2 = childBox.y1 + Math.min(naturalHeight, allocHeight);
-        if (direction == St.TextDirection.LTR) {
+        if (direction == Clutter.TextDirection.LTR) {
             childBox.x1 = 0;
             childBox.x2 = childBox.x1 + Math.min(naturalWidth, allocWidth);
         } else {
@@ -698,7 +698,7 @@ WindowThumbnail.prototype = {
         childBox.y1 = yPadding;
         childBox.y2 = childBox.y1 + Math.min(naturalHeight, allocHeight);
 
-        if (direction == St.TextDirection.LTR) {
+        if (direction == Clutter.TextDirection.LTR) {
             childBox.x1 = Math.floor(iconWidth + 3);
             childBox.x2 = Math.min(childBox.x1 + naturalWidth, allocWidth);
         } else {
@@ -708,7 +708,7 @@ WindowThumbnail.prototype = {
         this._label.allocate(childBox, flags);
 
 	let buttonSize = THUMBNAIL_ICON_SIZE;
-        if (direction == St.TextDirection.LTR) {
+        if (direction == Clutter.TextDirection.LTR) {
             childBox.x1 = this.ThumbnailWidth - THUMBNAIL_ICON_SIZE;
             childBox.x2 = childBox.x1 + 36;
             childBox.y1 = iconWidth * (-1) - 3;
