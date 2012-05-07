@@ -1,7 +1,7 @@
 #!/bin/sh
 
-UUID="windowListGroup@jake.phy@gmail.com"
-OLD_UUID="windowList@jake.phy@gmail.com"
+UUID="WindowListGroup@jake.phy@gmail.com"
+OLD_UUID="windowListGroup@jake.phy@gmail.com"
 SCHEMA_NAME="windowListGroup"
 OLD_SCHEMA_NAME="windowList@jake.phy"
 SCHEMA_DIR="/usr/share/glib-2.0/schemas/"

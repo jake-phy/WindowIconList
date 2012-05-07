@@ -32,7 +32,7 @@ const PANEL_ICON_SIZE = 24;
 const SPINNER_ANIMATION_TIME = 1;
 
 // Load our applet so we can access other files in our extensions dir as libraries
-const AppletDir = imports.ui.appletManager.applets['windowListGroup@jake.phy@gmail.com'];
+const AppletDir = imports.ui.appletManager.applets['WindowListGroup@jake.phy@gmail.com'];
 const SpecialMenus = AppletDir.specialMenus;
 const SpecialButtons = AppletDir.specialButtons;
 

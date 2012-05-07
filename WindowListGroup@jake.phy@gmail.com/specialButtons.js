@@ -25,7 +25,7 @@ const BUTTON_BOX_ANIMATION_TIME = 0.5;
 const MAX_BUTTON_WIDTH = 150; // Pixels
 const ICON_PADDING_TOP = 0;
 
-const AppletDir = imports.ui.appletManager.applets['windowListGroup@jake.phy@gmail.com'];
+const AppletDir = imports.ui.appletManager.applets['WindowListGroup@jake.phy@gmail.com'];
 
 
 // Creates a button with an icon and a label.

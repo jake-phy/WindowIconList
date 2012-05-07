@@ -15,8 +15,8 @@ const Tweener = imports.ui.tweener;
 const LIST_SCHEMAS = "org.cinnamon.applets.windowListGroup";
 let windowListSettings = new Gio.Settings({schema: LIST_SCHEMAS});
 
-const AppletMetaDir = imports.ui.appletManager.appletMeta["windowListGroup@jake.phy@gmail.com"].path;
-const AppletDir = imports.ui.appletManager.applets['windowListGroup@jake.phy@gmail.com'];
+const AppletMetaDir = imports.ui.appletManager.appletMeta["WindowListGroup@jake.phy@gmail.com"].path;
+const AppletDir = imports.ui.appletManager.applets['WindowListGroup@jake.phy@gmail.com'];
 const MainApplet = AppletDir.applet;
 const SpecialButtons = AppletDir.specialButtons;
 
