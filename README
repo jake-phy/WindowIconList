@@ -1,5 +1,5 @@
 install:
-	cp -r WindowListGroup@jake.phy@gmail.com ~/.local/share/cinnamon/applets/
+        run install.sh and restart cinnamon 
 
 website: https://github.com/jake-phy/WindowIconList/
 

@@ -12,17 +12,20 @@ const Params = imports.misc.params;
 const PopupMenu = imports.ui.popupMenu;
 const Cinnamon = imports.gi.Cinnamon;
 const St = imports.gi.St;
+const Gio = imports.gi.Gio;
 const Tweener = imports.ui.tweener;
 const Meta = imports.gi.Meta;
 const DND = imports.ui.dnd;
 const AppFavorites = imports.ui.appFavorites;
 
+const LIST_SCHEMAS = "org.cinnamon.applets.windowListGroup";
+let windowListSettings = new Gio.Settings({schema: LIST_SCHEMAS});
+
 const BUTTON_BOX_ANIMATION_TIME = 0.5;
 const MAX_BUTTON_WIDTH = 150; // Pixels
 const ICON_PADDING_TOP = 0;
 
-const AppletDir = imports.ui.appletManager.applets['WindowListGroup@jake.phy@gmail.com'];
-const OPTIONS = AppletDir.options.OPTIONS
+const AppletDir = imports.ui.appletManager.applets['windowListGroup@jake.phy@gmail.com'];
 
 
 // Creates a button with an icon and a label.
@@ -280,7 +283,7 @@ AppButton.prototype = {
     _isFavorite: function(isFav) {
         if (isFav) {
             this.actor.set_style_class_name('panel-launcher')
-            this.setText('');
+            this._label.set_text('');
         }else
             this.actor.set_style_class_name('window-list-item-box');
     },
@@ -332,6 +335,9 @@ WindowButton.prototype = {
             this.signals.push(this.metaWindow.connect('notify::title', Lang.bind(this, this._onTitleChange)));
             this.signals.push(this.metaWindow.connect('notify::urgent', Lang.bind(this, this._onAttentionRequest)));
             this.signals.push(this.metaWindow.connect('notify::demands-attention', Lang.bind(this, this._onAttentionRequest)));
+            this.winTitleSetting = windowListSettings.connect("changed::title-display", Lang.bind(this, function() {
+            this._onTitleChange(this.metaWindow);
+            }));
 
             this._onFocusChange();
         }
@@ -346,6 +352,7 @@ WindowButton.prototype = {
         this.signals.forEach(Lang.bind(this, function(s) {
             this.metaWindow.disconnect(s);
         }));
+        windowListSettings.disconnect(this.winTitleSetting);
         this._container.destroy_children();
         this.actor.destroy();
         this.rightClickMenu.destroy();
@@ -420,25 +427,25 @@ WindowButton.prototype = {
            [title, appName] = ['', ''];
         else
            [title, appName] = [this.metaWindow.get_title(), this.app.get_name()];
-        switch(OPTIONS['DISPLAY_TITLE']) {
+        switch(windowListSettings.get_enum("title-display")) {
             case 'TITLE':
                 // Some apps take a long time to set a valid title.  We don't want to error
                 // if title is null
                 if (title) {
-                    this.setText(title);
+                    this._label.set_text(title);
                     break;
                 }else {
-                    this.setText(appName);
+                    this._label.set_text(appName);
                     break;
                 }
             case 'APP':
                 if (appName) {
-                    this.setText(appName);
+                    this._label.set_text(appName);
                     break;
                 }
             case 'NONE':
             default:
-                this.setText('');
+                this._label.set_text('');
         }
     }
 };
