@@ -2,51 +2,69 @@
 
 from gi.repository import Gtk, Gio, Gdk
 
-class WindowLabel(Gtk.Label):
-    def __init__(self, label):
-        super(WindowLabel, self).__init__(label)
+class NewLabel(Gtk.Label):
+    def __init__(self, label, tooltip=None):
+        super(NewLabel, self).__init__(label)
+	NewTooltip(self, tooltip)
+
+class NewTooltip(Gtk.HBox):
+    def __init__(self, item, text):
+        self.text = text
+        super(NewTooltip, self).__init__()
+	if self.text:
+            item.set_has_tooltip(True)
+  	    item.connect('query-tooltip', self.tooltip)
+
+    def tooltip(self, item, x, y, key_mode, tooltip):
+        tooltip.set_text(self.text)
+        return True
 
 class GSettingsCheckButton(Gtk.HBox):
-    def __init__(self, label, schema, key):
+    def __init__(self, label, schema, key, tooltip=None):
         self.key = key
         super(GSettingsCheckButton, self).__init__()
         self.label = Gtk.Label(label)
 	self.button = Gtk.CheckButton()
+	self.label = NewLabel(label, tooltip)
         if (label != ""):
             self.pack_start(self.label, False, False, 2)
         self.pack_end(self.button, False, False, 2)
         self.settings = Gio.Settings.new(schema)
         self.button.set_active(self.settings.get_boolean(self.key))
         self.button.connect('toggled', self.on_my_value_changed)
+	NewTooltip(self.button, tooltip)
         
     def on_my_value_changed(self, widget):
         self.settings.set_boolean(self.key, self.button.get_active())
 
 class GSettingsSpinButton(Gtk.HBox):
-    def __init__(self, label, schema, key, min, max, step, page):
+    def __init__(self, label, schema, key, min, max, step, page, tooltip=None):
         self.key = key
         super(GSettingsSpinButton, self).__init__()
         self.label = Gtk.Label(label)
         self.settings = Gio.Settings.new(schema)
 	self.adjustment = Gtk.Adjustment(self.settings.get_int(self.key), min, max, step, page, 0)
-        self.content_widget = Gtk.SpinButton()
+        self.spinner = Gtk.SpinButton()
+	self.label = NewLabel(label, tooltip)
         if (label != ""):
             self.pack_start(self.label, False, False, 2)
-        self.pack_end(self.content_widget, False, False, 2)
+        self.pack_end(self.spinner, False, False, 2)
 
-        self.content_widget.set_adjustment(self.adjustment)
-        self.content_widget.connect('value-changed', self.on_my_value_changed)
+        self.spinner.set_adjustment(self.adjustment)
+        self.spinner.connect('value-changed', self.on_my_value_changed)
+	NewTooltip(self.spinner, tooltip)
         
     def on_my_value_changed(self, widget):
         self.settings.set_int(self.key, widget.get_value())
 
 class GSettingsRadioButton(Gtk.HBox):
-    def __init__(self, label, schema, key, items):
+    def __init__(self, label, schema, key, items, tooltip=None):
         self.key = key
 	self.items = items
         super(GSettingsRadioButton, self).__init__()
         self.label = Gtk.Label(label)
 	self.vbox = Gtk.VBox()
+	self.label = NewLabel(label, tooltip)
         if (label != ""):
             self.pack_start(self.label, False, False, 2)
         self.pack_end(self.vbox, False, False, 2)
@@ -59,6 +77,7 @@ class GSettingsRadioButton(Gtk.HBox):
             if not(self.buttonFirst): self.buttonFirst = button
             button.set_active(self.active == idx)
             button.connect('toggled', self.on_my_value_changed)
+	    NewTooltip(button, tooltip)
             self.vbox.add(button)
 
     def on_my_value_changed(self, widget):
@@ -71,22 +90,23 @@ class CinnamonListSettings:
     def __init__(self):
         self.window = Gtk.Window(title='Window List Settings')
         self.window.connect('destroy', Gtk.main_quit)
-	self.space = WindowLabel('')
-	self.space2 = WindowLabel('')
 
-	self.window_list_settings = WindowLabel('WINDOW LIST SETTINGS')
-	self.list_title_display = GSettingsRadioButton('Window Title Display', "org.cinnamon.applets.windowListGroup", 'title-display', [(0, 'none'), (1, 'app'), (2, 'title')])
-        self.list_show_favs = GSettingsCheckButton("Show Favorites", "org.cinnamon.applets.windowListGroup", "show-favorites")
-        self.list_group_apps = GSettingsCheckButton("Group Apps into one icon", "org.cinnamon.applets.windowListGroup", "group-apps")
-	self.list_number_display = GSettingsRadioButton('List Number Display', "org.cinnamon.applets.windowListGroup", 'number-display', [(0, 'smart'), (1, 'normal'), (2, 'none')])
-	self.thumbnail_settings = WindowLabel('THUMBNAIL SETTINGS')
-        self.thumbnail_size = GSettingsSpinButton("Size of Thumbnails", "org.cinnamon.applets.windowListGroup", "thumbnail-size", 2, 15, 1, 1)
-        self.thumbnail_timeout = GSettingsSpinButton("Thumbnail Timeout", "org.cinnamon.applets.windowListGroup", "thumbnail-timeout", 0, 2000, 100, 1000)
-	self.sort_thumnails = GSettingsRadioButton('Sort Thumbnails', "org.cinnamon.applets.windowListGroup", 'sort-thumbnails', [(0, 'Last focused'), (1, 'Order opened')])
-	self.hover_peek_settings = WindowLabel('HOVER PEEK SETTINGS')
-        self.hover_peek = GSettingsCheckButton('Enable Hover Peek', "org.cinnamon.applets.windowListGroup", "enable-hover-peek")
-        self.window_opacity = GSettingsSpinButton("Window Opacity", "org.cinnamon.applets.windowListGroup", "hover-peek-opacity", 0, 255, 10, 100)
-        self.peek_time = GSettingsSpinButton("Fade in/out Time", "org.cinnamon.applets.windowListGroup", "hover-peek-time", 0, 1000, 10, 1000)
+	self.space = NewLabel('')
+	self.space2 = NewLabel('')
+
+	self.window_list_settings = NewLabel('WINDOW LIST SETTINGS')
+	self.list_title_display = GSettingsRadioButton('Window Title Display', "org.cinnamon.applets.windowListGroup", 'title-display', [(0, 'none'), (1, 'app'), (2, 'title')], "title: display the window title, app: diplay app name, none: don't display anything")
+        self.list_show_favs = GSettingsCheckButton("Show Favorites", "org.cinnamon.applets.windowListGroup", "show-favorites", "Checked: show favorites, else: hide them")
+        self.list_group_apps = GSettingsCheckButton("Group Apps into one icon", "org.cinnamon.applets.windowListGroup", "group-apps", "Checked: group windows into one app icon, else: every window has it's own icon")
+	self.list_number_display = GSettingsRadioButton('List Number Display', "org.cinnamon.applets.windowListGroup", 'number-display', [(0, 'smart'), (1, 'normal'), (2, 'none')], "normal: display window number, smart: display window number if more than one window, none: don't display number")
+	self.thumbnail_settings = NewLabel('THUMBNAIL SETTINGS')
+        self.thumbnail_size = GSettingsSpinButton("Size of Thumbnails", "org.cinnamon.applets.windowListGroup", "thumbnail-size", 5, 30, 1, 1, "Thumbnail Size; Default is ten")
+        self.thumbnail_timeout = GSettingsSpinButton("Thumbnail Timeout", "org.cinnamon.applets.windowListGroup", "thumbnail-timeout", 0, 2000, 100, 1000, "Thumbnail timeout in milliseconds")
+	self.sort_thumnails = GSettingsRadioButton('Sort Thumbnails', "org.cinnamon.applets.windowListGroup", 'sort-thumbnails', [(0, 'Last focused'), (1, 'Order opened')], "opened: sort by first opened, focused: sort by last focused")
+	self.hover_peek_settings = NewLabel('HOVER PEEK SETTINGS')
+        self.hover_peek = GSettingsCheckButton('Enable Hover Peek', "org.cinnamon.applets.windowListGroup", "enable-hover-peek", "Checked: enable hover peek, else: disable it")
+        self.window_opacity = GSettingsSpinButton("Window Opacity", "org.cinnamon.applets.windowListGroup", "hover-peek-opacity", 0, 255, 10, 100, "Opacity of the windows when peeked")
+        self.peek_time = GSettingsSpinButton("Fade in/out Time", "org.cinnamon.applets.windowListGroup", "hover-peek-time", 0, 1000, 10, 1000, "Hover Peek Fade in/out time")
 
         self.vbox = Gtk.VBox();
         self.vbox.add(self.window_list_settings)

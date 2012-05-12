@@ -490,6 +490,7 @@ WindowThumbnail.prototype = {
         this.metaWindow = metaWindow;
         this.app = app;
         this.isFavapp = isFavapp;
+	this.wasMinimized = false;
 
         // Inherit the theme from the alt-tab menu
         this.actor = new St.BoxLayout({ style_class: 'item-box',
@@ -536,12 +537,17 @@ WindowThumbnail.prototype = {
 	}));	
         this.actor.connect('enter-event', Lang.bind(this, function() {
 							if (!this.isFavapp) {
+							    this._hoverPeek(windowListSettings.get_int("hover-peek-opacity"), this.metaWindow);
                                                             this.actor.add_style_pseudo_class('outlined');
                                                             this.actor.add_style_pseudo_class('selected');
-							    this._hoverPeek(windowListSettings.get_int("hover-peek-opacity"), this.metaWindow);
 							    this.button.show();
 							}
-							this.stopClick = false;
+
+							if ( this.metaWindow.minimized ) {
+            						    this.metaWindow.unminimize();
+	    						    this.wasMinimized = true;
+							}else
+	    						    this.wasMinimized = false;
 	}));
         this.actor.connect('leave-event', Lang.bind(this, function() {
 							if (!this.isFavapp) {
@@ -549,7 +555,12 @@ WindowThumbnail.prototype = {
                                                             this.actor.remove_style_pseudo_class('outlined');
                                                             this.actor.remove_style_pseudo_class('selected');
 							    this.button.hide();
-	}}));
+
+							}
+							if (this.wasMinimized) {
+        						    this.metaWindow.minimize(global.get_current_time());
+							}
+	}));
         this.button.connect('button-release-event', Lang.bind(this, this._onButtonRelease));
 
         this.actor.connect('button-release-event', Lang.bind(this, this._connectToWindow));
@@ -605,15 +616,17 @@ WindowThumbnail.prototype = {
     },
 
     _connectToWindow: function(actor, event) {
+	this.wasMinimized = false;
         if ( Cinnamon.get_event_state(event) & Clutter.ModifierType.BUTTON1_MASK && !this.stopClick && !this.isFavapp) {
             this.metaWindow.activate(global.get_current_time());
         }
+	this.stopClick = false;
     },
 
     _refresh: function() {
 	// Turn favorite tooltip into a normal thumbnail
-	this.ThumbnailHeight = Math.max(125, Main.layoutManager.primaryMonitor.height / windowListSettings.get_int("thumbnail-size"));
-	this.ThumbnailWidth = Math.max(200, Main.layoutManager.primaryMonitor.width / windowListSettings.get_int("thumbnail-size"));
+	this.ThumbnailHeight = Math.max(125, Math.floor(Main.layoutManager.primaryMonitor.height / 70) * windowListSettings.get_int("thumbnail-size"));
+	this.ThumbnailWidth = Math.max(200, Math.floor(Main.layoutManager.primaryMonitor.width / 70) * windowListSettings.get_int("thumbnail-size"));
         this.thumbnailActor.height = this.ThumbnailHeight;
         this.thumbnailActor.width = this.ThumbnailWidth;
 	this.isFavapp = false;
@@ -627,6 +640,7 @@ WindowThumbnail.prototype = {
     _hoverPeek: function(opacity, metaWin) {
 	if (!windowListSettings.get_boolean("enable-hover-peek"))
 	    return;
+
 	function setOpacity(window_actor, target_opacity) {
            Tweener.addTween(window_actor, {
                 time: windowListSettings.get_int("hover-peek-time") * 0.001,
@@ -642,10 +656,10 @@ WindowThumbnail.prototype = {
 	    if (metaWin == meta_win)
 		return;
 
-	    if (metaWin.minimized)
-            	metaWin.unminimize(global.get_current_time());
 	    if (meta_win.get_window_type() != Meta.WindowType.DESKTOP)
                 setOpacity(wa, opacity);
+		    
+		
         });
     },
 

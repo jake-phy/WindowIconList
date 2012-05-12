@@ -323,7 +323,6 @@ AppGroup.prototype = {
         this._hoverMenuManager = new SpecialMenus.HoverMenuController(this);
         this._hoverMenuManager.addMenu(this.hoverMenu);
 
-        this._calcWindowNumber();
         this._loadWinBoxFavs();
 
         this._draggable = SpecialButtons.makeDraggable(this.actor);
@@ -519,6 +518,7 @@ AppGroup.prototype = {
             this._windowTitleChanged(this.lastFocused);
             this.rightClickMenu.setMetaWindow(this.lastFocused);
         }
+        this._calcWindowNumber(metaWorkspace);
     },
                 
     _windowAdded: function(metaWorkspace, metaWindow) {
@@ -529,12 +529,17 @@ AppGroup.prototype = {
                                                            metaWindow: metaWindow,
                                                            iconSize: PANEL_ICON_SIZE,
                                                            orientation: this.orientation});
+            let workspaceAppNumber = this.app.get_windows().filter(function(win) { return win.get_workspace() == metaWorkspace; }).length;
             if (this.isFavapp){
                 this._isFavorite(false, metaWindow);
             }
-            let windowNum = this.app.get_windows().length;
-            if (windowListSettings.get_enum("sort-thumbnails") == SortThumbs.opened && windowNum == 1)
-                this.hoverMenu.setMetaWindow(metaWindow);
+            if (workspaceAppNumber <= 1) {
+                this.lastFocused = metaWindow;
+                this._windowTitleChanged(this.lastFocused);
+                this.rightClickMenu.setMetaWindow(this.lastFocused);
+                this.hoverMenu.setMetaWindow(this.lastFocused);
+            }
+                
             this._windowButtonBox.add(button);
             let signals = [];
             let winSettingSignal = windowListSettings.connect("changed::title-display", Lang.bind(this, function() {
@@ -549,7 +554,7 @@ AppGroup.prototype = {
             this.metaWindows.sort(function(w1, w2) {
                 return w1.get_stable_sequence() - w2.get_stable_sequence();
             });
-            this._calcWindowNumber();
+            this._calcWindowNumber(metaWorkspace);
         }
     },
 
@@ -574,7 +579,7 @@ AppGroup.prototype = {
                 this.hoverMenu.setMetaWindow(this.lastFocused);
                 this.rightClickMenu.setMetaWindow(this.lastFocused);
             }
-            this._calcWindowNumber();
+            this._calcWindowNumber(metaWorkspace);
         }
     },
 
@@ -656,8 +661,8 @@ AppGroup.prototype = {
         this.hoverMenu.appSwitcherItem._isFavorite(isFav);
     },
 
-    _calcWindowNumber: function() {
-        let windowNum = this.app.get_windows().length;
+    _calcWindowNumber: function(metaWorkspace) {
+        let windowNum = this.app.get_windows().filter(function(win) { return win.get_workspace() == metaWorkspace; }).length;
 	this._appButton._numLabel.set_text(windowNum.toString());
         switch(windowListSettings.get_enum("number-display")) {
             case NumberDisplay.smart:
@@ -836,13 +841,13 @@ AppList.prototype = {
 
             // We also need to monitor the state 'cause some pesky apps (namely: plugin_container left over after fullscreening a flash video)
             // don't report having zero windows after they close
-            /*let appStateSignal = app.connect('notify::state', Lang.bind(this, function(app) {
-                if (app.state == Cinnamon.AppState.STOPPED && this._appList.contains(app) && !isFavapp) {
+            let appStateSignal = app.connect('notify::state', Lang.bind(this, function(app) {
+                if (app.state == Cinnamon.AppState.STOPPED && this._appList.contains(app) && !this._whitelist_app(app)) {
                     this._removeApp(app);
                 }
-            }));*/
+            }));
 
-            this._appList.set(app, { appGroup: appGroup/*, signals: [appStateSignal]*/ });
+            this._appList.set(app, { appGroup: appGroup, signals: [appStateSignal] });
             // TODO not quite ready yet for prime time
             /* appGroup.connect('focus-state-change', function(group, focusState) {
                 if (focusState) {
@@ -864,9 +869,9 @@ AppList.prototype = {
             }
             this._appList.remove(app);
             appGroup['appGroup'].destroy();
-            /*appGroup['signals'].forEach(function(s) {
+            appGroup['signals'].forEach(function(s) {
                 app.disconnect(s);
-            });*/
+            });
         }
     },
 
@@ -882,6 +887,21 @@ AppList.prototype = {
              if(!app) app = appSys.lookup_settings_app(launchers[i]);
              this._windowAdded(this.metaWorkspace, null, app, true);
 	}
+    },
+
+   _whitelist_app: function (parentApp) {
+        let whitelist_apps = windowListSettings.get_strv('whitelist-apps'),
+            appSys = Cinnamon.AppSystem.get_default();
+        for (var i = 0; i < whitelist_apps.length; i++) {
+            let app = appSys.lookup_app(whitelist_apps[i]);
+            if(!app) app = appSys.lookup_settings_app(whitelist_apps[i]);
+            if (app == parentApp) {
+                return true;
+            } else if (app > parentApp) {
+                return false;
+            }
+        }
+        return false;
     },
 
     _windowRemoved: function(metaWorkspace, metaWindow) {
@@ -907,7 +927,7 @@ AppList.prototype = {
             this.metaWorkspace.disconnect(s);
         }));
         this.winListSignals.forEach(Lang.bind(this, function(s) {
-            this.windowListSettings.disconnect(s);
+            windowListSettings.disconnect(s);
         }));
         Cinnamon.AppSystem.get_default().disconnect(this.fav_InstallChanged);
         AppFavorites.getAppFavorites().disconnect(this.fav_Changed);

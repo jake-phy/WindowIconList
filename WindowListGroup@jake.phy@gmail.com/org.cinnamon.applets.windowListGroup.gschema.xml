@@ -41,20 +41,27 @@
       <summary>true: enable hover peek, false: disable it</summary>
     </key>
     <key type="i" name="thumbnail-size">
-      <default>7</default>
-      <summary>A smaller number means a bigger thumbnail</summary>
+      <default>10</default>
+      <summary>Thumbnail Size; Default is ten</summary>
     </key>
     <key type="i" name="thumbnail-timeout">
       <default>500</default>
       <summary>Thumbnail timeout in milliseconds</summary>
     </key>
     <key type="i" name="hover-peek-opacity">
-      <default>15</default>
+      <default>10</default>
       <summary>Opacity of the windows</summary>
     </key>
     <key type="i" name="hover-peek-time">
-      <default>300</default>
+      <default>50</default>
       <summary>Hover Peek Fade in/out time</summary>
+    </key>
+    <key type="as" name="whitelist-apps">
+	<default>[ 'libreoffice-startcenter.desktop' ]
+	</default>
+	<summary>List of desktop file IDs for whitelisting applications</summary>
+	<description>The applications corresponding to these identifiers will not be terminated when cinnamon.appstate = none.
+	</description>
     </key>
   </schema>
 </schemalist>

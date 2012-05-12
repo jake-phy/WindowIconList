@@ -101,7 +101,10 @@ IconLabelButton.prototype = {
         // The label text is starts in the center of the icon, so we should allocate the space
         // needed for the icon plus the space needed for(label - icon/2)
         alloc.min_size = iconMinSize + Math.max(0, labelMinSize - iconMinSize);
-        alloc.natural_size = Math.min(iconNaturalSize + Math.max(0, labelNaturalSize), MAX_BUTTON_WIDTH);
+        if (windowListSettings.get_enum('title-display') == 2 && this._label.get_text() != '')
+            alloc.natural_size = MAX_BUTTON_WIDTH;
+        else
+            alloc.natural_size = Math.min(iconNaturalSize + Math.max(0, labelNaturalSize), MAX_BUTTON_WIDTH);
     },
 
     _getPreferredHeight: function(actor, forWidth, alloc) {

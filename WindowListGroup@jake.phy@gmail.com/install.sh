@@ -3,7 +3,7 @@
 UUID="WindowListGroup@jake.phy@gmail.com"
 OLD_UUID="windowListGroup@jake.phy@gmail.com"
 SCHEMA_NAME="windowListGroup"
-OLD_SCHEMA_NAME="windowList@jake.phy"
+OLD_SCHEMA_NAME="windowListGroup"
 SCHEMA_DIR="/usr/share/glib-2.0/schemas/"
 OLD_SCHEMA="org.cinnamon.applets.${OLD_SCHEMA_NAME}.gschema.xml"
 SCHEMA="org.cinnamon.applets.${SCHEMA_NAME}.gschema.xml"
