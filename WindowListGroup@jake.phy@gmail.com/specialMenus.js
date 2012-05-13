@@ -138,13 +138,13 @@ AppMenuButtonRightClickMenu.prototype = {
     },
 
     _onParentActorButtonRelease: function(actor, event) {
-        if ( Cinnamon.get_event_state(event) & Clutter.ModifierType.BUTTON1_MASK ) {
+        if ( event.get_state() & Clutter.ModifierType.BUTTON1_MASK ) {
             if ( this.isOpen ) {
                 this.toggle();
             }
-        } else if ( Cinnamon.get_event_state(event) & Clutter.ModifierType.BUTTON2_MASK ) {
+        } else if ( event.get_state() & Clutter.ModifierType.BUTTON2_MASK ) {
 	    this.close(false);
-        } else if (Cinnamon.get_event_state(event) & Clutter.ModifierType.BUTTON3_MASK) {
+        } else if ( event.get_state() & Clutter.ModifierType.BUTTON3_MASK ) {
             this.mouseEvent = event;
             this.toggle();
         }   
@@ -470,11 +470,11 @@ PopupMenuAppSwitcherItem.prototype = {
 
         // Update appThumbnails to remove old programs
         for (let win in this.appThumbnails) {
-            if (windows.indexOf(this.appThumbnails[win].metaWindow) == -1) {
+	    if (windows.indexOf(this.appThumbnails[win].metaWindow) == -1) {
                 this.appContainer.remove_actor(this.appThumbnails[win].thumbnail.actor);
                 this.appThumbnails[win].thumbnail.destroy();
                 delete this.appThumbnails[win];
-            }
+	    }
         }
     }
 };
@@ -607,7 +607,7 @@ WindowThumbnail.prototype = {
     },
 
     _onButtonRelease: function(actor, event) {
-        if ( Cinnamon.get_event_state(event) & Clutter.ModifierType.BUTTON1_MASK ) {
+        if ( event.get_state() & Clutter.ModifierType.BUTTON1_MASK ) {
 	    this._hoverPeek(OPACITY_OPAQUE, this.metaWindow);
             this.metaWindow.delete(global.get_current_time());
 	    // Stop the _connectToWindow from receiving the signal
@@ -617,7 +617,7 @@ WindowThumbnail.prototype = {
 
     _connectToWindow: function(actor, event) {
 	this.wasMinimized = false;
-        if ( Cinnamon.get_event_state(event) & Clutter.ModifierType.BUTTON1_MASK && !this.stopClick && !this.isFavapp) {
+        if ( event.get_state() & Clutter.ModifierType.BUTTON1_MASK && !this.stopClick && !this.isFavapp) {
             this.metaWindow.activate(global.get_current_time());
         }
 	this.stopClick = false;

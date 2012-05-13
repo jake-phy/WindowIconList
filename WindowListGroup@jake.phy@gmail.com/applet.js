@@ -351,15 +351,19 @@ AppGroup.prototype = {
     },
     
     handleDragOver: function(source, actor, x, y, time) {
-        if (source.isDraggableApp || source instanceof AppGroup) return DND.DragMotionResult.CONTINUE;
+        if (source instanceof AppGroup) return DND.DragMotionResult.CONTINUE;
         
         if (typeof(this._applet.dragEnterTime) == 'undefined') {
             this._applet.dragEnterTime = time;
-        }else {
-            if (time > (this._applet.dragEnterTime + 3000)) {
+        } else {
+            if (time > (this._applet.dragEnterTime + 3000))
+            {
                 this._applet.dragEnterTime = time;
-            }else
-                return;
+            }
+        }
+
+        if (time > (this._applet.dragEnterTime + 300)) {
+            this._windowHandle(true);
         }
     },
     
@@ -446,7 +450,7 @@ AppGroup.prototype = {
     },
 
     _onAppButtonRelease: function(actor, event) {
-        if (Cinnamon.get_event_state(event) & Clutter.ModifierType.BUTTON1_MASK && this.isFavapp) {
+        if (event.get_state() & Clutter.ModifierType.BUTTON1_MASK && this.isFavapp) {
 	        this.app.open_new_window(-1);
                 this._animate();
                 return;
@@ -454,18 +458,18 @@ AppGroup.prototype = {
         if (!this.lastFocused)
             return;
 
-        if (Cinnamon.get_event_state(event) & Clutter.ModifierType.BUTTON1_MASK) {
+        if (event.get_state() & Clutter.ModifierType.BUTTON1_MASK) {
             if (this.rightClickMenu && this.rightClickMenu.isOpen) {
                 this.rightClickMenu.toggle();
             }
             this._windowHandle(false);
-        }else if (Cinnamon.get_event_state(event) & Clutter.ModifierType.BUTTON2_MASK && !this.isFavapp) {
+        }else if (event.get_state() & Clutter.ModifierType.BUTTON2_MASK && !this.isFavapp) {
             this.lastFocused.delete(global.get_current_time());
         }  
     },
 
     _windowHandle: function(fromDrag){
-            if ( this.lastFocused.has_focus() ) {
+            if (this.lastFocused.has_focus()) {
                 if (fromDrag){
                         return;
                 }
@@ -531,8 +535,9 @@ AppGroup.prototype = {
                                                            orientation: this.orientation});
             let workspaceAppNumber = this.app.get_windows().filter(function(win) { return win.get_workspace() == metaWorkspace; }).length;
             if (this.isFavapp){
-                this._isFavorite(false, metaWindow);
+                this._isFavorite(false);
             }
+            //fix a problem with this.lastFocused not being set when cinnamon is restarted
             if (workspaceAppNumber <= 1) {
                 this.lastFocused = metaWindow;
                 this._windowTitleChanged(this.lastFocused);
@@ -645,14 +650,7 @@ AppGroup.prototype = {
         }
     },
     
-    _isFavorite: function(isFav, metaWindow) {
-        //fix a problem with this.lastFocused not being set when cinnamon is restarted
-        if (!this.lastFocused) {
-            this.lastFocused = metaWindow;
-            this._windowTitleChanged(metaWindow);
-            this.hoverMenu.setMetaWindow(metaWindow);
-            this.rightClickMenu.setMetaWindow(metaWindow);
-        }
+    _isFavorite: function(isFav) {
         this.isFavapp = isFav;
         this.wasFavapp = !(isFav);
         this._appButton._isFavorite(isFav);

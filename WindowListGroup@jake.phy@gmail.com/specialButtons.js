@@ -295,7 +295,7 @@ AppButton.prototype = {
     destroy: function() {
         let tracker = Cinnamon.WindowTracker.get_default();
         tracker.disconnect(this._trackerSignal);
-        this._container.destroy_children();
+        this._container.destroy_all_children();
         this.actor.destroy();
     }
 };
@@ -356,7 +356,7 @@ WindowButton.prototype = {
             this.metaWindow.disconnect(s);
         }));
         windowListSettings.disconnect(this.winTitleSetting);
-        this._container.destroy_children();
+        this._container.destroy_all_children();
         this.actor.destroy();
         this.rightClickMenu.destroy();
     },
@@ -376,19 +376,19 @@ WindowButton.prototype = {
     },
 
     _onButtonRelease: function(actor, event) {
-        if (Cinnamon.get_event_state(event) & Clutter.ModifierType.BUTTON1_MASK && this.isFavapp) {
+        if (event.get_state() & Clutter.ModifierType.BUTTON1_MASK && this.isFavapp) {
 	        this.app.open_new_window(-1);
                 this._animate();
                 return;
         }
-        if (Cinnamon.get_event_state(event) & Clutter.ModifierType.BUTTON1_MASK) {
+        if (event.get_state() & Clutter.ModifierType.BUTTON1_MASK) {
             if (this.metaWindow.has_focus()) {
                 this.metaWindow.minimize(global.get_current_time());
             } else {
                 this.metaWindow.activate(global.get_current_time());
             }
         }
-        if (Cinnamon.get_event_state(event) & Clutter.ModifierType.BUTTON2_MASK && !this.isFavapp) {
+        if (event.get_state() & Clutter.ModifierType.BUTTON2_MASK && !this.isFavapp) {
             if (this.rightClickMenu && this.rightClickMenu.isOpen) {
                 this.rightClickMenu.toggle();
             }
@@ -520,7 +520,7 @@ ButtonBox.prototype = {
     },
 
     destroy: function() {
-        this.actor.destroy_children();
+        this.actor.destroy_all_children();
         this.actor.destroy();
         this.actor = null;
     }
