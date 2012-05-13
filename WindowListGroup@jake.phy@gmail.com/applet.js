@@ -351,6 +351,8 @@ AppGroup.prototype = {
     },
     
     handleDragOver: function(source, actor, x, y, time) {
+        if (this.isFavapp || !windowListSettings.get_boolean("group-apps"))
+            return;
         if (source instanceof AppGroup) return DND.DragMotionResult.CONTINUE;
         
         if (typeof(this._applet.dragEnterTime) == 'undefined') {
@@ -459,9 +461,6 @@ AppGroup.prototype = {
             return;
 
         if (event.get_state() & Clutter.ModifierType.BUTTON1_MASK) {
-            if (this.rightClickMenu && this.rightClickMenu.isOpen) {
-                this.rightClickMenu.toggle();
-            }
             this._windowHandle(false);
         }else if (event.get_state() & Clutter.ModifierType.BUTTON2_MASK && !this.isFavapp) {
             this.lastFocused.delete(global.get_current_time());
@@ -529,16 +528,16 @@ AppGroup.prototype = {
         let tracker = Cinnamon.WindowTracker.get_default();
         if (tracker.get_window_app(metaWindow) == this.app && !this.metaWindows.contains(metaWindow) && tracker.is_window_interesting(metaWindow)) {
             let button = new SpecialButtons.WindowButton({ app: this.app,
+                                                           applet: this._applet,
                                                            isFavapp: false,
                                                            metaWindow: metaWindow,
                                                            iconSize: PANEL_ICON_SIZE,
                                                            orientation: this.orientation});
-            let workspaceAppNumber = this.app.get_windows().filter(function(win) { return win.get_workspace() == metaWorkspace; }).length;
             if (this.isFavapp){
                 this._isFavorite(false);
             }
-            //fix a problem with this.lastFocused not being set when cinnamon is restarted
-            if (workspaceAppNumber <= 1) {
+            //fix a problem with this.lastFocused not being set for favorites
+            if (!this.lastFocused) {
                 this.lastFocused = metaWindow;
                 this._windowTitleChanged(this.lastFocused);
                 this.rightClickMenu.setMetaWindow(this.lastFocused);

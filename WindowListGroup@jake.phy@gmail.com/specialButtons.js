@@ -312,10 +312,12 @@ WindowButton.prototype = {
 
     _init: function(params) {
         params = Params.parse(params, { app: null,
+                                        applet: null,
                                         isFavapp: false,
                                         metaWindow: null,
                                         iconSize: 24,
                                         orientation: St.Side.TOP});
+        this._applet = params.applet
         this.metaWindow = params.metaWindow;
         this.app = params.app;
         this.isFavapp = params.isFavapp;
@@ -382,11 +384,7 @@ WindowButton.prototype = {
                 return;
         }
         if (event.get_state() & Clutter.ModifierType.BUTTON1_MASK) {
-            if (this.metaWindow.has_focus()) {
-                this.metaWindow.minimize(global.get_current_time());
-            } else {
-                this.metaWindow.activate(global.get_current_time());
-            }
+            this._windowHandle(false);
         }
         if (event.get_state() & Clutter.ModifierType.BUTTON2_MASK && !this.isFavapp) {
             if (this.rightClickMenu && this.rightClickMenu.isOpen) {
@@ -394,6 +392,43 @@ WindowButton.prototype = {
             }
             this.metaWindow.delete(global.get_current_time());
         }
+    },
+
+    handleDragOver: function(source, actor, x, y, time) {
+        if (this.isFavapp)
+            return;
+        if (source instanceof WindowButton) return DND.DragMotionResult.CONTINUE;
+        
+        if (typeof(this._applet.dragEnterTime) == 'undefined') {
+            this._applet.dragEnterTime = time;
+        } else {
+            if (time > (this._applet.dragEnterTime + 3000))
+            {
+                this._applet.dragEnterTime = time;
+            }
+        }
+
+        if (time > (this._applet.dragEnterTime + 300)) {
+            this._windowHandle(true);
+        }
+    },
+    
+    acceptDrop: function(source, actor, x, y, time) {
+        return false;
+    },
+
+    _windowHandle: function(fromDrag){
+            if (this.metaWindow.has_focus()) {
+                if (fromDrag){
+                        return;
+                }
+                this.metaWindow.minimize(global.get_current_time());
+            }else {
+                if (this.metaWindow.minimized) {
+                    this.metaWindow.unminimize(global.get_current_time()); 
+                }
+                this.metaWindow.activate(global.get_current_time());
+            }
     },
 
     _onFocusChange: function() {
