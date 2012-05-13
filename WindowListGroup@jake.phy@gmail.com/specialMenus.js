@@ -22,15 +22,6 @@ const SpecialButtons = AppletDir.specialButtons;
 
 const THUMBNAIL_ICON_SIZE = 16;
 const OPACITY_OPAQUE = 255;
-/*const OPTIONS = AppletDir.options.OPTIONS
-const HOVER_MENU_TIMEOUT = OPTIONS['THUMBNAIL_MENU_TIMEOUT'];
-//windowListSettings.get_int("thumbnail-timeout");
-const THUMBNAIL_SIZE = OPTIONS['THUMBNAIL_SIZE'];
-//windowListSettings.get_int("thumbnail-size");
-const OPACITY_TRANSPARENT = OPTIONS['HOVER_PEEK_OPACITY'];
-//windowListSettings.get_int("hover-peek-opacity");
-const TRANSITION_TIME = windowListSettings.get_int("hover-peek-time") * 0.001;*/
-//windowListSettings.get_int("hover-peek-time");
 
 function AppMenuButtonRightClickMenu() {
     this._init.apply(this, arguments);
@@ -543,7 +534,7 @@ WindowThumbnail.prototype = {
 							    this.button.show();
 							}
 
-							if ( this.metaWindow.minimized ) {
+							if (this.metaWindow.minimized && windowListSettings.get_boolean("enable-hover-peek")) {
             						    this.metaWindow.unminimize();
 	    						    this.wasMinimized = true;
 							}else
