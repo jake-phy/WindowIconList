@@ -838,13 +838,13 @@ AppList.prototype = {
 
             // We also need to monitor the state 'cause some pesky apps (namely: plugin_container left over after fullscreening a flash video)
             // don't report having zero windows after they close
-            let appStateSignal = app.connect('notify::state', Lang.bind(this, function(app) {
+            /*let appStateSignal = app.connect('notify::state', Lang.bind(this, function(app) {
                 if (app.state == Cinnamon.AppState.STOPPED && this._appList.contains(app) && !this._whitelist_app(app)) {
                     this._removeApp(app);
                 }
-            }));
+            }));*/
 
-            this._appList.set(app, { appGroup: appGroup, signals: [appStateSignal] });
+            this._appList.set(app, { appGroup: appGroup/*, signals: [appStateSignal] */});
             // TODO not quite ready yet for prime time
             /* appGroup.connect('focus-state-change', function(group, focusState) {
                 if (focusState) {
@@ -866,9 +866,9 @@ AppList.prototype = {
             }
             this._appList.remove(app);
             appGroup['appGroup'].destroy();
-            appGroup['signals'].forEach(function(s) {
+            /*appGroup['signals'].forEach(function(s) {
                 app.disconnect(s);
-            });
+            });*/
         }
     },
 
