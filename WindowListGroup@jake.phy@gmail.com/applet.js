@@ -521,7 +521,6 @@ AppGroup.prototype = {
             this._windowTitleChanged(this.lastFocused);
             this.rightClickMenu.setMetaWindow(this.lastFocused);
         }
-        this._calcWindowNumber(metaWorkspace);
     },
                 
     _windowAdded: function(metaWorkspace, metaWindow) {
@@ -537,7 +536,8 @@ AppGroup.prototype = {
                 this._isFavorite(false);
             }
             //fix a problem with this.lastFocused not being set for favorites
-            if (!this.lastFocused) {
+            let windowNum = this.app.get_windows().filter(function(win) { return win.get_workspace() == metaWorkspace; }).length;
+            if (windowNum == 1) {
                 this.lastFocused = metaWindow;
                 this._windowTitleChanged(this.lastFocused);
                 this.rightClickMenu.setMetaWindow(this.lastFocused);
@@ -838,13 +838,13 @@ AppList.prototype = {
 
             // We also need to monitor the state 'cause some pesky apps (namely: plugin_container left over after fullscreening a flash video)
             // don't report having zero windows after they close
-            /*let appStateSignal = app.connect('notify::state', Lang.bind(this, function(app) {
-                if (app.state == Cinnamon.AppState.STOPPED && this._appList.contains(app) && !this._whitelist_app(app)) {
+            let appStateSignal = app.connect('notify::state', Lang.bind(this, function(app) {
+                if (app.state == Cinnamon.AppState.STOPPED && this._appList.contains(app)) {
                     this._removeApp(app);
                 }
-            }));*/
+            }));
 
-            this._appList.set(app, { appGroup: appGroup/*, signals: [appStateSignal] */});
+            this._appList.set(app, { appGroup: appGroup, signals: [appStateSignal] });
             // TODO not quite ready yet for prime time
             /* appGroup.connect('focus-state-change', function(group, focusState) {
                 if (focusState) {
@@ -866,9 +866,9 @@ AppList.prototype = {
             }
             this._appList.remove(app);
             appGroup['appGroup'].destroy();
-            /*appGroup['signals'].forEach(function(s) {
+            appGroup['signals'].forEach(function(s) {
                 app.disconnect(s);
-            });*/
+            });
         }
     },
 
