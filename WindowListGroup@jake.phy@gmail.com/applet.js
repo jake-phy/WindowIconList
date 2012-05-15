@@ -870,6 +870,8 @@ AppList.prototype = {
                 app.disconnect(s);
             });
         }
+        // have to delay to fix openoffice start-center bug 
+        Mainloop.timeout_add(0, Lang.bind(this, this._refreshApps));
     },
 
 
@@ -884,21 +886,6 @@ AppList.prototype = {
              if(!app) app = appSys.lookup_settings_app(launchers[i]);
              this._windowAdded(this.metaWorkspace, null, app, true);
 	}
-    },
-
-   _whitelist_app: function (parentApp) {
-        let whitelist_apps = windowListSettings.get_strv('whitelist-apps'),
-            appSys = Cinnamon.AppSystem.get_default();
-        for (var i = 0; i < whitelist_apps.length; i++) {
-            let app = appSys.lookup_app(whitelist_apps[i]);
-            if(!app) app = appSys.lookup_settings_app(whitelist_apps[i]);
-            if (app == parentApp) {
-                return true;
-            } else if (app > parentApp) {
-                return false;
-            }
-        }
-        return false;
     },
 
     _windowRemoved: function(metaWorkspace, metaWindow) {

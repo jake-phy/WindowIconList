@@ -56,12 +56,5 @@
       <default>50</default>
       <summary>Hover Peek Fade in/out time</summary>
     </key>
-    <key type="as" name="whitelist-apps">
-	<default>[ 'libreoffice-startcenter.desktop' ]
-	</default>
-	<summary>List of desktop file IDs for whitelisting applications</summary>
-	<description>The applications corresponding to these identifiers will not be terminated when cinnamon.appstate = none.
-	</description>
-    </key>
   </schema>
 </schemalist>
