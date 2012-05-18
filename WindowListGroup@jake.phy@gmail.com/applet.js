@@ -312,7 +312,6 @@ AppGroup.prototype = {
         this.windowButtonsVisible = true;
 
         this._appButton.actor.connect('button-release-event', Lang.bind(this, this._onAppButtonRelease));
-        windowListSettings.connect("changed::number-display", Lang.bind(this, this._calcWindowNumber));
         // Set up the right click menu for this._appButton
         this.rightClickMenu = new SpecialMenus.AppMenuButtonRightClickMenu(this._appButton.actor, this.metaWindow, this.app, isFavapp, orientation);
         this._menuManager = new PopupMenu.PopupMenuManager(this);
@@ -546,12 +545,16 @@ AppGroup.prototype = {
                 
             this._windowButtonBox.add(button);
             let signals = [];
-            let winSettingSignal = windowListSettings.connect("changed::title-display", Lang.bind(this, function() {
+            let settings = [];
+            settings.push(windowListSettings.connect("changed::title-display", Lang.bind(this, function() {
                 this._windowTitleChanged(this.lastFocused);
-            }));
+            })));
+            settings.push(windowListSettings.connect("changed::number-display", Lang.bind(this, function() {
+                this._calcWindowNumber(metaWorkspace);
+            })));
             signals.push(metaWindow.connect('notify::title', Lang.bind(this, this._windowTitleChanged)));
             signals.push(metaWindow.connect('notify::appears-focused', Lang.bind(this, this._focusWindowChange)));
-            let data = { settings: winSettingSignal,
+            let data = { settings: settings,
                          signals: signals,
                          windowButton: button };
             this.metaWindows.set(metaWindow, data);
@@ -569,7 +572,9 @@ AppGroup.prototype = {
             deleted['signals'].forEach(function(s) {
                 metaWindow.disconnect(s);
             });
-            windowListSettings.disconnect(deleted['settings']);
+            deleted['settings'].forEach(function(s) {
+                windowListSettings.disconnect(s);
+            });
             this._windowButtonBox.remove(deleted['windowButton']);
             deleted['windowButton'].destroy();
 
@@ -712,7 +717,9 @@ AppGroup.prototype = {
             data['signals'].forEach(function(s) {
                 win.disconnect(s);
             });
-            windowListSettings.disconnect(data['settings']);
+            data['settings'].forEach(function(s) {
+                windowListSettings.disconnect(s);
+            });
         });
         this._appButton.destroy();
         this._windowButtonBox.destroy();
@@ -841,6 +848,7 @@ AppList.prototype = {
             let appStateSignal = app.connect('notify::state', Lang.bind(this, function(app) {
                 if (app.state == Cinnamon.AppState.STOPPED && this._appList.contains(app)) {
                     this._removeApp(app);
+                    appGroup._calcWindowNumber(metaWorkspace);
                 }
             }));
 
@@ -862,6 +870,8 @@ AppList.prototype = {
         if (appGroup) {
             if (appGroup['appGroup'].wasFavapp || appGroup['appGroup'].isFavapp) {
                appGroup['appGroup']._isFavorite(true);
+               // have to delay to fix openoffice start-center bug 
+               Mainloop.timeout_add(0, Lang.bind(this, this._refreshApps));
                return;
             }
             this._appList.remove(app);
@@ -869,12 +879,10 @@ AppList.prototype = {
             appGroup['signals'].forEach(function(s) {
                 app.disconnect(s);
             });
+            Mainloop.timeout_add(0, Lang.bind(this, this._refreshApps));
         }
-        // have to delay to fix openoffice start-center bug 
-        Mainloop.timeout_add(0, Lang.bind(this, this._refreshApps));
+
     },
-
-
 
     _loadFavorites: function() {
 	if (!windowListSettings.get_boolean("show-favorites"))
@@ -900,7 +908,7 @@ AppList.prototype = {
             log(e.name + ': ' + e.message);
             return;
         }
-        let hasWindowsOnWorkspace = app.get_windows().some(function(win) { return win.get_workspace() == metaWorkspace; });
+        let hasWindowsOnWorkspace = app.get_windows().some(function(win) { return win.get_workspace() == metaWorkspace });
         if (app && !hasWindowsOnWorkspace) {
             this._removeApp(app);
         }

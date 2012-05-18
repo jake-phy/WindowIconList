@@ -64,9 +64,8 @@ IconLabelButton.prototype = {
         this._container.add_actor(this._iconBox);
         this._label = new St.Label();
         this._container.add_actor(this._label);
-     	this._numLabel = new St.Label();
-        this._numLabel.add_style_class_name('window-list-item-label');
-        this._numLabel.set_style('text-shadow: black 1px 1px 1px;')
+     	this._numLabel = new St.Label({ style_class: 'window-list-item-label' });
+        this._numLabel.set_style('text-shadow: black 1px 0px 2px');
     	this._container.add_actor(this._numLabel);
         this._iconBottomClip = 0;
     },
@@ -295,7 +294,7 @@ AppButton.prototype = {
     destroy: function() {
         let tracker = Cinnamon.WindowTracker.get_default();
         tracker.disconnect(this._trackerSignal);
-        this._container.destroy_all_children();
+        this._container.destroy_children();
         this.actor.destroy();
     }
 };
@@ -358,7 +357,7 @@ WindowButton.prototype = {
             this.metaWindow.disconnect(s);
         }));
         windowListSettings.disconnect(this.winTitleSetting);
-        this._container.destroy_all_children();
+        this._container.destroy_children();
         this.actor.destroy();
         this.rightClickMenu.destroy();
     },
@@ -555,7 +554,7 @@ ButtonBox.prototype = {
     },
 
     destroy: function() {
-        this.actor.destroy_all_children();
+        this.actor.destroy_children();
         this.actor.destroy();
         this.actor = null;
     }
