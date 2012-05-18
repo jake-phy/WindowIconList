@@ -27,6 +27,12 @@ const ICON_PADDING_TOP = 0;
 
 const AppletDir = imports.ui.appletManager.applets['WindowListGroup@jake.phy@gmail.com'];
 
+const TitleDisplay = {
+	none: 0,
+	app: 1,
+	title: 2
+}
+
 
 // Creates a button with an icon and a label.
 // The label text must be set with setText
@@ -340,7 +346,7 @@ WindowButton.prototype = {
             this.signals.push(this.metaWindow.connect('notify::urgent', Lang.bind(this, this._onAttentionRequest)));
             this.signals.push(this.metaWindow.connect('notify::demands-attention', Lang.bind(this, this._onAttentionRequest)));
             this.winTitleSetting = windowListSettings.connect("changed::title-display", Lang.bind(this, function() {
-            this._onTitleChange(this.metaWindow);
+            this._onTitleChange();
             }));
 
             this._onFocusChange();
@@ -465,7 +471,7 @@ WindowButton.prototype = {
         else
            [title, appName] = [this.metaWindow.get_title(), this.app.get_name()];
         switch(windowListSettings.get_enum("title-display")) {
-            case 'TITLE':
+            case TitleDisplay.title:
                 // Some apps take a long time to set a valid title.  We don't want to error
                 // if title is null
                 if (title) {
@@ -475,12 +481,12 @@ WindowButton.prototype = {
                     this._label.set_text(appName);
                     break;
                 }
-            case 'APP':
+            case TitleDisplay.app:
                 if (appName) {
                     this._label.set_text(appName);
                     break;
                 }
-            case 'NONE':
+            case TitleDisplay.none:
             default:
                 this._label.set_text('');
         }
