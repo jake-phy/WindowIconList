@@ -90,14 +90,18 @@ class CinnamonListSettings:
     def __init__(self):
         self.window = Gtk.Window(title='Window List Settings')
         self.window.connect('destroy', Gtk.main_quit)
+	self.window.set_default_size(320, 50)
+	self.window.set_border_width(5)
+	self.window.set_position(Gtk.WindowPosition.CENTER)
 
 	self.space = NewLabel('')
 	self.space2 = NewLabel('')
+	self.space3 = NewLabel('')
 
 	self.window_list_settings = NewLabel('WINDOW LIST SETTINGS')
 	self.list_title_display = GSettingsRadioButton('Window Title Display', "org.cinnamon.applets.windowListGroup", 'title-display', [(0, 'none'), (1, 'app'), (2, 'title')], "title: display the window title, app: diplay app name, none: don't display anything")
-        self.list_show_favs = GSettingsCheckButton("Show Favorites", "org.cinnamon.applets.windowListGroup", "show-favorites", "Checked: show favorites, else: hide them")
-        self.list_group_apps = GSettingsCheckButton("Group Apps into one icon", "org.cinnamon.applets.windowListGroup", "group-apps", "Checked: group windows into one app icon, else: every window has it's own icon")
+        self.list_group_apps = GSettingsCheckButton("Group Apps into one Icon", "org.cinnamon.applets.windowListGroup", "group-apps", "Checked: group windows into one app icon, else: every window has it's own icon")
+        self.seperate_favorites = GSettingsRadioButton('Favorites Display', "org.cinnamon.applets.windowListGroup", 'favorites-display', [(0, 'favorites'), (1, 'pinned'), (2, 'none')], "favorites: display the favorites, pinned: display pinned apps instead of favorites, none: don't display anything")
 	self.list_number_display = GSettingsRadioButton('List Number Display', "org.cinnamon.applets.windowListGroup", 'number-display', [(0, 'smart'), (1, 'normal'), (2, 'none')], "normal: display window number, smart: display window number if more than one window, none: don't display number")
 	self.thumbnail_settings = NewLabel('THUMBNAIL SETTINGS')
         self.thumbnail_size = GSettingsSpinButton("Size of Thumbnails", "org.cinnamon.applets.windowListGroup", "thumbnail-size", 5, 30, 1, 1, "Thumbnail Size; Default is ten")
@@ -111,8 +115,9 @@ class CinnamonListSettings:
         self.vbox = Gtk.VBox();
         self.vbox.add(self.window_list_settings)
         self.vbox.add(self.list_title_display)
-        self.vbox.add(self.list_show_favs)
         self.vbox.add(self.list_group_apps)
+        self.vbox.add(self.seperate_favorites)
+        self.vbox.add(self.space3)
         self.vbox.add(self.list_number_display)
         self.vbox.add(self.space)
         self.vbox.add(self.thumbnail_settings)

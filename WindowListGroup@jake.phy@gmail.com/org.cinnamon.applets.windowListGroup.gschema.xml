@@ -11,6 +11,11 @@
     <value nick="none" value="2" />
     <value nick="all" value="3" />
   </enum>
+  <enum id="win-favorites-display">
+    <value nick="favorites" value="0" />
+    <value nick="pinned-apps" value="1" />
+    <value nick="none" value="2" />
+  </enum>
   <enum id="thumbnail-sort">
     <value nick="focused" value="0" />
     <value nick="opened" value="1" />
@@ -24,6 +29,10 @@
       <default>'normal'</default>
       <summary>normal: display window number, smart: display window number if more than one window, none: don't display number, all: display window number for favorites too </summary>
     </key>
+    <key name="favorites-display" enum="win-favorites-display">
+      <default>'pinned-apps'</default>
+      <summary>favorites: display favorites, pinned-apps: display pinned apps instead of favorites, none: don't display anything </summary>
+    </key>
     <key name="sort-thumbnails" enum="thumbnail-sort">
       <default>'opened'</default>
       <summary>opened: sort by first opened, focused: sort by last focused</summary>
@@ -31,10 +40,6 @@
     <key type="b" name="group-apps">
       <default>true</default>
       <summary>true: group windows into one app icon, false: every window has it's own icon</summary>
-    </key>
-    <key type="b" name="show-favorites">
-      <default>true</default>
-      <summary>true: show favorites, false: hide them</summary>
     </key>
     <key type="b" name="enable-hover-peek">
       <default>true</default>
@@ -55,6 +60,11 @@
     <key type="i" name="hover-peek-time">
       <default>50</default>
       <summary>Hover Peek Fade in/out time</summary>
+    </key>
+    <key type="as" name="pinned-apps">
+      <default>[ 'firefox.desktop', 'mintInstall.desktop', 'cinnamon-settings.desktop', 'xchat.desktop', 'gnome-terminal.desktop', 'nautilus.desktop' ]</default>
+      <summary>List of desktop file IDs for pinned applications</summary>
+      <description>The applications corresponding to these identifiers will be displayed in the favorites area.</description>
     </key>
   </schema>
 </schemalist>
