@@ -25,9 +25,9 @@ const DND = imports.ui.dnd;
 const AppFavorites = imports.ui.appFavorites;
 
 const LIST_SCHEMAS = "org.cinnamon.applets.windowListGroup";
-let windowListSettings = new Gio.Settings({
-    schema: LIST_SCHEMAS
-});
+let windowListSettings;
+if (Gio.Settings.list_schemas().indexOf(LIST_SCHEMAS) != -1)
+    windowListSettings = new Gio.Settings({schema: LIST_SCHEMAS});
 
 const PANEL_ICON_SIZE = 24;
 const SPINNER_ANIMATION_TIME = 1;
@@ -294,7 +294,7 @@ PinnedFavs.prototype = {
     },
 
     _favoriteType: function () {
-        if (windowListSettings.get_enum("favorites-display") == FavType.pinnedApps) {
+        if (windowListSettings && windowListSettings.get_enum("favorites-display") == FavType.pinnedApps) {
             this.settings = windowListSettings;
             this.FAVORITE_APPS_KEY = FavType.pinned;
         } else {

@@ -12,9 +12,9 @@ const Gio = imports.gi.Gio;
 const Tweener = imports.ui.tweener;
 
 const LIST_SCHEMAS = "org.cinnamon.applets.windowListGroup";
-let windowListSettings = new Gio.Settings({
-    schema: LIST_SCHEMAS
-});
+let windowListSettings;
+if (Gio.Settings.list_schemas().indexOf(LIST_SCHEMAS) != -1)
+    windowListSettings = new Gio.Settings({schema: LIST_SCHEMAS});
 
 const AppletMetaDir = imports.ui.appletManager.appletMeta["WindowListGroup@jake.phy@gmail.com"].path;
 const AppletDir = imports.ui.appletManager.applets['WindowListGroup@jake.phy@gmail.com'];

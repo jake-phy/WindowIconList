@@ -17,9 +17,9 @@ const Meta = imports.gi.Meta;
 const DND = imports.ui.dnd;
 
 const LIST_SCHEMAS = "org.cinnamon.applets.windowListGroup";
-let windowListSettings = new Gio.Settings({
-    schema: LIST_SCHEMAS
-});
+let windowListSettings;
+if (Gio.Settings.list_schemas().indexOf(LIST_SCHEMAS) != -1)
+    windowListSettings = new Gio.Settings({schema: LIST_SCHEMAS});
 
 const BUTTON_BOX_ANIMATION_TIME = 0.5;
 const MAX_BUTTON_WIDTH = 150; // Pixels
