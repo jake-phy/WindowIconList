@@ -4,6 +4,7 @@
     <value value="0" nick="none"/>
     <value value="1" nick="app"/>
     <value value="2" nick="title"/>
+    <value value="3" nick="focused"/>
   </enum>
   <enum id="win-number-display">
     <value nick="smart" value="0" />
@@ -23,7 +24,7 @@
   <schema path="/org/cinnamon/applets/windowListGroup/" id="org.cinnamon.applets.windowListGroup">
     <key name="title-display" enum="win-title-display">
       <default>'none'</default>
-      <summary>title: display the window title, app: diplay app name, none: don't display anything</summary>
+      <summary>focused: show focused window title, title: display the window title, app: diplay app name, none: don't display anything</summary>
     </key>
     <key name="number-display" enum="win-number-display">
       <default>'normal'</default>
@@ -65,6 +66,44 @@
       <default>[ 'firefox.desktop', 'mintInstall.desktop', 'cinnamon-settings.desktop', 'xchat.desktop', 'gnome-terminal.desktop', 'nautilus.desktop' ]</default>
       <summary>List of desktop file IDs for pinned applications</summary>
       <description>The applications corresponding to these identifiers will be displayed in the favorites area.</description>
+    </key>
+  </schema>
+  <schema path="/org/cinnamon/applets/windowListGroup/keybindings/" id="org.cinnamon.applets.windowListGroup.keybindings">
+    <key type="as" name="launch-app-key-1">
+      <default><![CDATA[['<Super>1']]]></default>
+      <summary>open new window using keyboard</summary>
+    </key>
+    <key type="as" name="launch-app-key-2">
+      <default><![CDATA[['<Super>2']]]></default>
+      <summary>open new window using keyboard</summary>
+    </key>
+    <key type="as" name="launch-app-key-3">
+      <default><![CDATA[['<Super>3']]]></default>
+      <summary>open new window using keyboard</summary>
+    </key>
+    <key type="as" name="launch-app-key-4">
+      <default><![CDATA[['<Super>4']]]></default>
+      <summary>open new window using keyboard</summary>
+    </key>
+    <key type="as" name="launch-app-key-5">
+      <default><![CDATA[['<Super>5']]]></default>
+      <summary>open new window using keyboard</summary>
+    </key>
+    <key type="as" name="launch-app-key-6">
+      <default><![CDATA[['<Super>6']]]></default>
+      <summary>open new window using keyboard</summary>
+    </key>
+    <key type="as" name="launch-app-key-7">
+      <default><![CDATA[['<Super>7']]]></default>
+      <summary>open new window using keyboard</summary>
+    </key>
+    <key type="as" name="launch-app-key-8">
+      <default><![CDATA[['<Super>8']]]></default>
+      <summary>open new window using keyboard</summary>
+    </key>
+    <key type="as" name="launch-app-key-9">
+      <default><![CDATA[['<Super>9']]]></default>
+      <summary>open new window using keyboard</summary>
     </key>
   </schema>
 </schemalist>

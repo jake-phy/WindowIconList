@@ -297,12 +297,12 @@ AppThumbnailHoverMenu.prototype = {
 
         this.parentActor.connect('enter-event', Lang.bind(this, this._onEnter));
         this.parentActor.connect('leave-event', Lang.bind(this, this._onLeave));
-        this.parentActor.connect('button-press-event', Lang.bind(this, this._onButtonPress));
+        this.parentActor.connect('button-release-event', Lang.bind(this, this._onButtonPress));
 
         this.actor.connect('enter-event', Lang.bind(this, this._onMenuEnter));
         this.actor.connect('leave-event', Lang.bind(this, this._onMenuLeave));
 
-        this.actor.connect('button-press-event', Lang.bind(this, this._onButtonPress));
+        this.actor.connect('button-release-event', Lang.bind(this, this._onButtonPress));
     },
 
     _onButtonPress: function (actor, event) {

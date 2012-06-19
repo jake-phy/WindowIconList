@@ -19,17 +19,18 @@ const Gio = imports.gi.Gio;
 const Main = imports.ui.main;
 const Mainloop = imports.mainloop;
 const Tweener = imports.ui.tweener;
+const Meta = imports.gi.Meta;
 const PopupMenu = imports.ui.popupMenu;
 const Signals = imports.signals;
 const DND = imports.ui.dnd;
 const AppFavorites = imports.ui.appFavorites;
 
 const LIST_SCHEMAS = "org.cinnamon.applets.windowListGroup";
+const FIND_SCHEMA = Gio.Settings.list_schemas().indexOf(LIST_SCHEMAS) != -1
 let windowListSettings;
-if (Gio.Settings.list_schemas().indexOf(LIST_SCHEMAS) != -1)
+if (FIND_SCHEMA)
     windowListSettings = new Gio.Settings({schema: LIST_SCHEMAS});
 
-const PANEL_ICON_SIZE = 24;
 const SPINNER_ANIMATION_TIME = 1;
 
 // Load our applet so we can access other files in our extensions dir as libraries
@@ -40,7 +41,8 @@ const SpecialButtons = AppletDir.specialButtons;
 const TitleDisplay = {
     none: 0,
     app: 1,
-    title: 2
+    title: 2,
+    focused: 3
 }
 const NumberDisplay = {
     smart: 0,
@@ -400,8 +402,7 @@ AppGroup.prototype = {
         this._windowButtonBox = new SpecialButtons.ButtonBox();
         this._appButton = new SpecialButtons.AppButton({
             isFavapp: this.isFavapp,
-            app: this.app,
-            iconSize: PANEL_ICON_SIZE
+            app: this.app
         });
         this.myactor = new St.BoxLayout({
             reactive: true
@@ -413,7 +414,11 @@ AppGroup.prototype = {
         this.appButtonVisible = true;
         this.windowButtonsVisible = true;
 
+        this._metaDisplay = global.screen.get_display();
+
         this._appButton.actor.connect('button-release-event', Lang.bind(this, this._onAppButtonRelease));
+        //global.screen.connect('event', Lang.bind(this, this._onAppKeyPress));
+//        global.screen.connect('key-release-event', Lang.bind(this, this._onAppKeyReleased));
         // Set up the right click menu for this._appButton
         this.rightClickMenu = new SpecialMenus.AppMenuButtonRightClickMenu(this._appButton.actor, this.metaWindow, this.app, isFavapp, orientation);
         this._menuManager = new PopupMenu.PopupMenuManager(this);
@@ -550,8 +555,8 @@ AppGroup.prototype = {
         this._appButton.hideLabel(animate)
     },
 
-    showAppButtonLabel: function (animate) {
-        this._appButton.showLabel(animate)
+    showAppButtonLabel: function (animate, targetWidth) {
+        this._appButton.showLabel(animate, targetWidth);
     },
 
     _onAppButtonRelease: function (actor, event) {
@@ -567,6 +572,20 @@ AppGroup.prototype = {
         } else if (event.get_state() & Clutter.ModifierType.BUTTON2_MASK && !this.isFavapp) {
             this.lastFocused.delete(global.get_current_time());
         }
+    },
+
+    _newAppKeyNumber: function (number) {
+        if (this.keyBinding)
+            this._metaDisplay.remove_keybinding('launch-app-key-' + this.keyNumber.toString());
+        if (number < 10 && FIND_SCHEMA)
+            this._metaDisplay.add_keybinding('launch-app-key-' + number.toString(), LIST_SCHEMAS + '.keybindings', 0, Lang.bind(this, this._onAppKeyPress));
+        this.keyBinding = true; 
+        this.keyNumber = number;
+    },
+
+    _onAppKeyPress: function (number) {
+        this.app.open_new_window(-1);
+        this._animate();
     },
 
     _windowHandle: function (fromDrag) {
@@ -633,7 +652,6 @@ AppGroup.prototype = {
                 applet: this._applet,
                 isFavapp: false,
                 metaWindow: metaWindow,
-                iconSize: PANEL_ICON_SIZE,
                 orientation: this.orientation
             });
             //fix a problem with this.lastFocused not being set for favorites
@@ -655,6 +673,7 @@ AppGroup.prototype = {
             let signals = [];
             let settings = [];
             settings.push(windowListSettings.connect("changed::title-display", Lang.bind(this, function () {
+                this._titleDisplayChanged(this.lastFocused);
                 this._windowTitleChanged(this.lastFocused);
             })));
             settings.push(windowListSettings.connect("changed::number-display", Lang.bind(this, function () {
@@ -719,6 +738,13 @@ AppGroup.prototype = {
                 this._appButton._label.set_text(title);
                 break;
             }
+        case TitleDisplay.focused:
+            // Some apps take a long time to set a valid title.  We don't want to error
+            // if title is null
+            if (title) {
+                this._appButton._label.set_text(title);
+                break;
+            }
         case TitleDisplay.app:
             if (appName) {
                 this._appButton._label.set_text(appName);
@@ -730,6 +756,24 @@ AppGroup.prototype = {
         }
     },
 
+    _titleDisplayChanged: function () {
+        switch (windowListSettings.get_enum("title-display")) {
+        case TitleDisplay.title:
+            this.showAppButtonLabel(true, 150);
+            break;
+        case TitleDisplay.focused:
+            this.hideAppButtonLabel(true);
+            this._updateFocusedStatus(true);
+            break
+        case TitleDisplay.app:
+            this.showAppButtonLabel(true, 150);
+            break;
+        case TitleDisplay.none:
+        default:
+            this.hideAppButtonLabel(true);
+        }
+    },
+
     _focusWindowChange: function (metaWindow) {
         if (metaWindow.appears_focused) {
             this.lastFocused = metaWindow;
@@ -737,20 +781,26 @@ AppGroup.prototype = {
             if (windowListSettings.get_enum("sort-thumbnails") == SortThumbs.focused) this.hoverMenu.setMetaWindow(this.lastFocused);
             this.rightClickMenu.setMetaWindow(this.lastFocused);
         }
-        this._updateFocusedStatus();
+        if (windowListSettings.get_enum("title-display") == TitleDisplay.focused)
+            this._updateFocusedStatus();
     },
 
-    // Monitors whether any windows of this.app have focus
-    // Emits a focus-status-change event if this chagnes
-    _updateFocusedStatus: function () {
+    _updateFocusedStatus: function (force) {
         let changed = false;
         let focusState = this.metaWindows.keys().some(function (win) {
             return win.appears_focused;
         });
-        if (this.focusState !== focusState) {
-            this.emit('focus-state-change', focusState);
-        }
+        if (this.focusState != focusState || force)
+            this._focusedLabel(focusState);
         this.focusState = focusState;
+    },
+
+    _focusedLabel: function (focusState) {
+        if (focusState) {
+            this.showAppButtonLabel(true, 150);
+        } else {
+            this.hideAppButtonLabel(true);
+        }
     },
 
     _loadWinBoxFavs: function () {
@@ -759,7 +809,6 @@ AppGroup.prototype = {
                 app: this.app,
                 isFavapp: true,
                 metaWindow: null,
-                iconSize: PANEL_ICON_SIZE,
                 orientation: this.orientation
             });
             this._windowButtonBox.add(button);
@@ -840,6 +889,7 @@ AppGroup.prototype = {
                 windowListSettings.disconnect(s);
             });
         });
+        this._metaDisplay.remove_keybinding('launch-app-key-' + this.keyNumber.toString());
         this._appButton.destroy();
         this._windowButtonBox.destroy();
         this.actor.destroy();
@@ -929,6 +979,25 @@ AppList.prototype = {
         this._refreshApps();
     },
 
+    _appGroupNumber: function (parentApp) {
+        let i = 0;
+        let number;
+        this._appList.forEach(function (app, data) {
+            ++i;
+            if (app == parentApp)
+                number = i;
+        });
+        return number;
+    },
+
+    _refreshAppGroupNumber: function () {
+        let i = 0;
+        this._appList.forEach(function (app, data) {
+            ++i;
+            data['appGroup']._newAppKeyNumber(i);
+        });
+    },
+
     _windowAdded: function (metaWorkspace, metaWindow, favapp, isFavapp) {
         // Check to see if the window that was added already has an app group.
         // If it does, then we don't need to do anything.  If not, we need to
@@ -968,14 +1037,11 @@ AppList.prototype = {
                 appGroup: appGroup,
                 signals: [appStateSignal]
             });
-            // TODO not quite ready yet for prime time
-/*appGroup.connect('focus-state-change', function(group, focusState) {
-                if (focusState) {
-                    group.showAppButtonLabel(true);
-                } else {
-                    group.hideAppButtonLabel(true);
-                }
-            });*/
+            let appGroupNum = this._appGroupNumber(app);
+            appGroup._newAppKeyNumber(appGroupNum);
+
+            if (windowListSettings.get_enum("title-display") == TitleDisplay.focused)
+                appGroup.hideAppButtonLabel(false);
         }
     },
 
@@ -994,7 +1060,10 @@ AppList.prototype = {
             appGroup['signals'].forEach(function (s) {
                 app.disconnect(s);
             });
-            Mainloop.timeout_add(0, Lang.bind(this, this._refreshApps));
+            Mainloop.timeout_add(15, Lang.bind(this, function () {
+                this._refreshApps();
+                this._refreshAppGroupNumber();
+            }));
         }
 
     },

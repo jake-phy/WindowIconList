@@ -1,5 +1,27 @@
 Changelog
+2.7
 
+Added Highlighting for activity in windows 
+Added Keybindings for launching Favorites
+___________
+2.6.1
+
+fixed cinnamon crashing when schema not loaded
+____
+2.6 
+added option for pinned-apps which are seperate from the menu favorites 
+fixed a drag and drop bug
+_________
+2.5.2
+
+fixed app buttons not closing
+fixed title not showing when when apps are not grouped
+____
+2.5.1
+
+fixed openoffice bug
+fixed thumbnail bug
+____
 2.5
 
 Lots of Bugfixes
@@ -9,9 +31,7 @@ ___________
 2.4
 
 added gesettings
-
 added option to sort thumbnail by when they were opened & set option to default
-
 fixed problem with windows in favorite groups not focusing right after resarting cinnamon
 
 ___________
@@ -19,7 +39,6 @@ ___________
 2.2
 
 fixed cinnamon freezing
-
 updated to work in gnome 3.4
 
 ___________
@@ -27,9 +46,7 @@ ___________
 2.1
 
 Added a hover peek feature
-
 Stuck all the options in a seperate file
-
 Bugfixes
 
 ___________
@@ -37,11 +54,8 @@ ___________
 2.0
 
 switched base extension to "Window List" by siefkenj for the app-grouping
-
 Added a window number when grouped.
-
 Thumbnail Preveiws:  major bug fixes and a facelift
-
 Favorites:  made them act like Window 7's Pinned Apps
 
 ___________
@@ -49,9 +63,7 @@ ___________
 1.5
 
 created more options for thumbnails ( in thumbnailPreveiw.js)
-
 made favorites fully drag and drop compatible with main menu
-
 enabled favorites
 
 -------------------
@@ -59,11 +71,8 @@ enabled favorites
 1.4.2
 
 changed file permissions
-
 updated to cinnamon 1.4
-
 added exit button to window previews
-
 disabled favorites(couldn't get it working in cinnamon 1.4)
 
 -------------------
@@ -71,7 +80,6 @@ disabled favorites(couldn't get it working in cinnamon 1.4)
 1.4.1x
 
 added  option to turn favorites on and off in applet.js
-
 and fixed some bugs
 
 -------------------
@@ -79,9 +87,7 @@ and fixed some bugs
 1.4x
 
 updated window preview style
-
 added favorites actor
-
 intergrated favorites into windowlist right click list
 
 -------------------
@@ -91,7 +97,5 @@ intergrated favorites into windowlist right click list
 1.1
 
 added window previews
-
 added,  middle click to close window
-
 changed style to work with cinnamon theme there has to be a better style but i don't know

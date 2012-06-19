@@ -99,7 +99,7 @@ class CinnamonListSettings:
 	self.space3 = NewLabel('')
 
 	self.window_list_settings = NewLabel('WINDOW LIST SETTINGS')
-	self.list_title_display = GSettingsRadioButton('Window Title Display', "org.cinnamon.applets.windowListGroup", 'title-display', [(0, 'none'), (1, 'app'), (2, 'title')], "title: display the window title, app: diplay app name, none: don't display anything")
+	self.list_title_display = GSettingsRadioButton('Window Title Display', "org.cinnamon.applets.windowListGroup", 'title-display', [(0, 'none'), (1, 'app'), (2, 'title'), (3, 'focused')], "title: display the window title, app: diplay app name, none: don't display anything")
         self.list_group_apps = GSettingsCheckButton("Group Apps into one Icon", "org.cinnamon.applets.windowListGroup", "group-apps", "Checked: group windows into one app icon, else: every window has it's own icon")
         self.seperate_favorites = GSettingsRadioButton('Favorites Display', "org.cinnamon.applets.windowListGroup", 'favorites-display', [(0, 'favorites'), (1, 'pinned'), (2, 'none')], "favorites: display the favorites, pinned: display pinned apps instead of favorites, none: don't display anything")
 	self.list_number_display = GSettingsRadioButton('List Number Display', "org.cinnamon.applets.windowListGroup", 'number-display', [(0, 'smart'), (1, 'normal'), (2, 'none')], "normal: display window number, smart: display window number if more than one window, none: don't display number")

@@ -217,13 +217,12 @@ IconLabelButton.prototype = {
             return;
         }
 
-        let width = this.oldLabelWidth || targetWidth;
+        let width = targetWidth;
         if (!width) {
             let[minWidth, naturalWidth] = this._label.get_preferred_width(-1);
             width = naturalWidth;
         }
 
-        this._label.width = 0;
         this._label.show();
         Tweener.addTween(this._label, {
             width: width,
@@ -235,12 +234,12 @@ IconLabelButton.prototype = {
     hideLabel: function (animate) {
         if (!animate) {
             this._label.hide();
+            this._label.width = 1;
             return;
         }
 
-        this.oldLabelWidth = this._label.width;
         Tweener.addTween(this._label, {
-            width: 0,
+            width: 1,
             // FIXME: if this is set to 0, a whole bunch of "Clutter-CRITICAL **: clutter_paint_volume_set_width: assertion `width >= 0.0f' failed" messages appear
             time: BUTTON_BOX_ANIMATION_TIME,
             transition: "easeOutQuad",
@@ -267,16 +266,28 @@ AppButton.prototype = {
     _init: function (params) {
         params = Params.parse(params, {
             isFavapp: false,
-            app: null,
-            iconSize: 24
+            app: null
         });
+        this.icon_size = Math.floor(Main.panel.actor.get_height() - 2);
         this.app = params.app;
-        this.icon = this.app.create_icon_texture(params.iconSize)
+        this.icon = this.app.create_icon_texture(this.icon_size)
         IconLabelButton.prototype._init.call(this, this.icon);
         if (params.isFavapp) this._isFavorite(true);
 
+        this.globalSignals = [];
+
         let tracker = Cinnamon.WindowTracker.get_default();
         this._trackerSignal = tracker.connect('notify::focus-app', Lang.bind(this, this._onFocusChange));
+        this._attention = global.display.connect('window-demands-attention', Lang.bind(this, this._onAttentionRequest));
+        this.globalSignals.push(global.settings.connect('changed::panel-resizable', Lang.bind(this, this._panelSizeChanged)));
+        this.globalSignals.push(global.settings.connect_after('changed::panel-size', Lang.bind(this, this._panelSizeChanged)));
+    },
+
+    _panelSizeChanged: function () {
+        this.icon.destroy();
+        this.icon_size = Math.floor(Main.panel.actor.get_height() - 2);
+        this.icon = this.app.create_icon_texture(this.icon_size)
+        this._iconBox.set_child(this.icon);
     },
 
     _onFocusChange: function () {
@@ -293,17 +304,25 @@ AppButton.prototype = {
         }
     },
 
+    _onAttentionRequest: function () {
+        this.actor.add_style_pseudo_class('window-list-item-demands-attention');
+    },
+
     _isFavorite: function (isFav) {
         if (isFav) {
             this.actor.set_style_class_name('panel-launcher')
-            this._label.set_text('');
+            this.hideLabel(false);
         } else this.actor.set_style_class_name('window-list-item-box');
     },
 
 
     destroy: function () {
+        this.globalSignals.forEach(Lang.bind(this, function (s) {
+            global.settings.disconnect(s);
+        }));
         let tracker = Cinnamon.WindowTracker.get_default();
         tracker.disconnect(this._trackerSignal);
+        global.display.disconnect(this._attention);
         this._container.destroy_children();
         this.actor.destroy();
     }
@@ -327,7 +346,6 @@ WindowButton.prototype = {
             applet: null,
             isFavapp: false,
             metaWindow: null,
-            iconSize: 24,
             orientation: St.Side.TOP
         });
         this._applet = params.applet
@@ -338,9 +356,11 @@ WindowButton.prototype = {
             let tracker = Cinnamom.WindowTracker.get_default();
             this.app = tracker.get_window_app(metaWindow);
         }
-        this.icon = this.app.create_icon_texture(params.iconSize)
+        this.icon_size = Math.floor(Main.panel.actor.get_height() - 2);
+        this.icon = this.app.create_icon_texture(this.icon_size)
         IconLabelButton.prototype._init.call(this, this.icon);
         this.signals = [];
+        this.globalSignals = [];
         this._numLabel.hide();
         if (params.isFavapp) this.actor.set_style_class_name('panel-launcher');
 
@@ -350,14 +370,15 @@ WindowButton.prototype = {
         if (this.metaWindow) {
             this.signals.push(this.metaWindow.connect('notify::appears-focused', Lang.bind(this, this._onFocusChange)));
             this.signals.push(this.metaWindow.connect('notify::title', Lang.bind(this, this._onTitleChange)));
-            this.signals.push(this.metaWindow.connect('notify::urgent', Lang.bind(this, this._onAttentionRequest)));
-            this.signals.push(this.metaWindow.connect('notify::demands-attention', Lang.bind(this, this._onAttentionRequest)));
-            this.winTitleSetting = windowListSettings.connect("changed::title-display", Lang.bind(this, function () {
+            this._attention = global.display.connect('window-demands-attention', Lang.bind(this, this._onAttentionRequest));
+            this._winTitleSetting = windowListSettings.connect("changed::title-display", Lang.bind(this, function () {
                 this._onTitleChange();
             }));
 
             this._onFocusChange();
         }
+        this.globalSignals.push(global.settings.connect('changed::panel-resizable', Lang.bind(this, this._panelSizeChanged)));
+        this.globalSignals.push(global.settings.connect_after('changed::panel-size', Lang.bind(this, this._panelSizeChanged)));
         this._onTitleChange();
         // Set up the right click menu
         this.rightClickMenu = new AppletDir.specialMenus.AppMenuButtonRightClickMenu(this.actor, this.metaWindow, this.app, params.isFavapp, params.orientation);
@@ -369,24 +390,25 @@ WindowButton.prototype = {
         this.signals.forEach(Lang.bind(this, function (s) {
             this.metaWindow.disconnect(s);
         }));
-        windowListSettings.disconnect(this.winTitleSetting);
+        this.globalSignals.forEach(Lang.bind(this, function (s) {
+            global.settings.disconnect(s);
+        }));
+        windowListSettings.disconnect(this._winTitleSetting);
+        global.display.disconnect(this._attention);
         this._container.destroy_children();
         this.actor.destroy();
         this.rightClickMenu.destroy();
     },
 
-    _onAttentionRequest: function () {
-        if (this.metaWindow.urgent) {
-            this.actor.add_style_pseudo_class('background-gradient-start: rgba(52,52,255,0.5);background-gradient-end: rgba(144,144,255,0.5);');
-        } else {
-            this.actor.remove_style_pseudo_class('background-gradient-start: rgba(52,52,255,0.5);background-gradient-end: rgba(144,144,255,0.5);');
-        }
+    _panelSizeChanged: function () {
+        this.icon.destroy();
+        this.icon_size = Math.floor(Main.panel.actor.get_height() - 2);
+        this.icon = this.app.create_icon_texture(this.icon_size)
+        this._iconBox.set_child(this.icon);
+    },
 
-        if (this.metaWindow.demands_attention) {
-            this.actor.add_style_pseudo_class('window-list-item-demands-attention');
-        } else {
-            this.actor.remove_style_pseudo_class('window-list-item-demands-attention');
-        }
+    _onAttentionRequest: function () {
+        this.actor.add_style_pseudo_class('window-list-item-demands-attention');
     },
 
     _onButtonRelease: function (actor, event) {
@@ -582,14 +604,7 @@ _Draggable.prototype = {
     _grabActor: function () {
         //Clutter.grab_pointer(this.actor);
         this._onEventId = this.actor.connect('event', Lang.bind(this, this._onEvent));
-    },
-
-    _ungrabActor: function () {
-        //Clutter.ungrab_pointer();
-        if (!this._onEventId) return;
-        this.actor.disconnect(this._onEventId);
-        this._onEventId = null;
-    },
+    }
 };
 
 function makeDraggable(actor, params) {
