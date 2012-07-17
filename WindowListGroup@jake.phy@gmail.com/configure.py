@@ -14,7 +14,7 @@ class NewTooltip(Gtk.HBox):
         super(NewTooltip, self).__init__()
         if self.text:
             item.set_has_tooltip(True)
-          item.connect('query-tooltip', self.tooltip)
+        item.connect('query-tooltip', self.tooltip)
 
     def tooltip(self, item, x, y, key_mode, tooltip):
         tooltip.set_text(self.text)
