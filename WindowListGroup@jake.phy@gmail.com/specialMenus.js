@@ -393,6 +393,8 @@ PopupMenuAppSwitcherItem.prototype = {
         this.app = app;
         this.isFavapp = isFavapp;
 
+        this.actor.style_class = null;
+
 
         this.appContainer = new St.BoxLayout({
             style_class: 'switcher-list'
