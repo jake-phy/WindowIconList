@@ -13,13 +13,18 @@ const Tweener = imports.ui.tweener;
 
 const LIST_SCHEMAS = "org.cinnamon.applets.windowListGroup";
 let windowListSettings;
-if (Gio.Settings.list_schemas().indexOf(LIST_SCHEMAS) != -1)
-    windowListSettings = new Gio.Settings({schema: LIST_SCHEMAS});
 
 const AppletMetaDir = imports.ui.appletManager.appletMeta["WindowListGroup@jake.phy@gmail.com"].path;
 const AppletDir = imports.ui.appletManager.applets['WindowListGroup@jake.phy@gmail.com'];
 const MainApplet = AppletDir.applet;
 const SpecialButtons = AppletDir.specialButtons;
+const Convenience = AppletDir.convenience
+
+let windowListSettings;
+//if (FIND_SCHEMA)
+//    windowListSettings = new Gio.Settings({schema: LIST_SCHEMAS});
+//if (FIND_SCHEMA)
+    windowListSettings = Convenience.getSettings("org.cinnamon.applets.windowListGroup");
 
 const THUMBNAIL_ICON_SIZE = 16;
 const OPACITY_OPAQUE = 255;
@@ -229,7 +234,7 @@ AppMenuButtonRightClickMenu.prototype = {
     },
 
     _settingMenu: function () {
-        Util.spawnCommandLine(AppletMetaDir + "/cinnamon-window-list-settings.py");
+        Util.spawnCommandLine(AppletMetaDir + "/configure.py");
     },
 
     removeItems: function () {
@@ -611,7 +616,9 @@ WindowThumbnail.prototype = {
         this.wasMinimized = false;
         if (event.get_state() & Clutter.ModifierType.BUTTON1_MASK && !this.stopClick && !this.isFavapp) {
             this.metaWindow.activate(global.get_current_time());
-        }
+        }else if (event.get_state() & Clutter.ModifierType.BUTTON2_MASK && !this.stopClick) {
+            this.metaWindow.delete(global.get_current_time());
+		}
         this.stopClick = false;
     },
 

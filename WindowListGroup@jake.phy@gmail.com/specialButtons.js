@@ -17,9 +17,7 @@ const Meta = imports.gi.Meta;
 const DND = imports.ui.dnd;
 
 const LIST_SCHEMAS = "org.cinnamon.applets.windowListGroup";
-let windowListSettings;
-if (Gio.Settings.list_schemas().indexOf(LIST_SCHEMAS) != -1)
-    windowListSettings = new Gio.Settings({schema: LIST_SCHEMAS});
+
 
 const BUTTON_BOX_ANIMATION_TIME = 0.5;
 const MAX_BUTTON_WIDTH = 150; // Pixels
@@ -27,6 +25,13 @@ const ICON_PADDING_TOP = 0;
 
 const AppletDir = imports.ui.appletManager.applets['WindowListGroup@jake.phy@gmail.com'];
 const Applet = AppletDir.applet;
+const Convenience = AppletDir.convenience
+
+let windowListSettings;
+//if (FIND_SCHEMA)
+//    windowListSettings = new Gio.Settings({schema: LIST_SCHEMAS});
+//if (FIND_SCHEMA)
+    windowListSettings = Convenience.getSettings("org.cinnamon.applets.windowListGroup");
 
 const TitleDisplay = {
     none: 0,
@@ -274,20 +279,9 @@ AppButton.prototype = {
         IconLabelButton.prototype._init.call(this, this.icon);
         if (params.isFavapp) this._isFavorite(true);
 
-        this.globalSignals = [];
-
         let tracker = Cinnamon.WindowTracker.get_default();
         this._trackerSignal = tracker.connect('notify::focus-app', Lang.bind(this, this._onFocusChange));
         this._attention = global.display.connect('window-demands-attention', Lang.bind(this, this._onAttentionRequest));
-        this.globalSignals.push(global.settings.connect('changed::panel-resizable', Lang.bind(this, this._panelSizeChanged)));
-        this.globalSignals.push(global.settings.connect_after('changed::panel-size', Lang.bind(this, this._panelSizeChanged)));
-    },
-
-    _panelSizeChanged: function () {
-        this.icon.destroy();
-        this.icon_size = Math.floor(Main.panel.actor.get_height() - 2);
-        this.icon = this.app.create_icon_texture(this.icon_size)
-        this._iconBox.set_child(this.icon);
     },
 
     _onFocusChange: function () {
@@ -317,9 +311,6 @@ AppButton.prototype = {
 
 
     destroy: function () {
-        this.globalSignals.forEach(Lang.bind(this, function (s) {
-            global.settings.disconnect(s);
-        }));
         let tracker = Cinnamon.WindowTracker.get_default();
         tracker.disconnect(this._trackerSignal);
         global.display.disconnect(this._attention);
@@ -360,7 +351,6 @@ WindowButton.prototype = {
         this.icon = this.app.create_icon_texture(this.icon_size)
         IconLabelButton.prototype._init.call(this, this.icon);
         this.signals = [];
-        this.globalSignals = [];
         this._numLabel.hide();
         if (params.isFavapp) this.actor.set_style_class_name('panel-launcher');
 
@@ -377,8 +367,6 @@ WindowButton.prototype = {
 
             this._onFocusChange();
         }
-        this.globalSignals.push(global.settings.connect('changed::panel-resizable', Lang.bind(this, this._panelSizeChanged)));
-        this.globalSignals.push(global.settings.connect_after('changed::panel-size', Lang.bind(this, this._panelSizeChanged)));
         this._onTitleChange();
         // Set up the right click menu
         this.rightClickMenu = new AppletDir.specialMenus.AppMenuButtonRightClickMenu(this.actor, this.metaWindow, this.app, params.isFavapp, params.orientation);
@@ -390,21 +378,11 @@ WindowButton.prototype = {
         this.signals.forEach(Lang.bind(this, function (s) {
             this.metaWindow.disconnect(s);
         }));
-        this.globalSignals.forEach(Lang.bind(this, function (s) {
-            global.settings.disconnect(s);
-        }));
         windowListSettings.disconnect(this._winTitleSetting);
         global.display.disconnect(this._attention);
         this._container.destroy_children();
         this.actor.destroy();
         this.rightClickMenu.destroy();
-    },
-
-    _panelSizeChanged: function () {
-        this.icon.destroy();
-        this.icon_size = Math.floor(Main.panel.actor.get_height() - 2);
-        this.icon = this.app.create_icon_texture(this.icon_size)
-        this._iconBox.set_child(this.icon);
     },
 
     _onAttentionRequest: function () {
@@ -424,7 +402,7 @@ WindowButton.prototype = {
             if (this.rightClickMenu && this.rightClickMenu.isOpen) {
                 this.rightClickMenu.toggle();
             }
-            this.metaWindow.delete(global.get_current_time());
+            this.app.open_new_window(-1);
         }
     },
 
@@ -577,14 +555,25 @@ ButtonBox.prototype = {
 
     add: function (button) {
         this.actor.add_actor(button.actor);
+        this.hidefav();
     },
 
     remove: function (button) {
         this.actor.remove_actor(button.actor);
+        this.hidefav();
     },
 
     clear: function () {
         this.actor.destroy_children();
+    },
+
+    hidefav: function () {
+        child = this.actor.get_children();
+        if (child.length ==1) { 
+            child[0].show();
+        } else {
+            child[0].hide();
+        }
     },
 
     destroy: function () {

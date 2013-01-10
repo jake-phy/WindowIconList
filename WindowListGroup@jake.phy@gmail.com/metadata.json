@@ -1,5 +1,7 @@
 {
 "uuid": "WindowListGroup@jake.phy@gmail.com",
 "name": "Window List With App Grouping",
-"description": "Window List with App Grouping an Window Thumbnails"
+"description": "Window List with App Grouping an Window Thumbnails",
+"gettext-domain": "WindowListGroup",
+"settings-schema": "org.cinnamon.applets.windowListGroup"
 }

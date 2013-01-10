@@ -26,10 +26,7 @@ const DND = imports.ui.dnd;
 const AppFavorites = imports.ui.appFavorites;
 
 const LIST_SCHEMAS = "org.cinnamon.applets.windowListGroup";
-const FIND_SCHEMA = Gio.Settings.list_schemas().indexOf(LIST_SCHEMAS) != -1
-let windowListSettings;
-if (FIND_SCHEMA)
-    windowListSettings = new Gio.Settings({schema: LIST_SCHEMAS});
+const FIND_SCHEMA = Gio.Settings.list_schemas().indexOf(LIST_SCHEMAS) != -1;
 
 const SPINNER_ANIMATION_TIME = 1;
 
@@ -37,6 +34,13 @@ const SPINNER_ANIMATION_TIME = 1;
 const AppletDir = imports.ui.appletManager.applets['WindowListGroup@jake.phy@gmail.com'];
 const SpecialMenus = AppletDir.specialMenus;
 const SpecialButtons = AppletDir.specialButtons;
+const Convenience = AppletDir.convenience
+
+let windowListSettings;
+//if (FIND_SCHEMA)
+//    windowListSettings = new Gio.Settings({schema: LIST_SCHEMAS});
+//if (FIND_SCHEMA)
+    windowListSettings = Convenience.getSettings("org.cinnamon.applets.windowListGroup");
 
 const TitleDisplay = {
     none: 0,
@@ -383,11 +387,12 @@ function AppGroup() {
 }
 
 AppGroup.prototype = {
-    _init: function (applet, app, isFavapp, orientation) {
-        this.orientation = orientation;
+    _init: function (applet, appList, app, isFavapp, orientation) {
         this.app = app;
-        this.isFavapp = isFavapp;
         this._applet = applet;
+        this.appList = appList;
+        this.isFavapp = isFavapp;
+        this.orientation = orientation;
         this.metaWindows = new OrderedHash();
         this.metaWorkspaces = new OrderedHash();
         this.actor = new St.Bin({
@@ -450,27 +455,27 @@ AppGroup.prototype = {
     _onDragEnd: function () {
         this.rightClickMenu.close(false);
         this.hoverMenu.close(false);
-        this._applet.myactorbox._clearDragPlaceholder();
+        this.appList.myactorbox._clearDragPlaceholder();
     },
 
     _onDragCancelled: function () {
         this.rightClickMenu.close(false);
         this.hoverMenu.close(false);
-        this._applet.myactorbox._clearDragPlaceholder();
+        this.appList.myactorbox._clearDragPlaceholder();
     },
 
     handleDragOver: function (source, actor, x, y, time) {
         if (source instanceof AppGroup || source.isDraggableApp) return DND.DragMotionResult.CONTINUE;
 
-        if (typeof (this._applet.dragEnterTime) == 'undefined') {
-            this._applet.dragEnterTime = time;
+        if (typeof (this.appList.dragEnterTime) == 'undefined') {
+            this.appList.dragEnterTime = time;
         } else {
-            if (time > (this._applet.dragEnterTime + 3000)) {
-                this._applet.dragEnterTime = time;
+            if (time > (this.appList.dragEnterTime + 3000)) {
+                this.appList.dragEnterTime = time;
             }
         }
 
-        if (time > (this._applet.dragEnterTime + 300) && !(this.isFavapp || source.isDraggableApp) && windowListSettings.get_boolean("group-apps")) {
+        if (time > (this.appList.dragEnterTime + 300) && !(this.isFavapp || source.isDraggableApp) && windowListSettings.get_boolean("group-apps")) {
             this._windowHandle(true);
         }
     },
@@ -570,7 +575,7 @@ AppGroup.prototype = {
         if (event.get_state() & Clutter.ModifierType.BUTTON1_MASK) {
             this._windowHandle(false);
         } else if (event.get_state() & Clutter.ModifierType.BUTTON2_MASK && !this.isFavapp) {
-            this.lastFocused.delete(global.get_current_time());
+            this.app.open_new_window(-1);
         }
     },
 
@@ -649,7 +654,7 @@ AppGroup.prototype = {
         if (tracker.get_window_app(metaWindow) == this.app && !this.metaWindows.contains(metaWindow) && tracker.is_window_interesting(metaWindow)) {
             let button = new SpecialButtons.WindowButton({
                 app: this.app,
-                applet: this._applet,
+                applet: this.appList,
                 isFavapp: false,
                 metaWindow: metaWindow,
                 orientation: this.orientation
@@ -1013,7 +1018,7 @@ AppList.prototype = {
             return;
         }
         if (!this._appList.contains(app)) {
-            let appGroup = new AppGroup(this, app, isFavapp, this.orientation);
+            let appGroup = new AppGroup(this._applet, this, app, isFavapp, this.orientation);
             appGroup._updateMetaWindows(metaWorkspace);
             appGroup.watchWorkspace(metaWorkspace);
             if (windowListSettings.get_boolean("group-apps")) {
@@ -1206,6 +1211,12 @@ MyApplet.prototype = {
 
     on_panel_edit_mode_changed: function () {
         this.actor.reactive = global.settings.get_boolean("panel-edit-mode");
+    },
+
+    on_panel_height_changed: function() {
+        this.metaWorkspaces.forEach(Lang.bind(this, function (ws, data) {
+                data['appList']._refreshList();
+        }));
     },
 
     _onWorkspaceCreatedOrDestroyed: function () {
