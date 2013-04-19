@@ -47,7 +47,7 @@ function initTranslations(domain) {
     // has the locale files in a subfolder
     // otherwise assume that extension has been installed in the
     // same prefix as gnome-shell
-    let localeDir = extension.dir.get_child('locale');
+    let localeDir = eAppletManager._find_applet('WindowListGroup@jake.phy@gmail.com').get_child('locale');
     if (localeDir.query_exists(null))
         Gettext.bindtextdomain(domain, localeDir.get_path());
     else
@@ -63,7 +63,6 @@ function initTranslations(domain) {
 * metadata['settings-schema'].
 */
 function getSettings(schema) {
-    let extension = AppletManager.applets['WindowListGroup@jake.phy@gmail.com'];
 
     schema = schema;
 
@@ -85,8 +84,7 @@ function getSettings(schema) {
 
     let schemaObj = schemaSource.lookup(schema, true);
     if (!schemaObj)
-        throw new Error('Schema ' + schema + ' could not be found for extension '
-                        + extension.metadata.uuid + '. Please check your installation.');
+        throw new Error('Schema ' + schema + ' could not be found for WindowListGroup@jake.phy@gmail.com Please check your installation.');
 
     return new Gio.Settings({ settings_schema: schemaObj });
 }

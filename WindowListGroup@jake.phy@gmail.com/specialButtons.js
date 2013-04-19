@@ -17,7 +17,7 @@ const Meta = imports.gi.Meta;
 const DND = imports.ui.dnd;
 
 const LIST_SCHEMAS = "org.cinnamon.applets.windowListGroup";
-
+const FIND_SCHEMA = Gio.Settings.list_schemas().indexOf(LIST_SCHEMAS) != -1;
 
 const BUTTON_BOX_ANIMATION_TIME = 0.5;
 const MAX_BUTTON_WIDTH = 150; // Pixels
@@ -25,12 +25,12 @@ const ICON_PADDING_TOP = 0;
 
 const AppletDir = imports.ui.appletManager.applets['WindowListGroup@jake.phy@gmail.com'];
 const Applet = AppletDir.applet;
-const Convenience = AppletDir.convenience
+const Convenience = AppletDir.convenience;
 
 let windowListSettings;
-//if (FIND_SCHEMA)
-//    windowListSettings = new Gio.Settings({schema: LIST_SCHEMAS});
-//if (FIND_SCHEMA)
+if (FIND_SCHEMA)
+    windowListSettings = new Gio.Settings({schema: LIST_SCHEMAS});
+else
     windowListSettings = Convenience.getSettings("org.cinnamon.applets.windowListGroup");
 
 const TitleDisplay = {

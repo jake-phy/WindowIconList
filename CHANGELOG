@@ -1,4 +1,9 @@
 Changelog
+2.7.1
+removed keybindings will readd when cinnamon 1.8 comes out.
+fixed some of the gshema problems
+still some bugs
+_____
 2.7
 
 Added Highlighting for activity in windows 

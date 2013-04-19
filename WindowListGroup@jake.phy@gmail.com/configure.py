@@ -5,13 +5,17 @@ from gi.repository import Gtk, Gio, Gdk
 
 def Settings(schema):
     path = os.path.expanduser("~/.local/share/cinnamon/applets/WindowListGroup@jake.phy@gmail.com/schemas/")
+    source = Gio.SettingsSchemaSource.get_default()
     if os.path.isfile(path + "gschemas.compiled") == True:
         schemaSource = Gio.SettingsSchemaSource.new_from_directory(path, None, False)
-        lookupSchema = schemaSource.lookup(schema, False)
-	compiledSchema = Gio.Settings.new_full(lookupSchema, None, None)
-	return compiledSchema
+        lookupSchema = Gio.SettingsSchemaSource.lookup(schemaSource, schema, False)
+	return Gio.Settings.new_full(lookupSchema, None, None)
     else:
-	return "no Schema"
+	schemaSource = source.lookup(schema, True)
+	if schemaSource != None:
+	     return Gio.Settings.new_full(schemaSource, None, None)
+	else:
+	     return "no Schema"
 
 class NewLabel(Gtk.Label):
     def __init__(self, label, tooltip=None):
@@ -121,21 +125,24 @@ class CinnamonListSettings:
 	self.NoteBK = Gtk.Notebook()
 
         self.action_completed = "echo 'Action Completed'"
-        self.compile_schema =  "glib-compile-schemas ~/.local/share/cinnamon/applets/WindowListGroup@jake.phy@gmail.com/schemas"
+        self.compile_locally =  "glib-compile-schemas ~/.local/share/cinnamon/applets/WindowListGroup@jake.phy@gmail.com/schemas"
+        self.compile_schema =  'gksu "glib-compile-schemas /usr/share/glib-2.0/schemas"'
         self.copy_applet = "mkdir -p ~/.local/share/cinnamon/applets/WindowListGroup@jake.phy@gmail.com && cp -f -v  convenience.js metadata.json applet.js configure.py icon.png specialButtons.js specialMenus.js ~/.local/share/cinnamon/applets/WindowListGroup@jake.phy@gmail.com"
-        self.copy_schema = "mkdir -p ~/.local/share/cinnamon/applets/WindowListGroup@jake.phy@gmail.com/schemas && cp -f -v  org.cinnamon.applets.windowListGroup.gschema.xml ~/.local/share/cinnamon/applets/WindowListGroup@jake.phy@gmail.com/schemas"
-        #self.copy_schema = "gksu 'cp -f -v org.cinnamon.applets.windowListGroup.gschema.xml /usr/share/glib-2.0/schemas/'"
+        self.copy_locally = "mkdir -p ~/.local/share/cinnamon/applets/WindowListGroup@jake.phy@gmail.com/schemas && cp -f -v  org.cinnamon.applets.windowListGroup.gschema.xml ~/.local/share/cinnamon/applets/WindowListGroup@jake.phy@gmail.com/schemas"
+        self.copy_schema = "gksu 'cp -f -v org.cinnamon.applets.windowListGroup.gschema.xml /usr/share/glib-2.0/schemas/'"
         self.remove_applet = "rm -rf -v ~/.local/share/cinnamon/applets/WindowListGroup@jake.phy@gmail.com"
         self.restart_cinnamon = "nohup cinnamon --replace > /dev/null 2>&1 &"
 
 	self.installation = NewLabel('Installation')
         self.install_applet = GTKButton('Install Applet', 'Install the Applet', self.copy_schema + "&&" + self.compile_schema + " && " + self.copy_applet + " && " + self.action_completed, "Install the applet and schema")
+        self.install_locally = GTKButton('Install Locally !dev!', 'Install Applet Locally', self.copy_locally + "&&" + self.compile_locally + " && " + self.copy_applet + " && " + self.action_completed, "Install the Gsettings Schema locally !!!Warning!!! keybindings will not work")
         self.uninstall_applet = GTKButton('Uninstall Applet', 'Uninstall the Applet', self.remove_applet + " && " + self.action_completed, "Remove the applet and schema")
         self.restart_cinnamon = GTKButton("Restart Cinnamon", 'Restart Cinnamon', self.restart_cinnamon, "Restart Cinnamon for applet to work")
 
         self.Ivbox = Gtk.VBox()
         self.Ivbox.add(self.installation)
         self.Ivbox.add(self.install_applet)
+        self.Ivbox.add(self.install_locally)
         self.Ivbox.add(self.uninstall_applet)
         self.Ivbox.add(self.restart_cinnamon)
 	self.NoteBK.append_page(self.Ivbox, Gtk.Label("Install"))

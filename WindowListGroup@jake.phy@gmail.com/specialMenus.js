@@ -12,18 +12,18 @@ const Gio = imports.gi.Gio;
 const Tweener = imports.ui.tweener;
 
 const LIST_SCHEMAS = "org.cinnamon.applets.windowListGroup";
-let windowListSettings;
+const FIND_SCHEMA = Gio.Settings.list_schemas().indexOf(LIST_SCHEMAS) != -1;
 
 const AppletMetaDir = imports.ui.appletManager.appletMeta["WindowListGroup@jake.phy@gmail.com"].path;
 const AppletDir = imports.ui.appletManager.applets['WindowListGroup@jake.phy@gmail.com'];
 const MainApplet = AppletDir.applet;
 const SpecialButtons = AppletDir.specialButtons;
-const Convenience = AppletDir.convenience
+const Convenience = AppletDir.convenience;
 
 let windowListSettings;
-//if (FIND_SCHEMA)
-//    windowListSettings = new Gio.Settings({schema: LIST_SCHEMAS});
-//if (FIND_SCHEMA)
+if (FIND_SCHEMA)
+    windowListSettings = new Gio.Settings({schema: LIST_SCHEMAS});
+else
     windowListSettings = Convenience.getSettings("org.cinnamon.applets.windowListGroup");
 
 const THUMBNAIL_ICON_SIZE = 16;

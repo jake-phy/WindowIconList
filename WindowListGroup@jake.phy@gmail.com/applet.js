@@ -34,12 +34,12 @@ const SPINNER_ANIMATION_TIME = 1;
 const AppletDir = imports.ui.appletManager.applets['WindowListGroup@jake.phy@gmail.com'];
 const SpecialMenus = AppletDir.specialMenus;
 const SpecialButtons = AppletDir.specialButtons;
-const Convenience = AppletDir.convenience
+const Convenience = AppletDir.convenience;
 
 let windowListSettings;
-//if (FIND_SCHEMA)
-//    windowListSettings = new Gio.Settings({schema: LIST_SCHEMAS});
-//if (FIND_SCHEMA)
+if (FIND_SCHEMA)
+    windowListSettings = new Gio.Settings({schema: LIST_SCHEMAS});
+else
     windowListSettings = Convenience.getSettings("org.cinnamon.applets.windowListGroup");
 
 const TitleDisplay = {
@@ -580,7 +580,7 @@ AppGroup.prototype = {
     },
 
     _newAppKeyNumber: function (number) {
-        if (this.keyBinding)
+        if (this.keyBinding && FIND_SCHEMA)
             this._metaDisplay.remove_keybinding('launch-app-key-' + this.keyNumber.toString());
         if (number < 10 && FIND_SCHEMA)
             this._metaDisplay.add_keybinding('launch-app-key-' + number.toString(), LIST_SCHEMAS + '.keybindings', 0, Lang.bind(this, this._onAppKeyPress));
