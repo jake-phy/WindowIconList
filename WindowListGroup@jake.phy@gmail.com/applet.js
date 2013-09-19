@@ -589,8 +589,12 @@ AppGroup.prototype = {
     },
 
     _onAppKeyPress: function (number) {
-        this.app.open_new_window(-1);
-        this._animate();
+        if (this.isFavapp) {
+            this.app.open_new_window(-1);
+            this._animate();
+        } else {
+            this._windowHandle(false);
+        }
     },
 
     _windowHandle: function (fromDrag) {
