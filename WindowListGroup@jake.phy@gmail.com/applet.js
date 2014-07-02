@@ -565,16 +565,33 @@ AppGroup.prototype = {
     },
 
     _onAppButtonRelease: function (actor, event) {
+        if (event.get_state() & Clutter.ModifierType.BUTTON1_MASK 
+                && this.isFavapp 
+                && event.get_state() & Clutter.ModifierType.SHIFT_MASK) {
+            this.app.open_new_window(-1);
+        }
+	
         if (event.get_state() & Clutter.ModifierType.BUTTON1_MASK && this.isFavapp) {
             this.app.open_new_window(-1);
             this._animate();
             return;
         }
-        if (!this.lastFocused) return;
+	
+        if (!this.lastFocused)  return;
 
-        if (event.get_state() & Clutter.ModifierType.BUTTON1_MASK) {
-            this._windowHandle(false);
-        } else if (event.get_state() & Clutter.ModifierType.BUTTON2_MASK && !this.isFavapp) {
+	if (event.get_state() & Clutter.ModifierType.BUTTON2_MASK && !this.isFavapp) {
+           this.app.open_new_window(-1);
+		
+        } else if ((event.get_state() & Clutter.ModifierType.SHIFT_MASK) 
+		&& (event.get_state() & Clutter.ModifierType.BUTTON1_MASK) ) {
+           this.app.open_new_window(-1);
+			
+        } else if (event.get_state() & Clutter.ModifierType.BUTTON1_MASK) {
+	    this._windowHandle(false);
+		
+        } else  if (event.get_state() & Clutter.ModifierType.BUTTON1_MASK 
+                && !this.isFavapp 
+                && event.get_state() & Clutter.ModifierType.SHIFT_MASK) {
             this.app.open_new_window(-1);
         }
     },
