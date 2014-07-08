@@ -8,23 +8,11 @@ const PopupMenu = imports.ui.popupMenu;
 const Meta = imports.gi.Meta;
 const Util = imports.misc.util;
 const St = imports.gi.St;
-const Gio = imports.gi.Gio;
 const Tweener = imports.ui.tweener;
 
-const LIST_SCHEMAS = "org.cinnamon.applets.windowListGroup";
-const FIND_SCHEMA = Gio.Settings.list_schemas().indexOf(LIST_SCHEMAS) != -1;
-
-const AppletMetaDir = imports.ui.appletManager.appletMeta["WindowListGroup@jake.phy@gmail.com"].path;
 const AppletDir = imports.ui.appletManager.applets['WindowListGroup@jake.phy@gmail.com'];
 const MainApplet = AppletDir.applet;
 const SpecialButtons = AppletDir.specialButtons;
-const Convenience = AppletDir.convenience;
-
-let windowListSettings;
-if (FIND_SCHEMA)
-    windowListSettings = new Gio.Settings({schema: LIST_SCHEMAS});
-else
-    windowListSettings = Convenience.getSettings("org.cinnamon.applets.windowListGroup");
 
 const THUMBNAIL_ICON_SIZE = 16;
 const OPACITY_OPAQUE = 255;
@@ -42,24 +30,25 @@ function AppMenuButtonRightClickMenu() {
 AppMenuButtonRightClickMenu.prototype = {
     __proto__: PopupMenu.PopupMenu.prototype,
 
-    _init: function (actor, metaWindow, app, isFavapp, orientation) {
+    _init: function (parent, actor) {
         //take care of menu initialization        
-        PopupMenu.PopupMenu.prototype._init.call(this, actor, 0.0, orientation, 0);
+        PopupMenu.PopupMenu.prototype._init.call(this, parent.actor, 0.0, parent.orientation, 0);
         Main.uiGroup.add_actor(this.actor);
         //Main.chrome.addActor(this.actor, { visibleInOverview: true,
         //                                   affectsStruts: false });
         this.actor.hide();
-        this.metaWindow = metaWindow;
+        this.metaWindow = parent.metaWindow;
         this._parentActor = actor;
         this._parentActor.connect('button-release-event', Lang.bind(this, this._onParentActorButtonRelease));
 
         actor.connect('key-press-event', Lang.bind(this, this._onSourceKeyPress));
         this.connect('open-state-changed', Lang.bind(this, this._onToggled));
 
-        this.orientation = orientation;
-        this.app = app;
-        this.isFavapp = isFavapp;
-        let PinnedFavorites = MainApplet.GetAppFavorites();
+        this.orientation = parent.orientation;
+        this.app = parent.app;
+        this.isFavapp = parent.isFavapp;
+        this._applet = parent._applet;
+        let PinnedFavorites = this._applet.pinned_app_contr();
 
         this.itemCloseWindow = new PopupMenu.PopupMenuItem(_("Close"));
         this.itemCloseWindow.connect('activate', Lang.bind(this, this._onCloseWindowActivate));
@@ -86,7 +75,7 @@ AppMenuButtonRightClickMenu.prototype = {
         this.settingItem.connect('activate', Lang.bind(this, this._settingMenu));
 
         this.favs = PinnedFavorites, this.favId = this.app.get_id(), this.isFav = this.favs.isFavorite(this.favId);
-        if (windowListSettings.get_enum("favorites-display") != FavType.none) {
+        if (this._applet.showPinned != FavType.none) {
             if (this.isFav) {
                 this.itemtoggleFav = new PopupMenu.PopupMenuItem(_('Unpin Favorite'));
                 this.itemtoggleFav.connect('activate', Lang.bind(this, this._toggleFav));
@@ -95,12 +84,12 @@ AppMenuButtonRightClickMenu.prototype = {
                 this.itemtoggleFav.connect('activate', Lang.bind(this, this._toggleFav));
             }
         }
-        if (isFavapp) this._isFavorite(true);
+        if (this.isFavapp) this._isFavorite(true);
         else this._isFavorite(false);
     },
 
     _isFavorite: function (isFav) {
-        let showFavs = windowListSettings.get_enum("favorites-display") != FavType.none;
+        let showFavs = this._applet.showPinned != FavType.none;
         if (isFav) {
             this.addMenuItem(this.settingItem);
             this.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
@@ -234,7 +223,7 @@ AppMenuButtonRightClickMenu.prototype = {
     },
 
     _settingMenu: function () {
-        Util.spawnCommandLine(AppletMetaDir + "/configure.py");
+        Util.spawnCommandLine("cinnamon-settings applets WindowListGroup@jake.phy@gmail.com");
     },
 
     removeItems: function () {
@@ -284,20 +273,20 @@ function AppThumbnailHoverMenu() {
 AppThumbnailHoverMenu.prototype = {
     __proto__: PopupMenu.PopupMenu.prototype,
 
-    _init: function (actor, metaWindow, app, isFavapp, orientation) {
-        PopupMenu.PopupMenu.prototype._init.call(this, actor, 0.45, orientation);
-
-        this.metaWindow = metaWindow;
-        this.app = app
-        this.isFavapp = isFavapp;
+    _init: function (parent) {
+        PopupMenu.PopupMenu.prototype._init.call(this, parent.actor, 0.45, parent.orientation);
+		this._applet = parent._applet;
+        this.metaWindow = parent.metaWindow;
+        this.app = parent.app;
+        this.isFavapp = parent.isFavapp;
         this.actor.style_class = null;
         this.actor.set_style("-arrow-background-color: rgba(80,80,80,0.0);-arrow-border-color: rgba(150,150,150,0.0);");
         this.actor.hide();
-        this.parentActor = actor;
+        this.parentActor = parent.actor;
 
         Main.layoutManager.addChrome(this.actor, this.orientation);
 
-        this.appSwitcherItem = new PopupMenuAppSwitcherItem(this.metaWindow, this.app, isFavapp);
+        this.appSwitcherItem = new PopupMenuAppSwitcherItem(this);
         this.addMenuItem(this.appSwitcherItem);
 
         this.parentActor.connect('enter-event', Lang.bind(this, this._onEnter));
@@ -308,39 +297,42 @@ AppThumbnailHoverMenu.prototype = {
         this.actor.connect('leave-event', Lang.bind(this, this._onMenuLeave));
 
         this.actor.connect('button-release-event', Lang.bind(this, this._onButtonPress));
+        this._applet.settings.connect('thumbnail-timeout', Lang.bind(this, function () { this.hoverTime =  this._applet.settings.getValue("thumbnail-timeout")}));
+        this.hoverTime =  this._applet.settings.getValue("thumbnail-timeout");
     },
 
     _onButtonPress: function (actor, event) {
+		if(this.parentActor == actor && this._applet.onclickThumbs) return;
         this.shouldOpen = false;
         this.shouldClose = true;
-        Mainloop.timeout_add(windowListSettings.get_int("thumbnail-timeout"), Lang.bind(this, this.hoverClose));
+        Mainloop.timeout_add(this.hoverTime, Lang.bind(this, this.hoverClose));
     },
 
     _onMenuEnter: function () {
         this.shouldOpen = true;
         this.shouldClose = false;
 
-        Mainloop.timeout_add(windowListSettings.get_int("thumbnail-timeout"), Lang.bind(this, this.hoverOpen));
+        Mainloop.timeout_add(this.hoverTime, Lang.bind(this, this.hoverOpen));
     },
 
     _onMenuLeave: function () {
         this.shouldOpen = false;
         this.shouldClose = true;
-        Mainloop.timeout_add(windowListSettings.get_int("thumbnail-timeout"), Lang.bind(this, this.hoverClose));
+        Mainloop.timeout_add(this.hoverTime, Lang.bind(this, this.hoverClose));
     },
 
     _onEnter: function () {
         this.shouldOpen = true;
         this.shouldClose = false;
 
-        Mainloop.timeout_add(windowListSettings.get_int("thumbnail-timeout"), Lang.bind(this, this.hoverOpen));
+        Mainloop.timeout_add(this.hoverTime, Lang.bind(this, this.hoverOpen));
     },
 
     _onLeave: function () {
         this.shouldClose = true;
         this.shouldOpen = false;
 
-        Mainloop.timeout_add(windowListSettings.get_int("thumbnail-timeout"), Lang.bind(this, this.hoverClose));
+        Mainloop.timeout_add(this.hoverTime, Lang.bind(this, this.hoverClose));
     },
 
     hoverOpen: function () {
@@ -388,15 +380,16 @@ function PopupMenuAppSwitcherItem() {
 PopupMenuAppSwitcherItem.prototype = {
     __proto__: PopupMenu.PopupBaseMenuItem.prototype,
 
-    _init: function (metaWindow, app, isFavapp, params) {
+    _init: function (parent, params) {
         params = Params.parse(params, {
             hover: false
         });
         PopupMenu.PopupBaseMenuItem.prototype._init.call(this, params);
-
-        this.metaWindow = metaWindow;
-        this.app = app;
-        this.isFavapp = isFavapp;
+        
+		this._applet = parent._applet;
+        this.metaWindow = parent.metaWindow;
+        this.app = parent.app;
+        this.isFavapp = parent.isFavapp;
 
         this.actor.style_class = null;
 
@@ -432,7 +425,7 @@ PopupMenuAppSwitcherItem.prototype = {
             }
             // If our metaWindow is null, just move along
             if (this.metaWindow || this.isFavapp) {
-                this.metaWindowThumbnail = new WindowThumbnail(this.metaWindow, this.app, this.isFavapp);
+                this.metaWindowThumbnail = new WindowThumbnail(this, this.metaWindow);
                 this.appContainer.insert_actor(this.metaWindowThumbnail.actor, 0);
             }
         }
@@ -450,7 +443,7 @@ PopupMenuAppSwitcherItem.prototype = {
             if (this.appThumbnails[metaWindow]) {
                 this.appThumbnails[metaWindow].thumbnail._isFavorite(this.isFavapp);
             } else {
-                let thumbnail = new WindowThumbnail(metaWindow, this.app);
+                let thumbnail = new WindowThumbnail(this, metaWindow);
                 this.appThumbnails[metaWindow] = {
                     metaWindow: metaWindow,
                     thumbnail: thumbnail
@@ -477,10 +470,11 @@ function WindowThumbnail() {
 WindowThumbnail.prototype = {
     __proto__: SpecialButtons.IconLabelButton.prototype,
 
-    _init: function (metaWindow, app, isFavapp) {
+    _init: function (parent, metaWindow) {
+    	this._applet = parent._applet;
         this.metaWindow = metaWindow;
-        this.app = app;
-        this.isFavapp = isFavapp;
+        this.app = parent.app;
+        this.isFavapp = parent.isFavapp || false;
         this.wasMinimized = false;
 
         // Inherit the theme from the alt-tab menu
@@ -526,7 +520,7 @@ WindowThumbnail.prototype = {
         this.actor.add_actor(bin);
         this.actor.add_actor(this.thumbnailActor);
 
-        if (isFavapp) this._isFavorite(true);
+        if (this.isFavapp) this._isFavorite(true);
         else this._isFavorite(false);
 
         if (this.metaWindow) this.metaWindow.connect('notify::title', Lang.bind(this, function () {
@@ -534,16 +528,15 @@ WindowThumbnail.prototype = {
         }));
         this.actor.connect('enter-event', Lang.bind(this, function () {
             if (!this.isFavapp) {
-                this._hoverPeek(windowListSettings.get_int("hover-peek-opacity"), this.metaWindow);
+                this._hoverPeek(this._applet.peekOpacity, this.metaWindow);
                 this.actor.add_style_pseudo_class('outlined');
                 this.actor.add_style_pseudo_class('selected');
                 this.button.show();
+		        if (this.metaWindow.minimized && this._applet.enablePeek) {
+		            this.metaWindow.unminimize();
+		            this.wasMinimized = true;
+		        } else this.wasMinimized = false;
             }
-
-            if (this.metaWindow.minimized && windowListSettings.get_boolean("enable-hover-peek")) {
-                this.metaWindow.unminimize();
-                this.wasMinimized = true;
-            } else this.wasMinimized = false;
         }));
         this.actor.connect('leave-event', Lang.bind(this, function () {
             if (!this.isFavapp) {
@@ -551,10 +544,10 @@ WindowThumbnail.prototype = {
                 this.actor.remove_style_pseudo_class('outlined');
                 this.actor.remove_style_pseudo_class('selected');
                 this.button.hide();
+		        if (this.wasMinimized) {
+		            this.metaWindow.minimize(global.get_current_time());
+		        }
 
-            }
-            if (this.wasMinimized) {
-                this.metaWindow.minimize(global.get_current_time());
             }
         }));
         this.button.connect('button-release-event', Lang.bind(this, this._onButtonRelease));
@@ -624,8 +617,8 @@ WindowThumbnail.prototype = {
 
     _refresh: function () {
         // Turn favorite tooltip into a normal thumbnail
-        this.ThumbnailHeight = Math.max(125, Math.floor(Main.layoutManager.primaryMonitor.height / 70) * windowListSettings.get_int("thumbnail-size"));
-        this.ThumbnailWidth = Math.max(200, Math.floor(Main.layoutManager.primaryMonitor.width / 70) * windowListSettings.get_int("thumbnail-size"));
+        this.ThumbnailHeight = Math.max(125, Math.floor(Main.layoutManager.primaryMonitor.height / 70) * this._applet.thumbSize);
+        this.ThumbnailWidth = Math.max(200, Math.floor(Main.layoutManager.primaryMonitor.width / 70) * this._applet.thumbSize);
         this.thumbnailActor.height = this.ThumbnailHeight;
         this.thumbnailActor.width = this.ThumbnailWidth;
         this.isFavapp = false;
@@ -637,11 +630,12 @@ WindowThumbnail.prototype = {
     },
 
     _hoverPeek: function (opacity, metaWin) {
-        if (!windowListSettings.get_boolean("enable-hover-peek")) return;
+    	let applet = this._applet;
+        if (applet.enablePeek == false) return;
 
         function setOpacity(window_actor, target_opacity) {
             Tweener.addTween(window_actor, {
-                time: windowListSettings.get_int("hover-peek-time") * 0.001,
+                time: applet.peekTime * 0.001,
                 transition: 'easeOutQuad',
                 opacity: target_opacity,
             });

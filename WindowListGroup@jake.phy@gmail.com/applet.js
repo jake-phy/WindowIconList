@@ -15,7 +15,6 @@ const Clutter = imports.gi.Clutter;
 const Lang = imports.lang;
 const Cinnamon = imports.gi.Cinnamon;
 const St = imports.gi.St;
-const Gio = imports.gi.Gio;
 const Main = imports.ui.main;
 const Mainloop = imports.mainloop;
 const Tweener = imports.ui.tweener;
@@ -24,9 +23,7 @@ const PopupMenu = imports.ui.popupMenu;
 const Signals = imports.signals;
 const DND = imports.ui.dnd;
 const AppFavorites = imports.ui.appFavorites;
-
-const LIST_SCHEMAS = "org.cinnamon.applets.windowListGroup";
-const FIND_SCHEMA = Gio.Settings.list_schemas().indexOf(LIST_SCHEMAS) != -1;
+const Settings = imports.ui.settings;
 
 const SPINNER_ANIMATION_TIME = 1;
 
@@ -34,36 +31,22 @@ const SPINNER_ANIMATION_TIME = 1;
 const AppletDir = imports.ui.appletManager.applets['WindowListGroup@jake.phy@gmail.com'];
 const SpecialMenus = AppletDir.specialMenus;
 const SpecialButtons = AppletDir.specialButtons;
-const Convenience = AppletDir.convenience;
-
-let windowListSettings;
-if (FIND_SCHEMA)
-    windowListSettings = new Gio.Settings({schema: LIST_SCHEMAS});
-else
-    windowListSettings = Convenience.getSettings("org.cinnamon.applets.windowListGroup");
 
 const TitleDisplay = {
-    none: 0,
-    app: 1,
-    title: 2,
-    focused: 3
+    none: 1,
+    app: 2,
+    title: 3,
+    focused: 4
 }
 const NumberDisplay = {
-    smart: 0,
-    normal: 1,
-    none: 2,
-    all: 3
+    smart: 1,
+    normal: 2,
+    none: 3,
+    all: 4
 }
 const SortThumbs = {
-    focused: 0,
-    opened: 1
-}
-const FavType = {
-    favs: 'favorite-apps',
-    pinned: 'pinned-apps',
-    favorites: 0,
-    pinnedApps: 1,
-    none: 2
+    focused: 1,
+    opened: 2
 }
 
 // Some functional programming tools
@@ -254,38 +237,33 @@ SignalTracker.prototype = {
     }
 };
 
-var appFavoritesInstance = null;
-
-function GetAppFavorites() {
-    if (appFavoritesInstance == null) appFavoritesInstance = new PinnedFavs();
-    return appFavoritesInstance;
-}
-
 function PinnedFavs() {
     this._init.apply(this, arguments);
 }
 
 PinnedFavs.prototype = {
-    __proto__: AppFavorites.AppFavorites.prototype,
 
-    _init: function () {
-        this._favoriteType();
+    _init: function (applet) {
+        this._applet = applet;
         this._favorites = {};
-        windowListSettings.connect("changed::favorites-display", Lang.bind(this, this._favoriteType));
-        this._reloadSignals();
+        this._applet.settings.connect('changed::pinned-apps', Lang.bind(this, this._reload));
         this._reload();
     },
 
-    _reload: function () {
-        let ids = this.settings.get_strv(this.FAVORITE_APPS_KEY);
+    _onFavsChanged: function() {
+        this._reload();
+        this.emit('changed');
+    },
+
+    _reload: function() {
+        let ids = this._applet.settings.getValue("pinned-apps");
         let appSys = Cinnamon.AppSystem.get_default();
         let apps = ids.map(function (id) {
-            let app = appSys.lookup_app(id);
-            if (!app) app = appSys.lookup_settings_app(id);
-            return app;
-        }).filter(function (app) {
-            return app != null;
-        });
+                let app = appSys.lookup_app(id);
+                return app;
+            }).filter(function (app) {
+                return app != null;
+            });
         this._favorites = {};
         for (let i = 0; i < apps.length; i++) {
             let app = apps[i];
@@ -293,48 +271,78 @@ PinnedFavs.prototype = {
         }
     },
 
-    _reloadSignals: function () {
-        if (this.oldSettings) this.oldSettings.disconnect(this.signal);
-        this.signal = this.settings.connect('changed::' + this.FAVORITE_APPS_KEY, Lang.bind(this, this._onFavsChanged));
-        this.oldSettings = this.settings;
+    _getIds: function() {
+        let ret = [];
+        for (let id in this._favorites)
+            ret.push(id);
+        return ret;
     },
 
-    _favoriteType: function () {
-        if (windowListSettings && windowListSettings.get_enum("favorites-display") == FavType.pinnedApps) {
-            this.settings = windowListSettings;
-            this.FAVORITE_APPS_KEY = FavType.pinned;
-        } else {
-            this.settings = global.settings;
-            this.FAVORITE_APPS_KEY = FavType.favs;
-        }
-        this._reloadSignals();
-        this._onFavsChanged();
+    getFavoriteMap: function() {
+        return this._favorites;
     },
 
-    _addFavorite: function (appId, pos) {
-        if (appId in this._favorites) return false;
+    getFavorites: function() {
+        let ret = [];
+        for (let id in this._favorites)
+            ret.push(this._favorites[id]);
+        return ret;
+    },
+
+    isFavorite: function(appId) {
+        return appId in this._favorites;
+    },
+
+    _addFavorite: function(appId, pos) {
+        if (appId in this._favorites)
+            return false;
 
         let app = Cinnamon.AppSystem.get_default().lookup_app(appId);
         if (!app) app = Cinnamon.AppSystem.get_default().lookup_settings_app(appId);
 
-        if (!app) return false;
+        if (!app)
+            return false;
 
         let ids = this._getIds();
-        if (pos == -1) ids.push(appId);
-        else ids.splice(pos, 0, appId);
-        this.settings.set_strv(this.FAVORITE_APPS_KEY, ids);
+        if (pos == -1)
+            ids.push(appId);
+        else
+            ids.splice(pos, 0, appId);
+        this._applet.pinnedApps = ids;
         this._favorites[appId] = app;
         return true;
     },
 
-    _removeFavorite: function (appId) {
-        if (!appId in this._favorites) return false;
+    addFavoriteAtPos: function(appId, pos) {
+        this._addFavorite(appId, pos);                            
+    },
 
-        let ids = this._getIds().filter(function (id) {
-            return id != appId;
-        });
-        this.settings.set_strv(this.FAVORITE_APPS_KEY, ids);
+    addFavorite: function(appId) {
+        this.addFavoriteAtPos(appId, -1);
+    },
+
+    moveFavoriteToPos: function(appId, pos) {
+        let ids = this._getIds();
+        let old_index = ids.indexOf(appId);
+        if(pos > old_index)
+            pos = pos - 1;
+        ids.splice(pos, 0, ids.splice(old_index, 1)[0]);
+        this._applet.pinnedApps = ids;
+        
+    },
+
+    _removeFavorite: function(appId) {
+        if (!appId in this._favorites)
+            return false;
+
+        let ids = this._getIds().filter(function (id) { return id != appId; });
+        this._applet.settings.setValue("pinned-apps", ids);
         return true;
+    },
+
+    removeFavorite: function(appId) {
+        let app = this._favorites[appId];
+        this._removeFavorite(appId);                    
     }
 };
 Signals.addSignalMethods(PinnedFavs.prototype);
@@ -388,9 +396,9 @@ function AppGroup() {
 
 AppGroup.prototype = {
     _init: function (applet, appList, app, isFavapp, orientation) {
-        this.app = app;
         this._applet = applet;
         this.appList = appList;
+        this.app = app;
         this.isFavapp = isFavapp;
         this.orientation = orientation;
         this.metaWindows = new OrderedHash();
@@ -405,10 +413,7 @@ AppGroup.prototype = {
         this.actor._delegate = this;
 
         this._windowButtonBox = new SpecialButtons.ButtonBox();
-        this._appButton = new SpecialButtons.AppButton({
-            isFavapp: this.isFavapp,
-            app: this.app
-        });
+        this._appButton = new SpecialButtons.AppButton(this);
         this.myactor = new St.BoxLayout({
             reactive: true
         });
@@ -425,12 +430,12 @@ AppGroup.prototype = {
         //global.screen.connect('event', Lang.bind(this, this._onAppKeyPress));
 //        global.screen.connect('key-release-event', Lang.bind(this, this._onAppKeyReleased));
         // Set up the right click menu for this._appButton
-        this.rightClickMenu = new SpecialMenus.AppMenuButtonRightClickMenu(this._appButton.actor, this.metaWindow, this.app, isFavapp, orientation);
+        this.rightClickMenu = new SpecialMenus.AppMenuButtonRightClickMenu(this, this._appButton.actor);
         this._menuManager = new PopupMenu.PopupMenuManager(this);
         this._menuManager.addMenu(this.rightClickMenu);
 
         // Set up the hover menu for this._appButton
-        this.hoverMenu = new SpecialMenus.AppThumbnailHoverMenu(this.actor, this.metaWindow, this.app, isFavapp, orientation)
+        this.hoverMenu = new SpecialMenus.AppThumbnailHoverMenu(this)
         this._hoverMenuManager = new SpecialMenus.HoverMenuController(this);
         this._hoverMenuManager.addMenu(this.hoverMenu);
 
@@ -438,6 +443,7 @@ AppGroup.prototype = {
         this._draggable.connect('drag-begin', Lang.bind(this, this._onDragBegin));
         this._draggable.connect('drag-cancelled', Lang.bind(this, this._onDragCancelled));
         this._draggable.connect('drag-end', Lang.bind(this, this._onDragEnd));
+        this.isDraggableApp = true;
 
         this.on_panel_edit_mode_changed();
         global.settings.connect('changed::panel-edit-mode', Lang.bind(this, this.on_panel_edit_mode_changed));
@@ -475,9 +481,10 @@ AppGroup.prototype = {
             }
         }
 
-        if (time > (this.appList.dragEnterTime + 300) && !(this.isFavapp || source.isDraggableApp) && windowListSettings.get_boolean("group-apps")) {
+        if (time > (this.appList.dragEnterTime + 300) && !(this.isFavapp || source.isDraggableApp) && this._applet.settings.getValue("group-apps")) {
             this._windowHandle(true);
         }
+        return true;
     },
 
     acceptDrop: function (source, actor, x, y, time) {
@@ -508,6 +515,10 @@ AppGroup.prototype = {
                 signals: [windowAddedSignal, windowRemovedSignal]
             });
         }
+        this._calcWindowNumber(metaWorkspace);
+        this._applet.settings.connect("changed::number-display", Lang.bind(this, function () {
+            this._calcWindowNumber(metaWorkspace);
+        }));
     },
 
     // Stop monitoring a workspace for added and removed windows.
@@ -557,7 +568,7 @@ AppGroup.prototype = {
     },
 
     hideAppButtonLabel: function (animate) {
-        this._appButton.hideLabel(animate)
+        this._appButton.hideLabel(animate);
     },
 
     showAppButtonLabel: function (animate, targetWidth) {
@@ -565,44 +576,40 @@ AppGroup.prototype = {
     },
 
     _onAppButtonRelease: function (actor, event) {
-        if (event.get_state() & Clutter.ModifierType.BUTTON1_MASK 
-                && this.isFavapp 
-                && event.get_state() & Clutter.ModifierType.SHIFT_MASK) {
-            this.app.open_new_window(-1);
-        }
-	
-        if (event.get_state() & Clutter.ModifierType.BUTTON1_MASK && this.isFavapp) {
+        if (event.get_state() & Clutter.ModifierType.BUTTON1_MASK && this.isFavapp || event.get_state() & Clutter.ModifierType.SHIFT_MASK && event.get_state() & Clutter.ModifierType.BUTTON1_MASK) {
             this.app.open_new_window(-1);
             this._animate();
             return;
         }
+
+        let windowNum = this.app.get_windows().filter(function (win) {
+            let workspaces = [global.screen.get_workspace_by_index(i) for each(i in range(global.screen.n_workspaces))];
+            for(let i = 0; i < workspaces.length; i++){
+                return win.get_workspace() == workspaces[i];
+            }
+
+        }).length;
 	
         if (!this.lastFocused)  return;
 
-	if (event.get_state() & Clutter.ModifierType.BUTTON2_MASK && !this.isFavapp) {
+	    if (event.get_state() & Clutter.ModifierType.BUTTON2_MASK && !this.isFavapp) {
            this.app.open_new_window(-1);
 		
-        } else if ((event.get_state() & Clutter.ModifierType.SHIFT_MASK) 
-		&& (event.get_state() & Clutter.ModifierType.BUTTON1_MASK) ) {
-           this.app.open_new_window(-1);
-			
-        } else if (event.get_state() & Clutter.ModifierType.BUTTON1_MASK) {
-	    this._windowHandle(false);
+        }else if (event.get_state() & Clutter.ModifierType.BUTTON1_MASK) {
+            if(this._applet.onclickThumbs && windowNum > 1){
+                this.shouldOpen = true;
+                this.shouldClose = false;
+                this.hoverMenu.hoverOpen();
+            }else
+	            this._windowHandle(false);
 		
-        } else  if (event.get_state() & Clutter.ModifierType.BUTTON1_MASK 
-                && !this.isFavapp 
-                && event.get_state() & Clutter.ModifierType.SHIFT_MASK) {
-            this.app.open_new_window(-1);
         }
+
     },
 
     _newAppKeyNumber: function (number) {
-        if (this.keyBinding && FIND_SCHEMA)
-            this._metaDisplay.remove_keybinding('launch-app-key-' + this.keyNumber.toString());
-        if (number < 10 && FIND_SCHEMA)
-            this._metaDisplay.add_keybinding('launch-app-key-' + number.toString(), LIST_SCHEMAS + '.keybindings', 0, Lang.bind(this, this._onAppKeyPress));
-        this.keyBinding = true; 
-        this.keyNumber = number;
+        if (number < 10)
+            Main.keybindingManager.addHotKey('launch-app-key-' + number.toString(), "<Super>" + number.toString(), Lang.bind(this, this._onAppKeyPress));
     },
 
     _onAppKeyPress: function (number) {
@@ -619,7 +626,10 @@ AppGroup.prototype = {
             if (fromDrag) {
                 return;
             }
-            this.lastFocused.minimize(global.get_current_time());
+            if (this.lastFocused.minimized) {
+                this.lastFocused.unminimize(global.get_current_time());
+            }else
+                this.lastFocused.minimize(global.get_current_time());
         } else {
             if (this.lastFocused.minimized) {
                 this.lastFocused.unminimize(global.get_current_time());
@@ -674,11 +684,9 @@ AppGroup.prototype = {
         let tracker = Cinnamon.WindowTracker.get_default();
         if (tracker.get_window_app(metaWindow) == this.app && !this.metaWindows.contains(metaWindow) && tracker.is_window_interesting(metaWindow)) {
             let button = new SpecialButtons.WindowButton({
-                app: this.app,
-                applet: this.appList,
+                parent: this,
                 isFavapp: false,
                 metaWindow: metaWindow,
-                orientation: this.orientation
             });
             //fix a problem with this.lastFocused not being set for favorites
             let windowNum = this.app.get_windows().filter(function (win) {
@@ -697,18 +705,12 @@ AppGroup.prototype = {
 
             this._windowButtonBox.add(button);
             let signals = [];
-            let settings = [];
-            settings.push(windowListSettings.connect("changed::title-display", Lang.bind(this, function () {
-                this._titleDisplayChanged(this.lastFocused);
+            this._applet.settings.connect("changed::title-display", Lang.bind(this, function () {
                 this._windowTitleChanged(this.lastFocused);
-            })));
-            settings.push(windowListSettings.connect("changed::number-display", Lang.bind(this, function () {
-                this._calcWindowNumber(metaWorkspace);
-            })));
+            }));
             signals.push(metaWindow.connect('notify::title', Lang.bind(this, this._windowTitleChanged)));
             signals.push(metaWindow.connect('notify::appears-focused', Lang.bind(this, this._focusWindowChange)));
             let data = {
-                settings: settings,
                 signals: signals,
                 windowButton: button
             };
@@ -726,9 +728,6 @@ AppGroup.prototype = {
             // Clean up all the signals we've connected
             deleted['signals'].forEach(function (s) {
                 metaWindow.disconnect(s);
-            });
-            deleted['settings'].forEach(function (s) {
-                windowListSettings.disconnect(s);
             });
             this._windowButtonBox.remove(deleted['windowButton']);
             deleted['windowButton'].destroy();
@@ -749,53 +748,38 @@ AppGroup.prototype = {
 
     _windowTitleChanged: function (metaWindow) {
         // We only really want to track title changes of the last focused app
-        if (metaWindow != this.lastFocused) return;
-        if (!this._appButton) {
-            throw 'Error: got a _windowTitleChanged callback but this._appButton is undefined';
-            return;
-        }
+        if (metaWindow != this.lastFocused || this.isFavapp) return;
 
+        let titleType = this._applet.settings.getValue("title-display");
         let[title, appName] = [metaWindow.get_title(), this.app.get_name()];
-        switch (windowListSettings.get_enum("title-display")) {
-        case TitleDisplay.title:
-            // Some apps take a long time to set a valid title.  We don't want to error
-            // if title is null
+        if (titleType == TitleDisplay.title) {
             if (title) {
-                this._appButton._label.set_text(title);
-                break;
+                this._appButton._label.text = title;
             }
-        case TitleDisplay.focused:
-            // Some apps take a long time to set a valid title.  We don't want to error
-            // if title is null
+        }else if (titleType == TitleDisplay.focused) {
             if (title) {
-                this._appButton._label.set_text(title);
-                break;
+                this._appButton._label.text = title;
             }
-        case TitleDisplay.app:
+        }else if (titleType == TitleDisplay.app) {
             if (appName) {
-                this._appButton._label.set_text(appName);
-                break;
+                this._appButton._label.text = appName;
             }
-        case TitleDisplay.none:
-        default:
-            this._appButton._label.set_text('');
+        }else if (titleType == TitleDisplay.none){
+            this._appButton._label.text = "";
         }
+        this._titleDisplayChanged();
     },
 
     _titleDisplayChanged: function () {
-        switch (windowListSettings.get_enum("title-display")) {
-        case TitleDisplay.title:
+        let titleType = this._applet.settings.getValue("title-display");
+        if(titleType == TitleDisplay.title) {
             this.showAppButtonLabel(true, 150);
-            break;
-        case TitleDisplay.focused:
+        }else if(titleType == TitleDisplay.focused) {
             this.hideAppButtonLabel(true);
             this._updateFocusedStatus(true);
-            break
-        case TitleDisplay.app:
-            this.showAppButtonLabel(true, 150);
-            break;
-        case TitleDisplay.none:
-        default:
+        }else if(titleType == TitleDisplay.app) {
+            this.showAppButtonLabel(true);
+        }else  if(titleType == TitleDisplay.none) {
             this.hideAppButtonLabel(true);
         }
     },
@@ -804,10 +788,10 @@ AppGroup.prototype = {
         if (metaWindow.appears_focused) {
             this.lastFocused = metaWindow;
             this._windowTitleChanged(this.lastFocused);
-            if (windowListSettings.get_enum("sort-thumbnails") == SortThumbs.focused) this.hoverMenu.setMetaWindow(this.lastFocused);
+            if (this._applet.sortThumbs == SortThumbs.focused) this.hoverMenu.setMetaWindow(this.lastFocused);
             this.rightClickMenu.setMetaWindow(this.lastFocused);
         }
-        if (windowListSettings.get_enum("title-display") == TitleDisplay.focused)
+        if (this._applet.settings.getValue("title-display") == TitleDisplay.focused)
             this._updateFocusedStatus();
     },
 
@@ -832,10 +816,9 @@ AppGroup.prototype = {
     _loadWinBoxFavs: function () {
         if (this.isFavapp || this.wasFavapp) {
             let button = new SpecialButtons.WindowButton({
-                app: this.app,
+                parent: this,
                 isFavapp: true,
                 metaWindow: null,
-                orientation: this.orientation
             });
             this._windowButtonBox.add(button);
         }
@@ -848,6 +831,7 @@ AppGroup.prototype = {
         this.rightClickMenu.removeItems();
         this.rightClickMenu._isFavorite(isFav);
         this.hoverMenu.appSwitcherItem._isFavorite(isFav);
+        this._windowTitleChanged(this.lastFocused);
     },
 
     _calcWindowNumber: function (metaWorkspace) {
@@ -859,29 +843,21 @@ AppGroup.prototype = {
         let windowNum = this.app.get_windows().filter(function (win) {
             return win.get_workspace() == metaWorkspace;
         }).length;
+        let numDisplay = this._applet.settings.getValue("number-display");
         this._appButton._numLabel.set_text(windowNum.toString());
-        switch (windowListSettings.get_enum("number-display")) {
-        case NumberDisplay.smart:
-            if (windowNum <= 1) {
+        if (numDisplay == NumberDisplay.smart) {
+            if (windowNum <= 1) 
                 this._appButton._numLabel.hide();
-                break;
-            } else {
+            else 
                 this._appButton._numLabel.show();
-                break;
-            }
-        case NumberDisplay.normal:
-            if (windowNum <= 0) {
+        }else if (numDisplay == NumberDisplay.normal) {
+            if (windowNum <= 0) 
                 this._appButton._numLabel.hide();
-                break;
-            } else {
-                this._appButton._numLabel.show();
-                break;
-            }
-        case NumberDisplay.all:
+            else 
+                this._appButton._numLabel.show();  
+        }else if (numDisplay == NumberDisplay.all) {
             this._appButton._numLabel.show();
-            break;
-        case NumberDisplay.none:
-        default:
+        }else{
             this._appButton._numLabel.hide();
         }
     },
@@ -911,21 +887,16 @@ AppGroup.prototype = {
             data['signals'].forEach(function (s) {
                 win.disconnect(s);
             });
-            data['settings'].forEach(function (s) {
-                windowListSettings.disconnect(s);
-            });
         });
-        this._metaDisplay.remove_keybinding('launch-app-key-' + this.keyNumber.toString());
         this._appButton.destroy();
         this._windowButtonBox.destroy();
         this.actor.destroy();
-        this.rightClickMenu.destroy();
         this.hoverMenu.destroy();
-        this._appButton = null;
+        /*this._appButton = null;
         this._windowButtonBox = null;
         this.actor = null;
         this.rightClickMenu = null;
-        this.hoverMenu = null;
+        this.hoverMenu = null;*/
     }
 };
 Signals.addSignalMethods(AppGroup.prototype)
@@ -946,7 +917,7 @@ AppList.prototype = {
             track_hover: true
         });
 
-        this.myactorbox = new SpecialButtons.MyAppletBox(this);
+        this.myactorbox = new SpecialButtons.MyAppletBox(applet);
         this.myactor = this.myactorbox.actor;
 
         this.actor.add(this.myactor);
@@ -978,13 +949,13 @@ AppList.prototype = {
 
     _setSignals: function () {
         this.signals = [];
-        this.winListSignals = [];
+        this.settingsSignals = [];
         // We use connect_after so that the window-tracker time to identify the app
         this.signals.push(this.metaWorkspace.connect_after('window-added', Lang.bind(this, this._windowAdded)));
         this.signals.push(this.metaWorkspace.connect_after('window-removed', Lang.bind(this, this._windowRemoved)));
-        this.fav_Changed = GetAppFavorites().connect('changed', Lang.bind(this, this._refreshList));
-        this.winListSignals.push(windowListSettings.connect("changed::group-apps", Lang.bind(this, this._refreshList)));
-        this.winListSignals.push(windowListSettings.connect("changed::favorites-display", Lang.bind(this, this._refreshList)));
+        this._applet.settings.connect('changed::pinned-apps', Lang.bind(this, this._refreshList));
+        this._applet.settings.connect("changed::group-apps", Lang.bind(this, this._refreshList));
+        this._applet.settings.connect("changed::show-pinned", Lang.bind(this, this._refreshList));
         global.settings.connect('changed::panel-edit-mode', Lang.bind(this, this.on_panel_edit_mode_changed));
     },
 
@@ -997,12 +968,12 @@ AppList.prototype = {
     },
 
     _refreshList: function () {
-        this._appList.forEach(function (app, data) {
-            data['appGroup'].destroy();
-        });
-        this._appList = new OrderedHash();
-        this._loadFavorites();
-        this._refreshApps();
+            this._appList.forEach(function (app, data) {
+                data['appGroup'].destroy();
+            });
+            this._appList = new OrderedHash();
+            this._loadFavorites();
+            this._refreshApps();
     },
 
     _appGroupNumber: function (parentApp) {
@@ -1035,14 +1006,14 @@ AppList.prototype = {
             if (favapp) app = favapp;
             else app = tracker.get_window_app(metaWindow);
         } catch (e) {
-            log(e.name + ': ' + e.message);
+            //log(e.name + ': ' + e.message);
             return;
         }
         if (!this._appList.contains(app)) {
             let appGroup = new AppGroup(this._applet, this, app, isFavapp, this.orientation);
             appGroup._updateMetaWindows(metaWorkspace);
             appGroup.watchWorkspace(metaWorkspace);
-            if (windowListSettings.get_boolean("group-apps")) {
+            if (this._applet.settings.getValue("group-apps")) {
                 appGroup.hideWindowButtons();
             } else {
                 appGroup.hideAppButton();
@@ -1066,7 +1037,7 @@ AppList.prototype = {
             let appGroupNum = this._appGroupNumber(app);
             appGroup._newAppKeyNumber(appGroupNum);
 
-            if (windowListSettings.get_enum("title-display") == TitleDisplay.focused)
+            if (this._applet.settings.getValue("title-display") == TitleDisplay.focused)
                 appGroup.hideAppButtonLabel(false);
         }
     },
@@ -1082,10 +1053,10 @@ AppList.prototype = {
                 return;
             }
             this._appList.remove(app);
-            appGroup['appGroup'].destroy();
             appGroup['signals'].forEach(function (s) {
                 app.disconnect(s);
             });
+            appGroup['appGroup'].destroy();
             Mainloop.timeout_add(15, Lang.bind(this, function () {
                 this._refreshApps();
                 this._refreshAppGroupNumber();
@@ -1095,8 +1066,8 @@ AppList.prototype = {
     },
 
     _loadFavorites: function () {
-        if (windowListSettings.get_enum("favorites-display") == FavType.none) return;
-        let launchers = GetAppFavorites().settings.get_strv(GetAppFavorites().FAVORITE_APPS_KEY), appSys = Cinnamon.AppSystem.get_default();
+        if (this._applet.settings.getValue("show-pinned") == false) return;
+        let launchers = this._applet.settings.getValue("pinned-apps"), appSys = Cinnamon.AppSystem.get_default();
         for (let i = 0; i < launchers.length; ++i) {
             let app = appSys.lookup_app(launchers[i]);
             if (!app) app = appSys.lookup_settings_app(launchers[i]);
@@ -1114,7 +1085,7 @@ AppList.prototype = {
         try {
             app = tracker.get_window_app(metaWindow);
         } catch (e) {
-            log(e.name + ': ' + e.message);
+            //log(e.name + ': ' + e.message);
             return;
         }
         let hasWindowsOnWorkspace = app.get_windows().some(function (win) {
@@ -1129,10 +1100,6 @@ AppList.prototype = {
         this.signals.forEach(Lang.bind(this, function (s) {
             this.metaWorkspace.disconnect(s);
         }));
-        this.winListSignals.forEach(Lang.bind(this, function (s) {
-            windowListSettings.disconnect(s);
-        }));
-        GetAppFavorites().disconnect(this.fav_Changed);
         this._appList.forEach(function (app, data) {
             data['appGroup'].destroy();
         });
@@ -1143,16 +1110,30 @@ AppList.prototype = {
 // Manages window/app lists and takes care of
 // hiding/showing them and manages switching workspaces, etc.
 
-function MyApplet(orientation) {
-    this._init(orientation);
+function MyApplet(orientation, panel_height, instance_id) {
+    this._init(orientation, panel_height, instance_id);
 }
 
 MyApplet.prototype = {
     __proto__: Applet.Applet.prototype,
 
-    _init: function (orientation) {
-        Applet.Applet.prototype._init.call(this, orientation);
+    _init: function (orientation, panel_height, instance_id) {
+        Applet.Applet.prototype._init.call(this, orientation, panel_height, instance_id);
         try {
+            this.settings = new Settings.AppletSettings(this, "WindowListGroup@jake.phy@gmail.com", instance_id);
+            this.settings.bindProperty(Settings.BindingDirection.IN, "group-apps", "groupApps", null, null);
+            this.settings.bindProperty(Settings.BindingDirection.IN, "show-pinned", "showPinned", null, null);
+            this.settings.bindProperty(Settings.BindingDirection.IN, "enable-hover-peek", "enablePeek", null, null);
+            this.settings.bindProperty(Settings.BindingDirection.IN, "enable-hover-peek", "enablePeek", null, null);
+            this.settings.bindProperty(Settings.BindingDirection.IN, "onclick-thumbnails", "onclickThumbs", null, null);
+            this.settings.bindProperty(Settings.BindingDirection.IN, "hover-peek-opacity", "peekOpacity", null, null);
+            this.settings.bindProperty(Settings.BindingDirection.IN, "thumbnail-timeout", "thumbTimeout", null, null);
+            this.settings.bindProperty(Settings.BindingDirection.IN, "thumbnail-size", "thumbSize", null, null);
+            this.settings.bindProperty(Settings.BindingDirection.IN, "sort-thumbnails", "sortThumbs", null, null);
+            this.settings.bindProperty(Settings.BindingDirection.IN, "number-display", "numDisplay", null, null);
+            this.settings.bindProperty(Settings.BindingDirection.IN, "title-display", "titleDisplay", null, null);
+            this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "pinned-apps", "pinnedApps", null, null);
+            log(this.pinnedApps);
             this.orientation = orientation;
             this.dragInProgress = false;
 
@@ -1172,8 +1153,9 @@ MyApplet.prototype = {
                 this.actor.set_style('margin-bottom: 0px;');
                 this.actor.set_style('padding-bottom: 0px;');
             }
-
-
+            
+            this.pinnedAppsContr = new PinnedFavs(this);
+            
             this.metaWorkspaces = new OrderedHash();
 
             // Use a signal tracker so we don't have to keep track of all these id's manually!
@@ -1239,6 +1221,11 @@ MyApplet.prototype = {
                 data['appList']._refreshList();
         }));
     },
+    
+    pinned_app_contr: function() {
+        let pinnedAppsContr = this.pinnedAppsContr; 
+        return pinnedAppsContr;
+    },
 
     _onWorkspaceCreatedOrDestroyed: function () {
         let workspaces = [global.screen.get_workspace_by_index(i) for each(i in range(global.screen.n_workspaces))];
@@ -1289,7 +1276,7 @@ MyApplet.prototype = {
     }
 };
 
-function main(metadata, orientation) {
-    let myApplet = new MyApplet(orientation);
+function main(metadata, orientation, panel_height, instance_id) {
+    let myApplet = new MyApplet(orientation, panel_height, instance_id);
     return myApplet;
 }

@@ -11,13 +11,9 @@ const Params = imports.misc.params;
 const PopupMenu = imports.ui.popupMenu;
 const Cinnamon = imports.gi.Cinnamon;
 const St = imports.gi.St;
-const Gio = imports.gi.Gio;
 const Tweener = imports.ui.tweener;
 const Meta = imports.gi.Meta;
 const DND = imports.ui.dnd;
-
-const LIST_SCHEMAS = "org.cinnamon.applets.windowListGroup";
-const FIND_SCHEMA = Gio.Settings.list_schemas().indexOf(LIST_SCHEMAS) != -1;
 
 const BUTTON_BOX_ANIMATION_TIME = 0.5;
 const MAX_BUTTON_WIDTH = 150; // Pixels
@@ -25,18 +21,11 @@ const ICON_PADDING_TOP = 0;
 
 const AppletDir = imports.ui.appletManager.applets['WindowListGroup@jake.phy@gmail.com'];
 const Applet = AppletDir.applet;
-const Convenience = AppletDir.convenience;
-
-let windowListSettings;
-if (FIND_SCHEMA)
-    windowListSettings = new Gio.Settings({schema: LIST_SCHEMAS});
-else
-    windowListSettings = Convenience.getSettings("org.cinnamon.applets.windowListGroup");
 
 const TitleDisplay = {
-    none: 0,
-    app: 1,
-    title: 2
+    none: 1,
+    app: 2,
+    title: 3
 }
 
 
@@ -50,8 +39,8 @@ function IconLabelButton() {
 }
 
 IconLabelButton.prototype = {
-    _init: function (icon) {
-        if (icon == null) throw 'IconLabelButton icon argument must be non-null';
+    _init: function (parent) {
+        if (parent.icon == null) throw 'IconLabelButton icon argument must be non-null';
 
         this.actor = new St.Bin({
             style_class: 'window-list-item-box',
@@ -63,6 +52,7 @@ IconLabelButton.prototype = {
         });
 
         this.actor._delegate = this;
+        this._applet = parent._applet;
 
         // We do a fancy layout with icons and labels, so we'd like to do our own allocation
         // in a Cinnamon.GenericContainer
@@ -79,7 +69,7 @@ IconLabelButton.prototype = {
         });
         this._iconBox.connect('style-changed', Lang.bind(this, this._onIconBoxStyleChanged));
         this._iconBox.connect('notify::allocation', Lang.bind(this, this._updateIconBoxClip));
-        this._iconBox.set_child(icon);
+        this._iconBox.set_child(parent.icon);
         this._container.add_actor(this._iconBox);
         this._label = new St.Label();
         this._container.add_actor(this._label);
@@ -116,8 +106,7 @@ IconLabelButton.prototype = {
         // The label text is starts in the center of the icon, so we should allocate the space
         // needed for the icon plus the space needed for(label - icon/2)
         alloc.min_size = iconMinSize + Math.max(0, labelMinSize - iconMinSize);
-        if (windowListSettings.get_enum('title-display') == 2 && this._label.get_text() != '') alloc.natural_size = MAX_BUTTON_WIDTH;
-        else alloc.natural_size = Math.min(iconNaturalSize + Math.max(0, labelNaturalSize), MAX_BUTTON_WIDTH);
+        alloc.natural_size = Math.min(iconNaturalSize + Math.max(0, labelNaturalSize), MAX_BUTTON_WIDTH);
     },
 
     _getPreferredHeight: function (actor, forWidth, alloc) {
@@ -188,7 +177,7 @@ IconLabelButton.prototype = {
             width = naturalWidth;
         }
 
-        this.actor.width = 3;
+        this.actor.width = 1;
         this.actor.show();
         Tweener.addTween(this.actor, {
             width: width,
@@ -205,7 +194,7 @@ IconLabelButton.prototype = {
 
         this.oldWidth = this.actor.width;
         Tweener.addTween(this.actor, {
-            width: 3,
+            width: 1,
             // FIXME: if this is set to 0, a whole bunch of "Clutter-CRITICAL **: clutter_paint_volume_set_width: assertion `width >= 0.0f' failed" messages appear
             time: BUTTON_BOX_ANIMATION_TIME,
             transition: "easeOutQuad",
@@ -217,15 +206,18 @@ IconLabelButton.prototype = {
     },
 
     showLabel: function (animate, targetWidth) {
-        if (!animate) {
-            this._label.show();
-            return;
-        }
-
         let width = targetWidth;
         if (!width) {
             let[minWidth, naturalWidth] = this._label.get_preferred_width(-1);
             width = naturalWidth;
+        }
+
+        if (!animate) {
+            if(width < 2)
+                width = 150;
+            this._label.set_width(width);
+            this._label.show();
+            return;
         }
 
         this._label.show();
@@ -239,7 +231,7 @@ IconLabelButton.prototype = {
     hideLabel: function (animate) {
         if (!animate) {
             this._label.hide();
-            this._label.width = 1;
+            this._label.set_width(1);
             return;
         }
 
@@ -268,16 +260,14 @@ function AppButton() {
 AppButton.prototype = {
     __proto__: IconLabelButton.prototype,
 
-    _init: function (params) {
-        params = Params.parse(params, {
-            isFavapp: false,
-            app: null
-        });
+    _init: function (parent) {
         this.icon_size = Math.floor(Main.panel.actor.get_height() - 2);
-        this.app = params.app;
+        this.app = parent.app;
         this.icon = this.app.create_icon_texture(this.icon_size)
-        IconLabelButton.prototype._init.call(this, this.icon);
-        if (params.isFavapp) this._isFavorite(true);
+        this._applet = parent._applet;
+        this._parent = parent;
+        IconLabelButton.prototype._init.call(this, this);
+        if (parent.isFavapp) this._isFavorite(true);
 
         let tracker = Cinnamon.WindowTracker.get_default();
         this._trackerSignal = tracker.connect('notify::focus-app', Lang.bind(this, this._onFocusChange));
@@ -305,8 +295,10 @@ AppButton.prototype = {
     _isFavorite: function (isFav) {
         if (isFav) {
             this.actor.set_style_class_name('panel-launcher')
-            this.hideLabel(false);
-        } else this.actor.set_style_class_name('window-list-item-box');
+            this.hideLabel(true);
+        } else{ 
+            this.actor.set_style_class_name('window-list-item-box');
+        }
     },
 
 
@@ -333,23 +325,24 @@ WindowButton.prototype = {
 
     _init: function (params) {
         params = Params.parse(params, {
-            app: null,
-            applet: null,
+            parent: null,
             isFavapp: false,
             metaWindow: null,
-            orientation: St.Side.TOP
         });
-        this._applet = params.applet
+        let parent = params.parent;
+        this._applet = parent._applet;
+        this.appList = parent.appList;
         this.metaWindow = params.metaWindow;
-        this.app = params.app;
+        this.app = parent.app;
         this.isFavapp = params.isFavapp;
+        this.orientation = parent.orientation;
         if (this.app == null) {
             let tracker = Cinnamom.WindowTracker.get_default();
             this.app = tracker.get_window_app(metaWindow);
         }
         this.icon_size = Math.floor(Main.panel.actor.get_height() - 2);
         this.icon = this.app.create_icon_texture(this.icon_size)
-        IconLabelButton.prototype._init.call(this, this.icon);
+        IconLabelButton.prototype._init.call(this, this);
         this.signals = [];
         this._numLabel.hide();
         if (params.isFavapp) this.actor.set_style_class_name('panel-launcher');
@@ -361,7 +354,7 @@ WindowButton.prototype = {
             this.signals.push(this.metaWindow.connect('notify::appears-focused', Lang.bind(this, this._onFocusChange)));
             this.signals.push(this.metaWindow.connect('notify::title', Lang.bind(this, this._onTitleChange)));
             this._attention = global.display.connect('window-demands-attention', Lang.bind(this, this._onAttentionRequest));
-            this._winTitleSetting = windowListSettings.connect("changed::title-display", Lang.bind(this, function () {
+            this._applet.settings.connect("changed::title-display", Lang.bind(this, function () {
                 this._onTitleChange();
             }));
 
@@ -369,7 +362,7 @@ WindowButton.prototype = {
         }
         this._onTitleChange();
         // Set up the right click menu
-        this.rightClickMenu = new AppletDir.specialMenus.AppMenuButtonRightClickMenu(this.actor, this.metaWindow, this.app, params.isFavapp, params.orientation);
+        this.rightClickMenu = new AppletDir.specialMenus.AppMenuButtonRightClickMenu(this, this.actor);
         this._menuManager = new PopupMenu.PopupMenuManager(this);
         this._menuManager.addMenu(this.rightClickMenu);
     },
@@ -378,7 +371,6 @@ WindowButton.prototype = {
         this.signals.forEach(Lang.bind(this, function (s) {
             this.metaWindow.disconnect(s);
         }));
-        windowListSettings.disconnect(this._winTitleSetting);
         global.display.disconnect(this._attention);
         this._container.destroy_children();
         this.actor.destroy();
@@ -390,7 +382,7 @@ WindowButton.prototype = {
     },
 
     _onButtonRelease: function (actor, event) {
-        if (event.get_state() & Clutter.ModifierType.BUTTON1_MASK && this.isFavapp) {
+        if (event.get_state() & Clutter.ModifierType.BUTTON1_MASK && this.isFavapp || event.get_state() & Clutter.ModifierType.SHIFT_MASK && event.get_state() & Clutter.ModifierType.BUTTON1_MASK) {
             this.app.open_new_window(-1);
             this._animate();
             return;
@@ -410,17 +402,18 @@ WindowButton.prototype = {
         if (this.isFavapp) return;
         if (source instanceof WindowButton) return DND.DragMotionResult.CONTINUE;
 
-        if (typeof (this._applet.dragEnterTime) == 'undefined') {
-            this._applet.dragEnterTime = time;
+        if (typeof (this.appList.dragEnterTime) == 'undefined') {
+            this.appList.dragEnterTime = time;
         } else {
-            if (time > (this._applet.dragEnterTime + 3000)) {
-                this._applet.dragEnterTime = time;
+            if (time > (this.appList.dragEnterTime + 3000)) {
+                this.appList.dragEnterTime = time;
             }
         }
 
-        if (time > (this._applet.dragEnterTime + 300)) {
+        if (time > (this.appList.dragEnterTime + 300)) {
             this._windowHandle(true);
         }
+        return true;
     },
 
     acceptDrop: function (source, actor, x, y, time) {
@@ -473,26 +466,23 @@ WindowButton.prototype = {
         let[title, appName] = [null, null];
         if (this.isFavapp)[title, appName] = ['', ''];
         else[title, appName] = [this.metaWindow.get_title(), this.app.get_name()];
-        switch (windowListSettings.get_enum("title-display")) {
-        case TitleDisplay.title:
+        let titleType = this._applet.settings.getValue("title-display");
+        if (titleType == TitleDisplay.title) {
             // Some apps take a long time to set a valid title.  We don't want to error
             // if title is null
             if (title) {
                 this._label.set_text(title);
-                break;
             } else {
                 this._label.set_text(appName);
-                break;
             }
-        case TitleDisplay.app:
+            return;
+        }else if (titleType == TitleDisplay.app) { 
             if (appName) {
                 this._label.set_text(appName);
-                break;
+                return;
             }
-        case TitleDisplay.none:
-        default:
+        }else
             this._label.set_text('');
-        }
     }
 };
 
@@ -619,7 +609,7 @@ MyAppletBox.prototype = {
     },
 
     handleDragOver: function (source, actor, x, y, time) {
-        if (!(source.isDraggableApp || source instanceof AppletDir.applet.AppGroup)) return DND.DragMotionResult.NO_DROP;
+        if (!source.isDraggableApp) return DND.DragMotionResult.NO_DROP;
 
         let children = this.actor.get_children();
         let windowPos = children.indexOf(source.actor);
@@ -695,12 +685,12 @@ MyAppletBox.prototype = {
         }
 
         let id = app.get_id();
-        let favorites = Applet.GetAppFavorites().getFavoriteMap();
+        let favorites = this._applet.pinned_app_contr().getFavoriteMap();
         let srcIsFavorite = (id in favorites);
         let favPos = this._dragPlaceholderPos;
 
         Meta.later_add(Meta.LaterType.BEFORE_REDRAW, Lang.bind(this, function () {
-            let appFavorites = Applet.GetAppFavorites();
+            let appFavorites = this._applet.pinned_app_contr();
             this._clearDragPlaceholder();
             if (srcIsFavorite) appFavorites.moveFavoriteToPos(id, favPos);
             else appFavorites.addFavoriteAtPos(id, favPos);
