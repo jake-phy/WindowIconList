@@ -1133,7 +1133,6 @@ MyApplet.prototype = {
             this.settings.bindProperty(Settings.BindingDirection.IN, "number-display", "numDisplay", null, null);
             this.settings.bindProperty(Settings.BindingDirection.IN, "title-display", "titleDisplay", null, null);
             this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "pinned-apps", "pinnedApps", null, null);
-            log(this.pinnedApps);
             this.orientation = orientation;
             this.dragInProgress = false;
 

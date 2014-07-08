@@ -261,7 +261,7 @@ AppButton.prototype = {
     __proto__: IconLabelButton.prototype,
 
     _init: function (parent) {
-        this.icon_size = Math.floor(Main.panel.actor.get_height() - 2);
+        this.icon_size = Math.floor(parent._applet._panelHeight - 2);
         this.app = parent.app;
         this.icon = this.app.create_icon_texture(this.icon_size)
         this._applet = parent._applet;
@@ -340,7 +340,7 @@ WindowButton.prototype = {
             let tracker = Cinnamom.WindowTracker.get_default();
             this.app = tracker.get_window_app(metaWindow);
         }
-        this.icon_size = Math.floor(Main.panel.actor.get_height() - 2);
+        this.icon_size = Math.floor(this._applet._panelHeight - 2);
         this.icon = this.app.create_icon_texture(this.icon_size)
         IconLabelButton.prototype._init.call(this, this);
         this.signals = [];
