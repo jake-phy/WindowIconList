@@ -75,11 +75,11 @@
  },
  "sort-thumbnails" : {
     "type": "combobox",
-    "default" : 1,
+    "default" : 2,
     "description" : "Sort thumbnails by:",
     "options" : {
-        "Order opened" : 1,
-        "Last focused" : 2
+        "Last focused" : 1,
+        "Order opened" : 2
     },
     "tooltip" : "opened: sort by first opened, focused: sort by last focused"
  },

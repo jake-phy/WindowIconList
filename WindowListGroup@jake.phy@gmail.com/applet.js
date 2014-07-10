@@ -585,7 +585,12 @@ AppGroup.prototype = {
         let windowNum = this.app.get_windows().filter(function (win) {
             let workspaces = [global.screen.get_workspace_by_index(i) for each(i in range(global.screen.n_workspaces))];
             for(let i = 0; i < workspaces.length; i++){
-                return win.get_workspace() == workspaces[i];
+                let workspace;
+                if(win.get_workspace() == workspaces[i])
+                    workspace = workspaces[i];
+                else
+                    workspace = false;
+                return workspace
             }
 
         }).length;

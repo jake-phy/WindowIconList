@@ -407,8 +407,10 @@ WindowButton.prototype = {
     },
 
     handleDragOver: function (source, actor, x, y, time) {
-        if (this.isFavapp) return;
-        if (source instanceof WindowButton) return DND.DragMotionResult.CONTINUE;
+        if (this.isFavapp)
+            return false;
+        else if(source instanceof WindowButton)
+            return DND.DragMotionResult.CONTINUE;
 
         if (typeof (this.appList.dragEnterTime) == 'undefined') {
             this.appList.dragEnterTime = time;
@@ -421,7 +423,7 @@ WindowButton.prototype = {
         if (time > (this.appList.dragEnterTime + 300)) {
             this._windowHandle(true);
         }
-        return true;
+        return false;
     },
 
     acceptDrop: function (source, actor, x, y, time) {
@@ -565,8 +567,8 @@ ButtonBox.prototype = {
         this.actor.destroy_children();
     },
 
-    hidefav: function () {
-        child = this.actor.get_children();
+    hidefav: function () {  
+        let child = this.actor.get_children();
         if (child.length ==1) { 
             child[0].show();
         } else {

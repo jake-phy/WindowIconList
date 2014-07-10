@@ -279,8 +279,8 @@ AppThumbnailHoverMenu.prototype = {
         this.metaWindow = parent.metaWindow;
         this.app = parent.app;
         this.isFavapp = parent.isFavapp;
-        this.actor.style_class = null;
-        this.actor.set_style("-arrow-background-color: rgba(80,80,80,0.0);-arrow-border-color: rgba(150,150,150,0.0);");
+		//need to impliment this class or cinnamon outputs a bunch of errors
+        this.actor.style_class = "hide-arrow";
         this.actor.hide();
         this.parentActor = parent.actor;
 
