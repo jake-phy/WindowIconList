@@ -397,7 +397,7 @@ PopupMenuAppSwitcherItem.prototype = {
         this.appContainer = new St.BoxLayout({
             style_class: 'switcher-list'
         });
-        this.appContainer.set_style("padding: 6px;border-radius: 12px;");
+		this.appContainer.set_style("margin: 0px;padding: 8px;");
         this.appThumbnails = {};
 
         this._refresh();
@@ -484,7 +484,7 @@ WindowThumbnail.prototype = {
             track_hover: true,
             vertical: true
         });
-
+		this.actor.set_style("border-width:2px;	padding: 8px;");
         this.thumbnailActor = new St.Bin();
 
         let bin = new St.Bin({

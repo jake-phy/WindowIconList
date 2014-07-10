@@ -41,7 +41,7 @@ function IconLabelButton() {
 IconLabelButton.prototype = {
     _init: function (parent) {
         if (parent.icon == null) throw 'IconLabelButton icon argument must be non-null';
-
+        this._applet = parent._applet;
         this.actor = new St.Bin({
             style_class: 'window-list-item-box',
             reactive: true,
@@ -50,9 +50,12 @@ IconLabelButton.prototype = {
             y_fill: false,
             track_hover: true
         });
-
+        if (this._applet.orientation == St.Side.TOP) 
+	        this.actor.add_style_class_name('window-list-item-box-top');
+        else
+	        this.actor.add_style_class_name('window-list-item-box-bottom');
+        this.setIconPadding();
         this.actor._delegate = this;
-        this._applet = parent._applet;
 
         // We do a fancy layout with icons and labels, so we'd like to do our own allocation
         // in a Cinnamon.GenericContainer
@@ -79,6 +82,11 @@ IconLabelButton.prototype = {
         this._numLabel.set_style('text-shadow: black 1px 0px 2px');
         this._container.add_actor(this._numLabel);
         this._iconBottomClip = 0;
+        this._applet.settings.connect("changed::icon-padding", Lang.bind(this, this.setIconPadding))
+    },
+
+    setIconPadding: function(){
+        this.actor.set_style("padding:2px; padding-left: " + this._applet.iconPadding + "px;padding-right:" + this._applet.iconPadding + "px;");
     },
 
     setText: function (text) {
@@ -261,7 +269,7 @@ AppButton.prototype = {
     __proto__: IconLabelButton.prototype,
 
     _init: function (parent) {
-        this.icon_size = Math.floor(parent._applet._panelHeight - 2);
+        this.icon_size = Math.floor(parent._applet._panelHeight - 3);
         this.app = parent.app;
         this.icon = this.app.create_icon_texture(this.icon_size)
         this._applet = parent._applet;
@@ -289,7 +297,7 @@ AppButton.prototype = {
     },
 
     _onAttentionRequest: function () {
-        this.actor.add_style_pseudo_class('window-list-item-demands-attention');
+        this.actor.add_style_class_name('window-list-item-demands-attention');
     },
 
     _isFavorite: function (isFav) {
@@ -378,7 +386,7 @@ WindowButton.prototype = {
     },
 
     _onAttentionRequest: function () {
-        this.actor.add_style_pseudo_class('window-list-item-demands-attention');
+        this.actor.add_style_class_name('window-list-item-demands-attention');
     },
 
     _onButtonRelease: function (actor, event) {

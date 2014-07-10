@@ -63,6 +63,16 @@
     "description" : "Thumbnail Size:",
     "tooltip" : "Opacity of the windows on peek."
  },
+ "icon-padding" : {
+    "type": "spinbutton",
+    "default" : 5,
+    "min" : 0,
+    "max" : 15,
+    "step" : 1,
+    "units" : "padding",
+    "description" : "Icon Padding:",
+    "tooltip" : "How much Padding is between the icons"
+ },
  "sort-thumbnails" : {
     "type": "combobox",
     "default" : 1,
