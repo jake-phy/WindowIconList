@@ -1,6 +1,5 @@
 //vim: expandtab shiftwidth=4 tabstop=8 softtabstop=4 encoding=utf-8 textwidth=99
 /* -*- mode: js2; js2-basic-offset: 4; indent-tabs-mode: nil -*- */
-
 // Some app-buttons that display an icon
 // and an label
 const Clutter = imports.gi.Clutter;
@@ -50,10 +49,12 @@ IconLabelButton.prototype = {
             y_fill: false,
             track_hover: true
         });
-        if (this._applet.orientation == St.Side.TOP) 
-	        this.actor.add_style_class_name('window-list-item-box-top');
+        this._icon = parent.icon;
+        this.actor.height = parent._applet._panelHeight - 2;
+        if (this._applet.orientation == St.Side.TOP)
+            this.actor.add_style_class_name('window-list-item-box-top');
         else
-	        this.actor.add_style_class_name('window-list-item-box-bottom');
+            this.actor.add_style_class_name('window-list-item-box-bottom');
         this.setIconPadding();
         this.actor._delegate = this;
 
@@ -67,50 +68,29 @@ IconLabelButton.prototype = {
         this._container.connect('allocate', Lang.bind(this, this._allocate));
         this.actor.set_child(this._container)
 
-        this._iconBox = new Cinnamon.Slicer({
-            name: 'appMenuIcon'
-        });
-        this._iconBox.connect('style-changed', Lang.bind(this, this._onIconBoxStyleChanged));
-        this._iconBox.connect('notify::allocation', Lang.bind(this, this._updateIconBoxClip));
-        this._iconBox.set_child(parent.icon);
-        this._container.add_actor(this._iconBox);
+        //this._icon.set_child(parent.icon);
+        this._container.add_actor(this._icon);
         this._label = new St.Label();
         this._container.add_actor(this._label);
         this._numLabel = new St.Label({
             style_class: 'window-list-item-label'
         });
-        this._numLabel.set_style('text-shadow: black 1px 0px 2px');
+        this._numLabel.style = 'text-shadow: black 1px 0px 2px';
         this._container.add_actor(this._numLabel);
-        this._iconBottomClip = 0;
         this._applet.settings.connect("changed::icon-padding", Lang.bind(this, this.setIconPadding))
     },
 
-    setIconPadding: function(){
-        this.actor.set_style("padding:2px; padding-left: " + this._applet.iconPadding + "px;padding-right:" + this._applet.iconPadding + "px;");
+    setIconPadding: function () {
+        this.actor.style = "padding-bottom: 0px;padding-top:1px; padding-left: " + this._applet.iconPadding + "px;padding-right:" + this._applet.iconPadding + "px;";
     },
 
     setText: function (text) {
         this._label.set_text(text);
     },
 
-    // ------------------------------------------
-    // -- Callbacks for display-related things --
-    // ------------------------------------------
-    _onIconBoxStyleChanged: function () {
-        let node = this._iconBox.get_theme_node();
-        this._iconBottomClip = node.get_length('app-icon-bottom-clip');
-        this._updateIconBoxClip();
-    },
-
-    _updateIconBoxClip: function () {
-        let allocation = this._iconBox.allocation;
-        if (this._iconBottomClip > 0) this._iconBox.set_clip(0, 0, allocation.x2 - allocation.x1, allocation.y2 - allocation.y1 - this._iconBottomClip);
-        else this._iconBox.remove_clip();
-    },
-
     _getPreferredWidth: function (actor, forHeight, alloc) {
-        let[iconMinSize, iconNaturalSize] = this._iconBox.get_preferred_width(forHeight);
-        let[labelMinSize, labelNaturalSize] = this._label.get_preferred_width(forHeight);
+        let [iconMinSize, iconNaturalSize] = this._icon.get_preferred_width(forHeight);
+        let [labelMinSize, labelNaturalSize] = this._label.get_preferred_width(forHeight);
         // The label text is starts in the center of the icon, so we should allocate the space
         // needed for the icon plus the space needed for(label - icon/2)
         alloc.min_size = iconMinSize + Math.max(0, labelMinSize - iconMinSize);
@@ -118,8 +98,8 @@ IconLabelButton.prototype = {
     },
 
     _getPreferredHeight: function (actor, forWidth, alloc) {
-        let[iconMinSize, iconNaturalSize] = this._iconBox.get_preferred_height(forWidth);
-        let[labelMinSize, labelNaturalSize] = this._label.get_preferred_height(forWidth);
+        let [iconMinSize, iconNaturalSize] = this._icon.get_preferred_height(forWidth);
+        let [labelMinSize, labelNaturalSize] = this._label.get_preferred_height(forWidth);
         alloc.min_size = Math.max(iconMinSize, labelMinSize);
         alloc.natural_size = Math.max(iconNaturalSize, labelMinSize);
     },
@@ -141,14 +121,19 @@ IconLabelButton.prototype = {
         let direction = this.actor.get_text_direction();
 
         // Set the icon to be left-justified (or right-justified) and centered vertically
-        let[iconMinWidth, iconMinHeight, iconNaturalWidth, iconNaturalHeight] = this._iconBox.get_preferred_size();[childBox.y1, childBox.y2] = center(allocHeight, iconNaturalHeight);
-        if (direction == Clutter.TextDirection.LTR) {[childBox.x1, childBox.x2] = [0, Math.min(iconNaturalWidth, allocWidth)];
-        } else {[childBox.x1, childBox.x2] = [Math.max(0, allocWidth - iconNaturalWidth), allocWidth];
+        let [iconMinWidth, iconMinHeight, iconNaturalWidth, iconNaturalHeight] = this._icon.get_preferred_size();
+        [childBox.y1, childBox.y2] = center(allocHeight, iconNaturalHeight);
+        if (direction == Clutter.TextDirection.LTR) {
+            [childBox.x1, childBox.x2] = [0, Math.min(iconNaturalWidth, allocWidth)];
+        } else {
+            [childBox.x1, childBox.x2] = [Math.max(0, allocWidth - iconNaturalWidth), allocWidth];
         }
-        this._iconBox.allocate(childBox, flags);
+        this._icon.allocate(childBox, flags);
         //        log('allocateA ' + [childBox.x1<0, childBox.x2<0, childBox.y1, childBox.y2] + ' ' + [childBox.x2-childBox.x1, childBox.y2-childBox.y1])
         // Set the label to start its text in the left of the icon
-        let iconWidth = childBox.x2 - childBox.x1;[minWidth, minHeight, naturalWidth, naturalHeight] = this._label.get_preferred_size();[childBox.y1, childBox.y2] = center(allocHeight, naturalHeight);
+        let iconWidth = childBox.x2 - childBox.x1;
+        [minWidth, minHeight, naturalWidth, naturalHeight] = this._label.get_preferred_size();
+        [childBox.y1, childBox.y2] = center(allocHeight, naturalHeight);
         if (direction == Clutter.TextDirection.LTR) {
             childBox.x1 = iconWidth;
             childBox.x2 = Math.min(childBox.x1 + naturalWidth, allocWidth, MAX_BUTTON_WIDTH);
@@ -181,7 +166,7 @@ IconLabelButton.prototype = {
 
         let width = this.oldWidth || targetWidth;
         if (!width) {
-            let[minWidth, naturalWidth] = this.actor.get_preferred_width(-1);
+            let [minWidth, naturalWidth] = this.actor.get_preferred_width(-1);
             width = naturalWidth;
         }
 
@@ -216,12 +201,12 @@ IconLabelButton.prototype = {
     showLabel: function (animate, targetWidth) {
         let width = targetWidth;
         if (!width) {
-            let[minWidth, naturalWidth] = this._label.get_preferred_width(-1);
+            let [minWidth, naturalWidth] = this._label.get_preferred_width(-1);
             width = naturalWidth;
         }
 
         if (!animate) {
-            if(width < 2)
+            if (width < 2)
                 width = 150;
             this._label.set_width(width);
             this._label.show();
@@ -269,13 +254,14 @@ AppButton.prototype = {
     __proto__: IconLabelButton.prototype,
 
     _init: function (parent) {
-        this.icon_size = Math.floor(parent._applet._panelHeight - 3);
+        this.icon_size = Math.floor(parent._applet._panelHeight - 4);
         this.app = parent.app;
         this.icon = this.app.create_icon_texture(this.icon_size)
         this._applet = parent._applet;
         this._parent = parent;
+        this.isFavapp = parent.isFavapp;
         IconLabelButton.prototype._init.call(this, this);
-        if (parent.isFavapp) this._isFavorite(true);
+        if (this.isFavapp) this._isFavorite(true);
 
         let tracker = Cinnamon.WindowTracker.get_default();
         this._trackerSignal = tracker.connect('notify::focus-app', Lang.bind(this, this._onFocusChange));
@@ -297,14 +283,15 @@ AppButton.prototype = {
     },
 
     _onAttentionRequest: function () {
-        this.actor.add_style_class_name('window-list-item-demands-attention');
+        if (!this.isFavapp)
+            this.actor.add_style_class_name('window-list-item-demands-attention');
     },
 
     _isFavorite: function (isFav) {
         if (isFav) {
             this.actor.set_style_class_name('panel-launcher')
             this.hideLabel(true);
-        } else{ 
+        } else {
             this.actor.set_style_class_name('window-list-item-box');
         }
     },
@@ -348,12 +335,12 @@ WindowButton.prototype = {
             let tracker = Cinnamom.WindowTracker.get_default();
             this.app = tracker.get_window_app(metaWindow);
         }
-        this.icon_size = Math.floor(this._applet._panelHeight - 2);
+        this.icon_size = Math.floor(this._applet._panelHeight - 4);
         this.icon = this.app.create_icon_texture(this.icon_size)
         IconLabelButton.prototype._init.call(this, this);
         this.signals = [];
         this._numLabel.hide();
-        if (params.isFavapp) this.actor.set_style_class_name('panel-launcher');
+        //if (params.isFavapp) this.actor.set_style_class_name('panel-launcher');
 
         this.actor.connect('button-release-event', Lang.bind(this, this._onButtonRelease));
         // We need to keep track of the signals we add to metaWindow so we can delete them when we are
@@ -380,13 +367,14 @@ WindowButton.prototype = {
             this.metaWindow.disconnect(s);
         }));
         global.display.disconnect(this._attention);
+        this.rightClickMenu.destroy();
         this._container.destroy_children();
         this.actor.destroy();
-        this.rightClickMenu.destroy();
     },
 
     _onAttentionRequest: function () {
-        this.actor.add_style_class_name('window-list-item-demands-attention');
+        if (!this.isFavapp)
+            this.actor.add_style_class_name('window-list-item-demands-attention');
     },
 
     _onButtonRelease: function (actor, event) {
@@ -409,7 +397,7 @@ WindowButton.prototype = {
     handleDragOver: function (source, actor, x, y, time) {
         if (this.isFavapp)
             return false;
-        else if(source instanceof WindowButton)
+        else if (source instanceof WindowButton)
             return DND.DragMotionResult.CONTINUE;
 
         if (typeof (this.appList.dragEnterTime) == 'undefined') {
@@ -473,9 +461,9 @@ WindowButton.prototype = {
     },
 
     _onTitleChange: function () {
-        let[title, appName] = [null, null];
+        let [title, appName] = [null, null];
         if (this.isFavapp)[title, appName] = ['', ''];
-        else[title, appName] = [this.metaWindow.get_title(), this.app.get_name()];
+        else [title, appName] = [this.metaWindow.get_title(), this.app.get_name()];
         let titleType = this._applet.settings.getValue("title-display");
         if (titleType == TitleDisplay.title) {
             // Some apps take a long time to set a valid title.  We don't want to error
@@ -486,12 +474,12 @@ WindowButton.prototype = {
                 this._label.set_text(appName);
             }
             return;
-        }else if (titleType == TitleDisplay.app) { 
+        } else if (titleType == TitleDisplay.app) {
             if (appName) {
                 this._label.set_text(appName);
                 return;
             }
-        }else
+        } else
             this._label.set_text('');
     }
 };
@@ -508,7 +496,7 @@ ButtonBox.prototype = {
     _init: function (params) {
         params = Params.parse(params, {});
         this.actor = new St.BoxLayout();
-        this.actor.set_style('padding-left: 2px');
+        this.actor.style = 'padding-left: 2px';
         //this.actor._delegate = this;
     },
 
@@ -520,7 +508,7 @@ ButtonBox.prototype = {
 
         let width = this.oldWidth || targetWidth;
         if (!width) {
-            let[minWidth, naturalWidth] = this.actor.get_preferred_width(-1);
+            let [minWidth, naturalWidth] = this.actor.get_preferred_width(-1);
             width = naturalWidth;
         }
 
@@ -567,9 +555,9 @@ ButtonBox.prototype = {
         this.actor.destroy_children();
     },
 
-    hidefav: function () {  
+    hidefav: function () {
         let child = this.actor.get_children();
-        if (child.length ==1) { 
+        if (child.length == 1) {
             child[0].show();
         } else {
             child[0].hide();
@@ -577,7 +565,9 @@ ButtonBox.prototype = {
     },
 
     destroy: function () {
-        this.actor.destroy_children();
+        this.actor.get_children().forEach(Lang.bind(this, function (button) {
+            button._delegate.destroy();
+        }));
         this.actor.destroy();
         this.actor = null;
     }

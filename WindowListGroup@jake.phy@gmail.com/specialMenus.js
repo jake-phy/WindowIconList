@@ -14,7 +14,7 @@ const AppletDir = imports.ui.appletManager.applets['WindowListGroup@jake.phy@gma
 const MainApplet = AppletDir.applet;
 const SpecialButtons = AppletDir.specialButtons;
 
-const THUMBNAIL_ICON_SIZE = 16;
+const THUMBNAIL_ICON_SIZE = 20;
 const OPACITY_OPAQUE = 255;
 
 const FavType = {
@@ -397,7 +397,7 @@ PopupMenuAppSwitcherItem.prototype = {
         this.appContainer = new St.BoxLayout({
             style_class: 'switcher-list'
         });
-		this.appContainer.set_style("margin: 0px;padding: 8px;");
+		this.appContainer.style = "margin: 0px;padding: 8px;";
         this.appThumbnails = {};
 
         this._refresh();
@@ -417,6 +417,8 @@ PopupMenuAppSwitcherItem.prototype = {
     _refresh: function () {
         // Check to see if this.metaWindow has changed.  If so, we need to recreate
         // our thumbnail, etc.
+		if(this.metaWindowThumbnai && !this.metaWindowThumbnail.needs_refresh())
+			this.metaWindowThumbnail == null;
         if (this.metaWindowThumbnail && this.metaWindowThumbnail.metaWindow == this.metaWindow) {
             this.metaWindowThumbnail._isFavorite(this.isFavapp);
         } else {
@@ -468,7 +470,6 @@ function WindowThumbnail() {
 }
 
 WindowThumbnail.prototype = {
-    __proto__: SpecialButtons.IconLabelButton.prototype,
 
     _init: function (parent, metaWindow) {
     	this._applet = parent._applet;
@@ -484,39 +485,31 @@ WindowThumbnail.prototype = {
             track_hover: true,
             vertical: true
         });
-		this.actor.set_style("border-width:2px;	padding: 8px;");
         this.thumbnailActor = new St.Bin();
 
-        let bin = new St.Bin({
-            name: 'appMenu'
+        this._container = new St.BoxLayout({		
+			style_class: 'thumbnail-iconLabel',
         });
-        this._container = new Cinnamon.GenericContainer();
-        bin.set_child(this._container);
-        // Stick the icon, lable and button in a container
-        this._container.connect('get-preferred-width', Lang.bind(this, this._getContentPreferredWidth));
-        this._container.connect('get-preferred-height', Lang.bind(this, this._getContentPreferredHeight));
-        this._container.connect('allocate', Lang.bind(this, this._contentAllocate));
 
-        this._iconBox = new Cinnamon.Slicer({
-            name: 'appMenuIcon'
+        let bin = new St.BoxLayout({
         });
-        this._iconBox.connect('style-changed', Lang.bind(this, this._onIconBoxStyleChanged));
-        this._iconBox.connect('notify::allocation', Lang.bind(this, this._updateIconBoxClip));
-        this._container.add_actor(this._iconBox);
+
+        this.icon = this.app.create_icon_texture(THUMBNAIL_ICON_SIZE);
+
+        this._container.add_actor(this.icon);
         this._label = new St.Label();
+		this._label.style = "padding: 2px;";
         this._container.add_actor(this._label);
-        this.button = new St.Bin({
+        this.button = new St.BoxLayout({
             style_class: 'window-close',
             reactive: true
         });
-        this._container.add_actor(this.button);
+		this.button.style = "width: 20px; height: 20px;";
+        //this._container.add_actor(this.button);
         this.button.hide();
-
-        this._iconBottomClip = 0;
-
-        let icon = this.app.create_icon_texture(THUMBNAIL_ICON_SIZE);
-        this._iconBox.set_child(icon);
-
+		bin.add_actor(this._container);
+		bin.add_actor(this.button);
+		bin.style = "padding-bottom: 3px;"
         this.actor.add_actor(bin);
         this.actor.add_actor(this.thumbnailActor);
 
@@ -566,7 +559,12 @@ WindowThumbnail.prototype = {
             this.ThumbnailWidth = THUMBNAIL_ICON_SIZE + Math.floor(apptext.length * 7.0);
             this._label.text = apptext;
             this.isFavapp = true;
-        } else this._refresh();
+			this.actor.style = "border-width:2px;padding: 0px;";
+			this._container.style = "width: " + this.ThumbnailWidth + "px";
+        } else {
+			this._refresh();
+			this.actor.style = "border-width:2px;padding: 6px;";
+		}
     },
 
     destroy: function () {
@@ -621,6 +619,7 @@ WindowThumbnail.prototype = {
         this.ThumbnailWidth = Math.max(200, Math.floor(Main.layoutManager.primaryMonitor.width / 70) * this._applet.thumbSize);
         this.thumbnailActor.height = this.ThumbnailHeight;
         this.thumbnailActor.width = this.ThumbnailWidth;
+		this._container.style = "width: " + Math.floor(this.ThumbnailWidth - 20) + "px";
         this.isFavapp = false;
 
         // Replace the old thumbnail
@@ -651,89 +650,5 @@ WindowThumbnail.prototype = {
 
 
         });
-    },
-
-    _onIconBoxStyleChanged: function () {
-        let node = this._iconBox.get_theme_node();
-        this._iconBottomClip = node.get_length('panel-launcher-bottom-clip');
-        this._updateIconBoxClip();
-    },
-
-    _updateIconBoxClip: function () {
-        let allocation = this._iconBox.allocation;
-        if (this._iconBottomClip > 0) this._iconBox.set_clip(0, 0, allocation.x2 - allocation.x1, allocation.y2 - allocation.y1 - this._iconBottomClip);
-        else this._iconBox.remove_clip();
-    },
-
-    _getContentPreferredWidth: function (actor, forHeight, alloc) {
-        let[minSize, naturalSize] = this._iconBox.get_preferred_width(forHeight);
-        alloc.min_size = minSize;
-        alloc.natural_size = naturalSize;[minSize, naturalSize] = this._label.get_preferred_width(forHeight);
-        //        alloc.min_size = alloc.min_size + Math.max(0, minSize - Math.floor(alloc.min_size / 2));
-        alloc.min_size = alloc.min_size + Math.max(0, minSize);
-        //        alloc.natural_size = alloc.natural_size + Math.max(0, naturalSize - Math.floor(alloc.natural_size / 2));
-        alloc.natural_size = Math.max(this.ThumbnailWidth, 50); // FIX ME --> This was set to 75 originally, we need some calculation.. we want this to be as big as possible for the window list to take all available space
-    },
-
-    _getContentPreferredHeight: function (actor, forWidth, alloc) {
-        let[minSize, naturalSize] = this._iconBox.get_preferred_height(forWidth);
-        alloc.min_size = minSize;
-        alloc.natural_size = naturalSize;[minSize, naturalSize] = this._label.get_preferred_height(forWidth);
-        if (minSize > alloc.min_size) alloc.min_size = minSize;
-        if (naturalSize > alloc.natural_size) alloc.natural_size = naturalSize;
-    },
-
-    _contentAllocate: function (actor, box, flags) {
-        let allocWidth = box.x2 - box.x1;
-        let allocHeight = box.y2 - box.y1;
-        let childBox = new Clutter.ActorBox();
-
-        let[minWidth, minHeight, naturalWidth, naturalHeight] = this._iconBox.get_preferred_size();
-
-        let direction = this.actor.get_text_direction();
-
-        let yPadding = Math.floor(Math.max(0, allocHeight - naturalHeight) / 2);
-        childBox.y1 = yPadding;
-        childBox.y2 = childBox.y1 + Math.min(naturalHeight, allocHeight);
-        if (direction == Clutter.TextDirection.LTR) {
-            childBox.x1 = 0;
-            childBox.x2 = childBox.x1 + Math.min(naturalWidth, allocWidth);
-        } else {
-            childBox.x1 = Math.max(0, allocWidth - naturalWidth);
-            childBox.x2 = allocWidth;
-        }
-        this._iconBox.allocate(childBox, flags);
-
-        let iconWidth = THUMBNAIL_ICON_SIZE;
-
-        [minWidth, minHeight, naturalWidth, naturalHeight] = this._label.get_preferred_size();
-
-        yPadding = Math.floor(Math.max(0, allocHeight - naturalHeight) / 2);
-        childBox.y1 = yPadding;
-        childBox.y2 = childBox.y1 + Math.min(naturalHeight, allocHeight);
-
-        if (direction == Clutter.TextDirection.LTR) {
-            childBox.x1 = Math.floor(iconWidth + 3);
-            childBox.x2 = Math.min(childBox.x1 + naturalWidth, allocWidth);
-        } else {
-            childBox.x2 = allocWidth - Math.floor(iconWidth + 3);
-            childBox.x1 = Math.max(0, childBox.x2 - naturalWidth);
-        }
-        this._label.allocate(childBox, flags);
-
-        let buttonSize = THUMBNAIL_ICON_SIZE;
-        if (direction == Clutter.TextDirection.LTR) {
-            childBox.x1 = this.ThumbnailWidth - THUMBNAIL_ICON_SIZE;
-            childBox.x2 = childBox.x1 + 36;
-            childBox.y1 = iconWidth * (-1) - 3;
-            childBox.y2 = iconWidth;
-            this.button.allocate(childBox, flags);
-        } else {
-            childBox.x1 = -this.button.width;
-            childBox.x2 = childBox.x1 + this.button.width;
-            childBox.y1 = box.y1;
-            childBox.y2 = box.y2 - 1;
-            this.button.allocate(childBox, flags);
-        }
     }
 };

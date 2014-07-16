@@ -1,6 +1,5 @@
 //vim: expandtab shiftwidth=4 tabstop=8 softtabstop=4 encoding=utf-8 textwidth=99
 /* -*- mode: js2; js2-basic-offset: 4; indent-tabs-mode: nil -*- */
-
 // Cinnamon Window List
 // Authors:
 //   Kurt Rottmann <kurtrottmann@gmail.com>
@@ -58,8 +57,9 @@ const dir = function (obj) {
 
 const range = function (a, b) {
     let ret = []
-    // if b is unset, we want a to be the upper bound on the range
-    if (b == null) {[a, b] = [0, a]
+        // if b is unset, we want a to be the upper bound on the range
+    if (b == null) {
+        [a, b] = [0, a]
     }
 
     for (let i = a; i < b; i++) {
@@ -77,7 +77,8 @@ const zip = function (a, b) {
 }
 
 const unzip = function (a) {
-    let ret1 = [], ret2 = [];
+    let ret1 = [],
+        ret2 = [];
     a.forEach(function (tuple) {
         ret1.push(tuple[0]);
         ret2.push(tuple[1]);
@@ -100,7 +101,8 @@ OrderedHash.prototype = {
     },
 
     toString: function () {
-        let ret = [this._keys[i] + ': ' + this._items[i] for each(i in range(this._keys.length))];
+        let ret = [this._keys[i] + ': ' + this._items[i]
+            for each(i in range(this._keys.length))];
         return '{' + ret.join(', ') + '}';
     },
 
@@ -168,14 +170,16 @@ OrderedHash.prototype = {
         let pairs = zip(this._keys, this._items);
         pairs.sort(Lang.bind(this, function (a, b) {
             return sortFunc(a[0], b[0]);
-        }));[this._keys, this._items] = unzip(pairs);
+        }));
+        [this._keys, this._items] = unzip(pairs);
     },
 
     sortByItems: function (sortFunc) {
         let pairs = zip(this._keys, this._items);
         pairs.sort(Lang.bind(this, function (a, b) {
             return sortFunc(a[1], b[1]);
-        }));[this._keys, this._items] = unzip(pairs);
+        }));
+        [this._keys, this._items] = unzip(pairs);
     },
 
     // Call forFunc(key, item) on each (key, item) pair.
@@ -250,20 +254,20 @@ PinnedFavs.prototype = {
         this._reload();
     },
 
-    _onFavsChanged: function() {
+    _onFavsChanged: function () {
         this._reload();
         this.emit('changed');
     },
 
-    _reload: function() {
+    _reload: function () {
         let ids = this._applet.settings.getValue("pinned-apps");
         let appSys = Cinnamon.AppSystem.get_default();
         let apps = ids.map(function (id) {
-                let app = appSys.lookup_app(id);
-                return app;
-            }).filter(function (app) {
-                return app != null;
-            });
+            let app = appSys.lookup_app(id);
+            return app;
+        }).filter(function (app) {
+            return app != null;
+        });
         this._favorites = {};
         for (let i = 0; i < apps.length; i++) {
             let app = apps[i];
@@ -271,29 +275,29 @@ PinnedFavs.prototype = {
         }
     },
 
-    _getIds: function() {
+    _getIds: function () {
         let ret = [];
         for (let id in this._favorites)
             ret.push(id);
         return ret;
     },
 
-    getFavoriteMap: function() {
+    getFavoriteMap: function () {
         return this._favorites;
     },
 
-    getFavorites: function() {
+    getFavorites: function () {
         let ret = [];
         for (let id in this._favorites)
             ret.push(this._favorites[id]);
         return ret;
     },
 
-    isFavorite: function(appId) {
+    isFavorite: function (appId) {
         return appId in this._favorites;
     },
 
-    _addFavorite: function(appId, pos) {
+    _addFavorite: function (appId, pos) {
         if (appId in this._favorites)
             return false;
 
@@ -313,36 +317,38 @@ PinnedFavs.prototype = {
         return true;
     },
 
-    addFavoriteAtPos: function(appId, pos) {
-        this._addFavorite(appId, pos);                            
+    addFavoriteAtPos: function (appId, pos) {
+        this._addFavorite(appId, pos);
     },
 
-    addFavorite: function(appId) {
+    addFavorite: function (appId) {
         this.addFavoriteAtPos(appId, -1);
     },
 
-    moveFavoriteToPos: function(appId, pos) {
+    moveFavoriteToPos: function (appId, pos) {
         let ids = this._getIds();
         let old_index = ids.indexOf(appId);
-        if(pos > old_index)
+        if (pos > old_index)
             pos = pos - 1;
         ids.splice(pos, 0, ids.splice(old_index, 1)[0]);
         this._applet.pinnedApps = ids;
-        
+
     },
 
-    _removeFavorite: function(appId) {
+    _removeFavorite: function (appId) {
         if (!appId in this._favorites)
             return false;
 
-        let ids = this._getIds().filter(function (id) { return id != appId; });
+        let ids = this._getIds().filter(function (id) {
+            return id != appId;
+        });
         this._applet.settings.setValue("pinned-apps", ids);
         return true;
     },
 
-    removeFavorite: function(appId) {
+    removeFavorite: function (appId) {
         let app = this._favorites[appId];
-        this._removeFavorite(appId);                    
+        this._removeFavorite(appId);
     }
 };
 Signals.addSignalMethods(PinnedFavs.prototype);
@@ -424,11 +430,9 @@ AppGroup.prototype = {
         this.appButtonVisible = true;
         this.windowButtonsVisible = true;
 
-        this._metaDisplay = global.screen.get_display();
-
         this._appButton.actor.connect('button-release-event', Lang.bind(this, this._onAppButtonRelease));
         //global.screen.connect('event', Lang.bind(this, this._onAppKeyPress));
-//        global.screen.connect('key-release-event', Lang.bind(this, this._onAppKeyReleased));
+        //        global.screen.connect('key-release-event', Lang.bind(this, this._onAppKeyReleased));
         // Set up the right click menu for this._appButton
         this.rightClickMenu = new SpecialMenus.AppMenuButtonRightClickMenu(this, this._appButton.actor);
         this._menuManager = new PopupMenu.PopupMenuManager(this);
@@ -584,30 +588,26 @@ AppGroup.prototype = {
 
         let windowNum = this.app.get_windows().filter(function (win) {
             let workspaces = [global.screen.get_workspace_by_index(i) for each(i in range(global.screen.n_workspaces))];
-            for(let i = 0; i < workspaces.length; i++){
-                let workspace;
-                if(win.get_workspace() == workspaces[i])
-                    workspace = workspaces[i];
-                else
-                    workspace = false;
-                return workspace
+            for (let i = 0; i < workspaces.length; i++) {
+                if (win.get_workspace() == workspaces[i])
+                    return workspaces[i];
             }
-
+            return false;
         }).length;
-	
-        if (!this.lastFocused)  return;
 
-	    if (event.get_state() & Clutter.ModifierType.BUTTON2_MASK && !this.isFavapp) {
-           this.app.open_new_window(-1);
-		
-        }else if (event.get_state() & Clutter.ModifierType.BUTTON1_MASK) {
-            if(this._applet.onclickThumbs && windowNum > 1){
+        if (!this.lastFocused) return;
+
+        if (event.get_state() & Clutter.ModifierType.BUTTON2_MASK && !this.isFavapp) {
+            this.app.open_new_window(-1);
+
+        } else if (event.get_state() & Clutter.ModifierType.BUTTON1_MASK) {
+            if (this._applet.onclickThumbs && windowNum > 1) {
                 this.shouldOpen = true;
                 this.shouldClose = false;
                 this.hoverMenu.hoverOpen();
-            }else
-	            this._windowHandle(false);
-		
+            } else
+                this._windowHandle(false);
+
         }
 
     },
@@ -633,7 +633,7 @@ AppGroup.prototype = {
             }
             if (this.lastFocused.minimized) {
                 this.lastFocused.unminimize(global.get_current_time());
-            }else
+            } else
                 this.lastFocused.minimize(global.get_current_time());
         } else {
             if (this.lastFocused.minimized) {
@@ -645,7 +645,8 @@ AppGroup.prototype = {
 
     _getLastFocusedWindow: function () {
         // Get a list of windows and sort it in order of last access
-        let list = [[win.user_time, win] for each(win in this.metaWindows.keys())]
+        let list = [[win.user_time, win]
+            for each(win in this.metaWindows.keys())]
         list.sort(function (a, b) {
             return a[0] - b[0];
         });
@@ -756,20 +757,20 @@ AppGroup.prototype = {
         if (metaWindow != this.lastFocused || this.isFavapp) return;
 
         let titleType = this._applet.settings.getValue("title-display");
-        let[title, appName] = [metaWindow.get_title(), this.app.get_name()];
+        let [title, appName] = [metaWindow.get_title(), this.app.get_name()];
         if (titleType == TitleDisplay.title) {
             if (title) {
                 this._appButton._label.text = title;
             }
-        }else if (titleType == TitleDisplay.focused) {
+        } else if (titleType == TitleDisplay.focused) {
             if (title) {
                 this._appButton._label.text = title;
             }
-        }else if (titleType == TitleDisplay.app) {
+        } else if (titleType == TitleDisplay.app) {
             if (appName) {
                 this._appButton._label.text = appName;
             }
-        }else if (titleType == TitleDisplay.none){
+        } else if (titleType == TitleDisplay.none) {
             this._appButton._label.text = "";
         }
         this._titleDisplayChanged();
@@ -777,14 +778,14 @@ AppGroup.prototype = {
 
     _titleDisplayChanged: function () {
         let titleType = this._applet.settings.getValue("title-display");
-        if(titleType == TitleDisplay.title) {
+        if (titleType == TitleDisplay.title) {
             this.showAppButtonLabel(true, 150);
-        }else if(titleType == TitleDisplay.focused) {
+        } else if (titleType == TitleDisplay.focused) {
             this.hideAppButtonLabel(true);
             this._updateFocusedStatus(true);
-        }else if(titleType == TitleDisplay.app) {
+        } else if (titleType == TitleDisplay.app) {
             this.showAppButtonLabel(true);
-        }else  if(titleType == TitleDisplay.none) {
+        } else if (titleType == TitleDisplay.none) {
             this.hideAppButtonLabel(true);
         }
     },
@@ -851,18 +852,18 @@ AppGroup.prototype = {
         let numDisplay = this._applet.settings.getValue("number-display");
         this._appButton._numLabel.set_text(windowNum.toString());
         if (numDisplay == NumberDisplay.smart) {
-            if (windowNum <= 1) 
+            if (windowNum <= 1)
                 this._appButton._numLabel.hide();
-            else 
+            else
                 this._appButton._numLabel.show();
-        }else if (numDisplay == NumberDisplay.normal) {
-            if (windowNum <= 0) 
+        } else if (numDisplay == NumberDisplay.normal) {
+            if (windowNum <= 0)
                 this._appButton._numLabel.hide();
-            else 
-                this._appButton._numLabel.show();  
-        }else if (numDisplay == NumberDisplay.all) {
+            else
+                this._appButton._numLabel.show();
+        } else if (numDisplay == NumberDisplay.all) {
             this._appButton._numLabel.show();
-        }else{
+        } else {
             this._appButton._numLabel.hide();
         }
     },
@@ -929,13 +930,11 @@ AppList.prototype = {
 
         if (orientation == St.Side.TOP) {
             this.myactor.add_style_class_name('window-list-box-top');
-            this.myactor.set_style('margin-top: 0px;');
-            this.myactor.set_style('padding-top: 0px;');
+            this.myactor.style = 'margin-top: 0px; padding-top: 0px;';
             //this.myactor.set_style('padding-left: 3px');
         } else {
             this.myactor.add_style_class_name('window-list-box-bottom');
-            this.myactor.set_style('margin-bottom: 0px;');
-            this.myactor.set_style('padding-bottom: 0px;');
+            this.myactor.style = 'margin-bottom: 0px; padding-bottom: 0px;';
             //this.myactor.set_style('padding-left: 3px');
         }
 
@@ -954,7 +953,6 @@ AppList.prototype = {
 
     _setSignals: function () {
         this.signals = [];
-        this.settingsSignals = [];
         // We use connect_after so that the window-tracker time to identify the app
         this.signals.push(this.metaWorkspace.connect_after('window-added', Lang.bind(this, this._windowAdded)));
         this.signals.push(this.metaWorkspace.connect_after('window-removed', Lang.bind(this, this._windowRemoved)));
@@ -973,12 +971,12 @@ AppList.prototype = {
     },
 
     _refreshList: function () {
-            this._appList.forEach(function (app, data) {
-                data['appGroup'].destroy();
-            });
-            this._appList = new OrderedHash();
-            this._loadFavorites();
-            this._refreshApps();
+        this._appList.forEach(function (app, data) {
+            data['appGroup'].destroy();
+        });
+        this._appList = new OrderedHash();
+        this._loadFavorites();
+        this._refreshApps();
     },
 
     _appGroupNumber: function (parentApp) {
@@ -993,10 +991,10 @@ AppList.prototype = {
     },
 
     _refreshAppGroupNumber: function () {
-        let i = 0;
+        let i = 1;
         this._appList.forEach(function (app, data) {
-            ++i;
             data['appGroup']._newAppKeyNumber(i);
+            ++i;
         });
     },
 
@@ -1028,7 +1026,7 @@ AppList.prototype = {
 
             // We also need to monitor the state 'cause some pesky apps (namely: plugin_container left over after fullscreening a flash video)
             // don't report having zero windows after they close
-            let appStateSignal = app.connect('notify::state', Lang.bind(this, function (app) {
+            app.connect('notify::state', Lang.bind(this, function (app) {
                 if (app.state == Cinnamon.AppState.STOPPED && this._appList.contains(app)) {
                     this._removeApp(app);
                     appGroup._calcWindowNumber(metaWorkspace);
@@ -1037,7 +1035,6 @@ AppList.prototype = {
 
             this._appList.set(app, {
                 appGroup: appGroup,
-                signals: [appStateSignal]
             });
             let appGroupNum = this._appGroupNumber(app);
             appGroup._newAppKeyNumber(appGroupNum);
@@ -1058,9 +1055,6 @@ AppList.prototype = {
                 return;
             }
             this._appList.remove(app);
-            appGroup['signals'].forEach(function (s) {
-                app.disconnect(s);
-            });
             appGroup['appGroup'].destroy();
             Mainloop.timeout_add(15, Lang.bind(this, function () {
                 this._refreshApps();
@@ -1072,7 +1066,8 @@ AppList.prototype = {
 
     _loadFavorites: function () {
         if (this._applet.settings.getValue("show-pinned") == false) return;
-        let launchers = this._applet.settings.getValue("pinned-apps"), appSys = Cinnamon.AppSystem.get_default();
+        let launchers = this._applet.settings.getValue("pinned-apps"),
+            appSys = Cinnamon.AppSystem.get_default();
         for (let i = 0; i < launchers.length; ++i) {
             let app = appSys.lookup_app(launchers[i]);
             if (!app) app = appSys.lookup_settings_app(launchers[i]);
@@ -1152,15 +1147,13 @@ MyApplet.prototype = {
 
 
             if (orientation == St.Side.TOP) {
-                this.actor.set_style('margin-top: 0px;');
-                this.actor.set_style('padding-top: 0px;');
+                this.actor.style = 'margin-top: 0px; padding-top: 0px;';
             } else {
-                this.actor.set_style('margin-bottom: 0px;');
-                this.actor.set_style('padding-bottom: 0px;');
+                this.actor.style = 'margin-bottom: 0px; padding-bottom: 0px;';
             }
-            
+
             this.pinnedAppsContr = new PinnedFavs(this);
-            
+
             this.metaWorkspaces = new OrderedHash();
 
             // Use a signal tracker so we don't have to keep track of all these id's manually!
@@ -1221,14 +1214,14 @@ MyApplet.prototype = {
         this.actor.reactive = global.settings.get_boolean("panel-edit-mode");
     },
 
-    on_panel_height_changed: function() {
+    on_panel_height_changed: function () {
         this.metaWorkspaces.forEach(Lang.bind(this, function (ws, data) {
-                data['appList']._refreshList();
+            data['appList']._refreshList();
         }));
     },
-    
-    pinned_app_contr: function() {
-        let pinnedAppsContr = this.pinnedAppsContr; 
+
+    pinned_app_contr: function () {
+        let pinnedAppsContr = this.pinnedAppsContr;
         return pinnedAppsContr;
     },
 
