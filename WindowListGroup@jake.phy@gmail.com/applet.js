@@ -896,8 +896,8 @@ AppGroup.prototype = {
         });
         this._appButton.destroy();
         this._windowButtonBox.destroy();
-        this.actor.destroy();
         this.hoverMenu.destroy();
+        this.actor.destroy();
         /*this._appButton = null;
         this._windowButtonBox = null;
         this.actor = null;
