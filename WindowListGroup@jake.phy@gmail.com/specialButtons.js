@@ -16,7 +16,6 @@ const DND = imports.ui.dnd;
 
 const BUTTON_BOX_ANIMATION_TIME = 0.5;
 const MAX_BUTTON_WIDTH = 150; // Pixels
-const ICON_PADDING_TOP = 0;
 
 const AppletDir = imports.ui.appletManager.applets['WindowListGroup@jake.phy@gmail.com'];
 const Applet = AppletDir.applet;
@@ -41,6 +40,7 @@ IconLabelButton.prototype = {
     _init: function (parent) {
         if (parent.icon == null) throw 'IconLabelButton icon argument must be non-null';
         this._applet = parent._applet;
+        this._icon = parent.icon;
         this.actor = new St.Bin({
             style_class: 'window-list-item-box',
             reactive: true,
@@ -49,13 +49,11 @@ IconLabelButton.prototype = {
             y_fill: false,
             track_hover: true
         });
-        this._icon = parent.icon;
         this.actor.height = parent._applet._panelHeight - 2;
         if (this._applet.orientation == St.Side.TOP)
             this.actor.add_style_class_name('window-list-item-box-top');
         else
             this.actor.add_style_class_name('window-list-item-box-bottom');
-        this.setIconPadding();
         this.actor._delegate = this;
 
         // We do a fancy layout with icons and labels, so we'd like to do our own allocation
@@ -63,20 +61,24 @@ IconLabelButton.prototype = {
         this._container = new Cinnamon.GenericContainer({
             name: 'iconLabelButton'
         });
+        this.actor.set_child(this._container)
         this._container.connect('get-preferred-width', Lang.bind(this, this._getPreferredWidth));
         this._container.connect('get-preferred-height', Lang.bind(this, this._getPreferredHeight));
         this._container.connect('allocate', Lang.bind(this, this._allocate));
-        this.actor.set_child(this._container)
 
         //this._icon.set_child(parent.icon);
-        this._container.add_actor(this._icon);
         this._label = new St.Label();
-        this._container.add_actor(this._label);
         this._numLabel = new St.Label({
             style_class: 'window-list-item-label'
         });
         this._numLabel.style = 'text-shadow: black 1px 0px 2px';
+
+        this._container.add_actor(this._icon);
+        this._container.add_actor(this._label);
         this._container.add_actor(this._numLabel);
+
+        this.setIconPadding();
+
         this._applet.settings.connect("changed::icon-padding", Lang.bind(this, this.setIconPadding))
     },
 
@@ -85,7 +87,13 @@ IconLabelButton.prototype = {
     },
 
     setText: function (text) {
-        this._label.set_text(text);
+        if (text)
+            this._label.text = text;
+    },
+
+    setStyle: function (name) {
+        if (name)
+            this.actor.set_style_class_name(name);
     },
 
     _getPreferredWidth: function (actor, forHeight, alloc) {
@@ -93,14 +101,14 @@ IconLabelButton.prototype = {
         let [labelMinSize, labelNaturalSize] = this._label.get_preferred_width(forHeight);
         // The label text is starts in the center of the icon, so we should allocate the space
         // needed for the icon plus the space needed for(label - icon/2)
-        alloc.min_size = iconMinSize + Math.max(0, labelMinSize - iconMinSize);
+        alloc.min_size = iconMinSize;
         alloc.natural_size = Math.min(iconNaturalSize + Math.max(0, labelNaturalSize), MAX_BUTTON_WIDTH);
     },
 
     _getPreferredHeight: function (actor, forWidth, alloc) {
         let [iconMinSize, iconNaturalSize] = this._icon.get_preferred_height(forWidth);
         let [labelMinSize, labelNaturalSize] = this._label.get_preferred_height(forWidth);
-        alloc.min_size = Math.max(iconMinSize, labelMinSize);
+        alloc.min_size = Math.min(iconMinSize, labelMinSize);
         alloc.natural_size = Math.max(iconNaturalSize, labelMinSize);
     },
 
@@ -136,7 +144,7 @@ IconLabelButton.prototype = {
         [childBox.y1, childBox.y2] = center(allocHeight, naturalHeight);
         if (direction == Clutter.TextDirection.LTR) {
             childBox.x1 = iconWidth;
-            childBox.x2 = Math.min(childBox.x1 + naturalWidth, allocWidth, MAX_BUTTON_WIDTH);
+            childBox.x2 = Math.min(allocWidth, MAX_BUTTON_WIDTH);
         } else {
             childBox.x2 = Math.min(allocWidth - iconWidth, MAX_BUTTON_WIDTH);
             childBox.x1 = Math.max(0, childBox.x2 - naturalWidth);
@@ -148,14 +156,13 @@ IconLabelButton.prototype = {
             childBox.x2 = childBox.x1 + this._numLabel.width;
             childBox.y1 = box.y1 - 2;
             childBox.y2 = box.y2 - 1;
-            this._numLabel.allocate(childBox, flags);
         } else {
             childBox.x1 = -this._numLabel.width;
             childBox.x2 = childBox.x1 + this._numLabel.width;
             childBox.y1 = box.y1;
             childBox.y2 = box.y2 - 1;
-            this._numLabel.allocate(childBox, flags);
         }
+        this._numLabel.allocate(childBox, flags);
     },
 
     show: function (animate, targetWidth) {
@@ -170,7 +177,6 @@ IconLabelButton.prototype = {
             width = naturalWidth;
         }
 
-        this.actor.width = 1;
         this.actor.show();
         Tweener.addTween(this.actor, {
             width: width,
@@ -199,16 +205,11 @@ IconLabelButton.prototype = {
     },
 
     showLabel: function (animate, targetWidth) {
-        let width = targetWidth;
-        if (!width) {
-            let [minWidth, naturalWidth] = this._label.get_preferred_width(-1);
-            width = naturalWidth;
-        }
-
+        //this._label.width = 150;
+        let [minWidth, naturalWidth] = this._label.get_preferred_width(-1);
+        let width = targetWidth || naturalWidth;
         if (!animate) {
-            if (width < 2)
-                width = 150;
-            this._label.set_width(width);
+            this._label.width = width;
             this._label.show();
             return;
         }
@@ -223,8 +224,8 @@ IconLabelButton.prototype = {
 
     hideLabel: function (animate) {
         if (!animate) {
+            this._label.width = 1;
             this._label.hide();
-            this._label.set_width(1);
             return;
         }
 
@@ -289,10 +290,10 @@ AppButton.prototype = {
 
     _isFavorite: function (isFav) {
         if (isFav) {
-            this.actor.set_style_class_name('panel-launcher')
-            this.hideLabel(true);
+            this.setStyle("panel-launcher");
+            this._label.text = '';
         } else {
-            this.actor.set_style_class_name('window-list-item-box');
+            this.setStyle('window-list-item-box');
         }
     },
 
@@ -340,7 +341,7 @@ WindowButton.prototype = {
         IconLabelButton.prototype._init.call(this, this);
         this.signals = [];
         this._numLabel.hide();
-        //if (params.isFavapp) this.actor.set_style_class_name('panel-launcher');
+        if (this.isFavapp) this.setStyle('panel-launcher');
 
         this.actor.connect('button-release-event', Lang.bind(this, this._onButtonRelease));
         // We need to keep track of the signals we add to metaWindow so we can delete them when we are
@@ -363,17 +364,19 @@ WindowButton.prototype = {
     },
 
     destroy: function () {
-        this.signals.forEach(Lang.bind(this, function (s) {
-            this.metaWindow.disconnect(s);
-        }));
-        global.display.disconnect(this._attention);
+        if (this.metaWindow) {
+            this.signals.forEach(Lang.bind(this, function (s) {
+                this.metaWindow.disconnect(s);
+            }));
+            global.display.disconnect(this._attention);
+        }
         this.rightClickMenu.destroy();
         this._container.destroy_children();
         this.actor.destroy();
     },
 
     _onAttentionRequest: function () {
-        if (!this.isFavapp)
+        if (!this.isFavapp )
             this.actor.add_style_class_name('window-list-item-demands-attention');
     },
 
@@ -469,18 +472,18 @@ WindowButton.prototype = {
             // Some apps take a long time to set a valid title.  We don't want to error
             // if title is null
             if (title) {
-                this._label.set_text(title);
+                this.setText(title);
             } else {
-                this._label.set_text(appName);
+                this.setText(appName);
             }
             return;
         } else if (titleType == TitleDisplay.app) {
             if (appName) {
-                this._label.set_text(appName);
+                this.setText(appName);
                 return;
             }
         } else
-            this._label.set_text('');
+            this.setText('');
     }
 };
 
@@ -496,8 +499,8 @@ ButtonBox.prototype = {
     _init: function (params) {
         params = Params.parse(params, {});
         this.actor = new St.BoxLayout();
-        this.actor.style = 'padding-left: 2px';
-        //this.actor._delegate = this;
+        this.actor._delegate = this;
+        this.actor.style = "spacing: 2px;";
     },
 
     show: function (animate, targetWidth) {
@@ -658,8 +661,8 @@ MyAppletBox.prototype = {
                 childHeight = source.actor.height;
             }
             this._dragPlaceholder = new DND.GenericDragPlaceholderItem();
-            this._dragPlaceholder.child.set_width(childWidth);
-            this._dragPlaceholder.child.set_height(childHeight);
+            this._dragPlaceholder.child.width = childWidth;
+            this._dragPlaceholder.child.height = childHeight;
             this.actor.insert_actor(this._dragPlaceholder.actor, this._dragPlaceholderPos);
             if (fadeIn) this._dragPlaceholder.animateIn();
         }

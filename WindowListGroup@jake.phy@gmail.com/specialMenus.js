@@ -139,11 +139,11 @@ AppMenuButtonRightClickMenu.prototype = {
         if (!event || !this.metaWindow) return;
 
         if (this.metaWindow.is_on_all_workspaces()) {
-            this.itemOnAllWorkspaces.label.set_text(_("Only on this workspace"));
+            this.itemOnAllWorkspaces.label.text = _("Only on this workspace");
             this.itemMoveToLeftWorkspace.actor.hide();
             this.itemMoveToRightWorkspace.actor.hide();
         } else {
-            this.itemOnAllWorkspaces.label.set_text(_("Visible on all workspaces"));
+            this.itemOnAllWorkspaces.label.text = _("Visible on all workspaces");
             if (this.metaWindow.get_workspace().get_neighbor(Meta.MotionDirection.LEFT) != this.metaWindow.get_workspace()) this.itemMoveToLeftWorkspace.actor.show();
             else this.itemMoveToLeftWorkspace.actor.hide();
 
@@ -151,12 +151,12 @@ AppMenuButtonRightClickMenu.prototype = {
             else this.itemMoveToRightWorkspace.actor.hide();
         }
         if (this.metaWindow.get_maximized()) {
-            this.itemMaximizeWindow.label.set_text(_("Unmaximize"));
+            this.itemMaximizeWindow.label.text = _("Unmaximize");
         } else {
-            this.itemMaximizeWindow.label.set_text(_("Maximize"));
+            this.itemMaximizeWindow.label.text = _("Maximize");
         }
-        if (this.metaWindow.minimized) this.itemMinimizeWindow.label.set_text(_("Restore"));
-        else this.itemMinimizeWindow.label.set_text(_("Minimize"));
+        if (this.metaWindow.minimized) this.itemMinimizeWindow.label.text = _("Restore");
+        else this.itemMinimizeWindow.label.text = _("Minimize");
     },
 
     _onWindowMinimized: function (actor, event) {},
@@ -210,11 +210,11 @@ AppMenuButtonRightClickMenu.prototype = {
         if (this.isFav) {
             this.close(false);
             this.favs.removeFavorite(this.favId)
-            this.itemtoggleFav.label.set_text(_('Pin To Favorites'));
+            this.itemtoggleFav.label.text = _('Pin To Favorites');
         } else {
             this.close(false);
             this.favs.addFavorite(this.favId);
-            this.itemtoggleFav.label.set_text(_('Unpin Favorite'));
+            this.itemtoggleFav.label.text = _('Unpin Favorite');
         }
     },
 
@@ -473,7 +473,7 @@ WindowThumbnail.prototype = {
 
     _init: function (parent, metaWindow) {
     	this._applet = parent._applet;
-        this.metaWindow = metaWindow;
+        this.metaWindow = metaWindow || null;
         this.app = parent.app;
         this.isFavapp = parent.isFavapp || false;
         this.wasMinimized = false;
