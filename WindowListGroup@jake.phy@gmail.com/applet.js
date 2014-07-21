@@ -457,6 +457,7 @@ AppGroup.prototype = {
 
     on_panel_edit_mode_changed: function () {
         this._draggable.inhibit = global.settings.get_boolean("panel-edit-mode");
+        this.actor.reactive = !global.settings.get_boolean("panel-edit-mode");
     },
 
     _onDragBegin: function () {
@@ -604,8 +605,8 @@ AppGroup.prototype = {
 
         } else if (event.get_state() & Clutter.ModifierType.BUTTON1_MASK) {
             if (this._applet.onclickThumbs && windowNum > 1) {
-                this.shouldOpen = true;
-                this.shouldClose = false;
+                this.hoverMenu.shouldOpen = true;
+                this.hoverMenu.shouldClose = false;
                 this.hoverMenu.hoverOpen();
             } else
                 this._windowHandle(false);
@@ -775,7 +776,7 @@ AppGroup.prototype = {
         if (metaWindow.appears_focused) {
             this.lastFocused = metaWindow;
             this._windowTitleChanged(this.lastFocused);
-            if (this._applet.sortThumbs == SortThumbs.focused) this.hoverMenu.setMetaWindow(this.lastFocused);
+            //if (this._applet.sortThumbs == SortThumbs.focused) this.hoverMenu.setMetaWindow(this.lastFocused);
             this.rightClickMenu.setMetaWindow(this.lastFocused);
         }
         if (this._applet.settings.getValue("title-display") == TitleDisplay.focused)
@@ -1123,7 +1124,10 @@ MyApplet.prototype = {
             this.settings.bindProperty(Settings.BindingDirection.IN, "hover-peek-opacity", "peekOpacity", null, null);
             this.settings.bindProperty(Settings.BindingDirection.IN, "thumbnail-timeout", "thumbTimeout", null, null);
             this.settings.bindProperty(Settings.BindingDirection.IN, "thumbnail-size", "thumbSize", null, null);
-            this.settings.bindProperty(Settings.BindingDirection.IN, "sort-thumbnails", "sortThumbs", null, null);
+            //this.settings.bindProperty(Settings.BindingDirection.IN, "sort-thumbnails", "sortThumbs", null, null);
+            this.settings.bindProperty(Settings.BindingDirection.IN, "vertical-thumbnails", "verticalThumbs", null, null);
+            this.settings.bindProperty(Settings.BindingDirection.IN, "stack-thumbnails", "stackThumbs", null, null);
+            this.settings.bindProperty(Settings.BindingDirection.IN, "show-thumbnails", "showThumbs", null, null);
             this.settings.bindProperty(Settings.BindingDirection.IN, "number-display", "numDisplay", null, null);
             this.settings.bindProperty(Settings.BindingDirection.IN, "title-display", "titleDisplay", null, null);
             this.settings.bindProperty(Settings.BindingDirection.IN, "icon-padding", "iconPadding", null, null);
