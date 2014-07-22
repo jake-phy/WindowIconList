@@ -23,8 +23,21 @@ const Signals = imports.signals;
 const DND = imports.ui.dnd;
 const AppFavorites = imports.ui.appFavorites;
 const Settings = imports.ui.settings;
+const Gettext = imports.gettext;
+const Gio = imports.gi.Gio;
+const GLib = imports.gi.GLib;
 
 const SPINNER_ANIMATION_TIME = 1;
+
+
+function _(str) {
+   let resultConf = Gettext.dgettext('WindowListGroup@jake.phy@gmail.com', str);
+   if(resultConf != str) {
+      return resultConf;
+   }
+   return Gettext.gettext(str);
+}
+
 
 // Load our applet so we can access other files in our extensions dir as libraries
 const AppletDir = imports.ui.appletManager.applets['WindowListGroup@jake.phy@gmail.com'];
@@ -1105,16 +1118,19 @@ AppList.prototype = {
 // Manages window/app lists and takes care of
 // hiding/showing them and manages switching workspaces, etc.
 
-function MyApplet(orientation, panel_height, instance_id) {
-    this._init(orientation, panel_height, instance_id);
+function MyApplet(metadata, orientation, panel_height, instance_id) {
+    this._init(metadata, orientation, panel_height, instance_id);
 }
 
 MyApplet.prototype = {
     __proto__: Applet.Applet.prototype,
 
-    _init: function (orientation, panel_height, instance_id) {
+    _init: function (metadata, orientation, panel_height, instance_id) {
         Applet.Applet.prototype._init.call(this, orientation, panel_height, instance_id);
         try {
+            this._uuid = metadata["uuid"];
+            this.execInstallLanguage();
+            Gettext.bindtextdomain(this._uuid, GLib.get_home_dir() + "/.local/share/locale");
             this.settings = new Settings.AppletSettings(this, "WindowListGroup@jake.phy@gmail.com", instance_id);
             this.settings.bindProperty(Settings.BindingDirection.IN, "group-apps", "groupApps", null, null);
             this.settings.bindProperty(Settings.BindingDirection.IN, "show-pinned", "showPinned", null, null);
@@ -1200,8 +1216,63 @@ MyApplet.prototype = {
 
             global.settings.connect('changed::panel-edit-mode', Lang.bind(this, this.on_panel_edit_mode_changed));
         } catch (e) {
+            Main.notify("Error", e.message);
             global.logError(e);
         }
+    },
+
+    execInstallLanguage: function() {
+        try {
+            let _shareFolder = GLib.get_home_dir() + "/.local/share/";
+            let _localeFolder = Gio.file_new_for_path(_shareFolder + "locale/");
+            let _moFolder = Gio.file_new_for_path(_shareFolder + "cinnamon/applets/" + this._uuid + "/locale/mo/");
+
+            let children = _moFolder.enumerate_children('standard::name,standard::type',
+                                                       Gio.FileQueryInfoFlags.NONE, null);
+            let info, child, _moFile, _moLocale, _moPath;
+                   
+            while ((info = children.next_file(null)) != null) {
+                let type = info.get_file_type();
+                if (type == Gio.FileType.REGULAR) {
+                    _moFile = info.get_name();
+                    if (_moFile.substring(_moFile.lastIndexOf(".")) == ".mo") {
+                        _moLocale = _moFile.substring(0, _moFile.lastIndexOf("."));
+                        _moPath = _localeFolder.get_path() + "/" + _moLocale + "/LC_MESSAGES/";
+                        let src = Gio.file_new_for_path(String(_moFolder.get_path() + "/" + _moFile));
+                        let dest = Gio.file_new_for_path(String(_moPath + this._uuid + ".mo"));
+                        try {
+                            //if(!this.equalsFile(dest.get_path(), src.get_path())) {
+                            this._makeDirectoy(dest.get_parent());
+                            src.copy(dest, Gio.FileCopyFlags.OVERWRITE, null, null);
+                            //}
+                        } catch(e) {
+                            global.logError(e);
+                            Main.notify("Error1", e.message);
+                        }
+                    }
+                }
+            }
+        } catch(e) {
+            global.logError(e);
+            Main.notify("Error2", e.message);
+        }
+    },
+
+    _makeDirectoy: function(fDir) {
+        if(!this._isDirectory(fDir))
+            this._makeDirectoy(fDir.get_parent());
+        if(!this._isDirectory(fDir))
+            fDir.make_directory(null);
+    },
+
+    _isDirectory: function(fDir) {
+        try {
+            let info = fDir.query_filesystem_info("standard::type", null);
+            if((info)&&(info.get_file_type() != Gio.FileType.DIRECTORY))
+                return true;
+        } catch(e) {
+        }
+        return false;
     },
 
     on_applet_clicked: function (event) {
@@ -1273,6 +1344,6 @@ MyApplet.prototype = {
 };
 
 function main(metadata, orientation, panel_height, instance_id) {
-    let myApplet = new MyApplet(orientation, panel_height, instance_id);
+    let myApplet = new MyApplet(metadata, orientation, panel_height, instance_id);
     return myApplet;
 }
