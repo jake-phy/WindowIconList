@@ -1,4 +1,19 @@
 Changelog
+2.7.5
+Themeing
+	Fixed a bunch of padding and spacing issue's.
+Updated to the new Cinnamon settings
+	Added settings to ajust Icon padding allows for larger panel size.
+	Added Stackable thumbnails (in right click menu of pinned apps)
+	Added vertical Thumbnails (doesn't order right,  made to use when show thumbnails is off)(in right click menu of pinned apps)
+	Added show thumbnails (if off use vertical thumbnails for best effect)(in right click menu of pinned apps)
+	Added ReArrange (need to enable to arrange apps in different order)(in right click menu of pinned apps)
+	Removed ability to use menu favorites.  not compatible with cinnamon settings.
+different bug fixes.
+Added Stacking Thumbnails :) (right now limited to three rows)
+ReAdded KeyBindings using Cinnamon's KeyBindings.
+Future Projects:  would like to add windows 7 right click menu functionality (don't promise anything).
+_____
 2.7.1
 removed keybindings will readd when cinnamon 1.8 comes out.
 fixed some of the gshema problems
@@ -20,7 +35,7 @@ _________
 2.5.2
 
 fixed app buttons not closing
-fixed title not showing when when apps are not grouped
+fixed title not showing when apps are not grouped
 ____
 2.5.1
 

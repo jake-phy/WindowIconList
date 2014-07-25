@@ -3,6 +3,11 @@
 import os
 from gi.repository import Gtk
 
+def FinishMessage():
+    dialog = Gtk.MessageDialog(None, 0, Gtk.MessageType.INFO,Gtk.ButtonsType.NONE, "Thanks For using this Applet")
+    dialog.format_secondary_text("Your Action has Completed Successfully")
+    return dialog
+
 class NewLabel(Gtk.Label):
     def __init__(self, label, tooltip=None):
         super(NewLabel, self).__init__(label)
@@ -35,6 +40,8 @@ class GTKButton(Gtk.HBox):
 
     def on_clicked(self, signal):
         os.system(self.command)
+        self.dialog = FinishMessage()
+        self.dialog.run()
 
 class CinnamonListSettings:
 
@@ -47,12 +54,11 @@ class CinnamonListSettings:
 
 	self.NoteBK = Gtk.Notebook()
 
-        self.action_completed = "echo 'Applet Task Completed'"
         self.copy_applet = "cp -avrf  WindowListGroup@jake.phy@gmail.com ~/.local/share/cinnamon/applets/"
         self.remove_applet = "rm -rf -v ~/.local/share/cinnamon/applets/WindowListGroup@jake.phy@gmail.com"
 
-        self.install_applet = GTKButton('Install Applet', 'Install the Applet',self.copy_applet + " && " + self.action_completed, "Install the applet and schema")
-        self.uninstall_applet = GTKButton('Uninstall Applet', 'Uninstall the Applet', self.remove_applet + " && " + self.action_completed, "Remove the applet and schema")
+        self.install_applet = GTKButton('Install Applet', 'Install the Applet',self.copy_applet, "Install the applet and schema")
+        self.uninstall_applet = GTKButton('Uninstall Applet', 'Uninstall the Applet', self.remove_applet, "Remove the applet and schema")
 
         self.Ivbox = Gtk.VBox()
         self.Ivbox.add(self.install_applet)
