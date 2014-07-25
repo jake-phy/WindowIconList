@@ -97,10 +97,10 @@ AppMenuButtonRightClickMenu.prototype = {
         this.favs = PinnedFavorites, this.favId = this.app.get_id(), this.isFav = this.favs.isFavorite(this.favId);
         if (this._applet.showPinned != FavType.none) {
             if (this.isFav) {
-                this.itemtoggleFav = new PopupMenu.PopupMenuItem(_('Unpin Favorite'));
+                this.itemtoggleFav = new PopupMenu.PopupMenuItem(_('Unpin App'));
                 this.itemtoggleFav.connect('activate', Lang.bind(this, this._toggleFav));
             } else {
-                this.itemtoggleFav = new PopupMenu.PopupMenuItem(_('Pin To Favorites'));
+                this.itemtoggleFav = new PopupMenu.PopupMenuItem(_('Pin App'));
                 this.itemtoggleFav.connect('activate', Lang.bind(this, this._toggleFav));
             }
         }
@@ -238,11 +238,11 @@ AppMenuButtonRightClickMenu.prototype = {
         if (this.isFav) {
             this.close(false);
             this.favs.removeFavorite(this.favId)
-            this.itemtoggleFav.label.text = _('Pin To Favorites');
+            this.itemtoggleFav.label.text = _('Pin App');
         } else {
             this.close(false);
             this.favs.addFavorite(this.favId);
-            this.itemtoggleFav.label.text = _('Unpin Favorite');
+            this.itemtoggleFav.label.text = _('Unpin App');
         }
     },
 
