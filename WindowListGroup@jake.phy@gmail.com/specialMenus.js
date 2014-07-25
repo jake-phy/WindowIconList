@@ -1,4 +1,3 @@
-const Cinnamon = imports.gi.Cinnamon;
 const Clutter = imports.gi.Clutter;
 const Lang = imports.lang;
 const Main = imports.ui.main;
