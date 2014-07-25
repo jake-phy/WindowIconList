@@ -70,9 +70,30 @@ AppMenuButtonRightClickMenu.prototype = {
 
         this.launchItem = new PopupMenu.PopupMenuItem(_('New Window'));
         this.launchItem.connect('activate', Lang.bind(this, this._launchMenu));
-
-        this.settingItem = new PopupMenu.PopupMenuItem(_('Settings'));
+		// Settings in pinned apps menu;
+        this.settingItem = new PopupMenu.PopupMenuItem(_('Go to Settings'));
         this.settingItem.connect('activate', Lang.bind(this, this._settingMenu));
+
+		this.reArrange = new PopupMenu.PopupSwitchMenuItem(_("ReArrange"), this._applet.arrangePinned);
+		this.reArrange.connect('toggled', Lang.bind(this, function(item) { this._applet.arrangePinned = item.state; }));
+
+		this.showPinned = new PopupMenu.PopupSwitchMenuItem(_("Show Pinned"), this._applet.showPinned);
+		this.showPinned.connect('toggled', Lang.bind(this, function(item) { this._applet.showPinned = item.state; }));
+
+		this.groupApps = new PopupMenu.PopupSwitchMenuItem(_("Group Apps"), this._applet.groupApps);
+		this.groupApps.connect('toggled', Lang.bind(this, function(item) { this._applet.groupApps = item.state; }));
+
+		this.showThumbs = new PopupMenu.PopupSwitchMenuItem(_("Show Thumbs"), this._applet.showThumbs);
+		this.showThumbs.connect('toggled', Lang.bind(this, function(item) { this._applet.showThumbs = item.state; }));
+
+		this.verticalThumbs = new PopupMenu.PopupSwitchMenuItem(_("Vertical Thumbs"), this._applet.verticalThumbs);
+		this.verticalThumbs.connect('toggled', Lang.bind(this, function(item) { this._applet.verticalThumbs = item.state; }));
+
+		this.stackThumbs =  new PopupMenu.PopupSwitchMenuItem(_("Stack Thumbs"), this._applet.stackThumbs);
+		this.stackThumbs.connect('toggled', Lang.bind(this, function(item) { this._applet.stackThumbs = item.state; }));
+
+		this.enablePeek = new PopupMenu.PopupSwitchMenuItem(_("Hover to Peek"), this._applet.enablePeek);
+		this.enablePeek.connect('toggled', Lang.bind(this, function(item) { this._applet.enablePeek = item.state; }));
 
         this.favs = PinnedFavorites, this.favId = this.app.get_id(), this.isFav = this.favs.isFavorite(this.favId);
         if (this._applet.showPinned != FavType.none) {
@@ -89,9 +110,16 @@ AppMenuButtonRightClickMenu.prototype = {
     },
 
     _isFavorite: function (isFav) {
-        let showFavs = this._applet.showPinned != FavType.none;
+        let showFavs = this._applet.showPinned;
         if (isFav) {
             this.addMenuItem(this.settingItem);
+            this.addMenuItem(this.reArrange);
+            this.addMenuItem(this.showPinned);
+            this.addMenuItem(this.groupApps);
+            this.addMenuItem(this.showThumbs);
+            this.addMenuItem(this.stackThumbs);
+            this.addMenuItem(this.enablePeek);
+            this.addMenuItem(this.verticalThumbs);
             this.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
             this.addMenuItem(this.launchItem);
             this.addMenuItem(this.itemtoggleFav);
@@ -235,6 +263,17 @@ AppMenuButtonRightClickMenu.prototype = {
         }
     },
 
+	destroy: function () {
+        let children = this._getMenuItems();
+        for (let i = 0; i < children.length; i++) {
+            let item = children[i];
+            this.box.remove_actor(item.actor);
+			item.actor.destroy();
+        }
+		this.box.destroy();
+		this.actor.destroy();
+    },
+
     _onSourceKeyPress: function (actor, event) {
         let symbol = event.get_key_symbol();
         if (symbol == Clutter.KEY_space || symbol == Clutter.KEY_Return) {
@@ -352,11 +391,9 @@ AppThumbnailHoverMenu.prototype = {
         // Refresh all the thumbnails, etc when the menu opens.  These cannot
         // be created when the menu is initalized because a lot of the clutter window surfaces
         // have not been created yet...
-		if (this._applet.showThumbs){
-		    this.appSwitcherItem._refresh();
-		    this.appSwitcherItem.actor.show();
-		    PopupMenu.PopupMenu.prototype.open.call(this, animate);
-		}
+	    this.appSwitcherItem._refresh();
+	    this.appSwitcherItem.actor.show();
+	    PopupMenu.PopupMenu.prototype.open.call(this, animate);
     },
 
     close: function (animate) {
@@ -366,6 +403,18 @@ AppThumbnailHoverMenu.prototype = {
         PopupMenu.PopupMenu.prototype.close.call(this, animate);
         this.appSwitcherItem.actor.hide();
     },
+
+	destroy: function () {
+        let children = this._getMenuItems();
+        for (let i = 0; i < children.length; i++) {
+            let item = children[i];
+            this.box.remove_actor(item.actor);
+			item.actor.destroy();
+        }
+		this.box.destroy();
+		this.actor.destroy();
+    },
+
 
     setMetaWindow: function (metaWindow) {
         this.metaWindow = metaWindow;
@@ -639,7 +688,8 @@ WindowThumbnail.prototype = {
                 this._hoverPeek(this._applet.peekOpacity, this.metaWindow);
                 this.actor.add_style_pseudo_class('outlined');
                 this.actor.add_style_pseudo_class('selected');
-                this.button.show();
+				if(this._applet.showThumbs)
+                	this.button.show();
 		        if (this.metaWindow.minimized && this._applet.enablePeek) {
 		            this.metaWindow.unminimize();
 		            this.wasMinimized = true;
@@ -666,8 +716,8 @@ WindowThumbnail.prototype = {
     _isFavorite: function (isFav) {
         // Whether we create a favorite tooltip or a window thumbnail
         if (isFav) {
-            this.thumbnailActor.height = 0;
-            this.thumbnailActor.width = 0;
+            //this.thumbnailActor.height = 0;
+            //this.thumbnailActor.width = 0;
             this.thumbnailActor.child = null;
             let apptext = this.app.get_name();
             // not sure why it's 7
@@ -734,15 +784,22 @@ WindowThumbnail.prototype = {
         // Turn favorite tooltip into a normal thumbnail
         this.ThumbnailHeight = Math.floor(Main.layoutManager.primaryMonitor.height / 70) * this._applet.thumbSize;
         this.ThumbnailWidth = Math.floor(Main.layoutManager.primaryMonitor.width / 70) * this._applet.thumbSize;
-        this.thumbnailActor.height = this.ThumbnailHeight;
-        this.thumbnailActor.width = this.ThumbnailWidth;
+        //this.thumbnailActor.height = this.ThumbnailHeight;
+        //this.thumbnailActor.width = this.ThumbnailWidth;
 		this._container.style = "width: " + Math.floor(this.ThumbnailWidth - 20) + "px";
         this.isFavapp = false;
 
         // Replace the old thumbnail
-        this.thumbnail = this._getThumbnail();
-        this.thumbnailActor.child = this.thumbnail;
-        this._label.text = this.metaWindow.get_title();
+		let title = this.metaWindow.get_title();
+        this._label.text = title;
+		if (this._applet.showThumbs){
+		    this.thumbnail = this._getThumbnail();
+        	this.thumbnail.height = this.ThumbnailHeight;
+        	this.thumbnail.width = this.ThumbnailWidth;
+		    this.thumbnailActor.child = this.thumbnail;
+		} else {
+			this.thumbnailActor.child = null;
+		}
     },
 
     _hoverPeek: function (opacity, metaWin) {

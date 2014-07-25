@@ -40,6 +40,12 @@
     "description": "Show pinned apps",
     "tooltip": "Show the pinned apps or just show the open windows"
  },
+ "arrange-pinnedApps" : {
+    "type" : "checkbox",
+    "default" : false,
+    "description": "Arrange pinned apps",
+    "tooltip": "Arrange pinned apps into a different order"
+ },
  "group-apps" : {
     "type" : "checkbox",
     "default" : true,

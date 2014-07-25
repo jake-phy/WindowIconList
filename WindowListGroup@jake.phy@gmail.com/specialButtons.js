@@ -303,6 +303,7 @@ AppButton.prototype = {
         tracker.disconnect(this._trackerSignal);
         global.display.disconnect(this._attention);
         this._container.destroy_children();
+        this._container.destroy();
         this.actor.destroy();
     }
 };
@@ -372,6 +373,7 @@ WindowButton.prototype = {
         }
         this.rightClickMenu.destroy();
         this._container.destroy_children();
+        this._container.destroy();
         this.actor.destroy();
     },
 
@@ -671,9 +673,9 @@ MyAppletBox.prototype = {
     },
 
     acceptDrop: function (source, actor, x, y, time) {
-        if (!(source.isDraggableApp || source instanceof AppletDir.applet.AppGroup)) return false;
+        if (!(source.isDraggableApp)) return false;
 
-        if (!(source.isFavapp || source.wasFavapp || source.isDraggableApp)) {
+        if (!(source.isFavapp || source.wasFavapp || source.isDraggableApp) || source.isNotFavapp) {
             this.actor.move_child(source.actor, this._dragPlaceholderPos);
             this._clearDragPlaceholder();
             actor.destroy();

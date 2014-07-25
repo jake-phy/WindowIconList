@@ -419,6 +419,7 @@ AppGroup.prototype = {
         this.appList = appList;
         this.app = app;
         this.isFavapp = isFavapp;
+        this.isNotFavapp = !isFavapp;
         this.orientation = orientation;
         this.metaWindows = new OrderedHash();
         this.metaWorkspaces = new OrderedHash();
@@ -459,23 +460,23 @@ AppGroup.prototype = {
         this._hoverMenuManager.addMenu(this.hoverMenu);
 
         this._draggable = SpecialButtons.makeDraggable(this.actor);
-        this._draggable.connect('drag-begin', Lang.bind(this, this._onDragBegin));
         this._draggable.connect('drag-cancelled', Lang.bind(this, this._onDragCancelled));
         this._draggable.connect('drag-end', Lang.bind(this, this._onDragEnd));
         this.isDraggableApp = true;
 
         this.on_panel_edit_mode_changed();
+        this.on_arrange_pinned();
         global.settings.connect('changed::panel-edit-mode', Lang.bind(this, this.on_panel_edit_mode_changed));
+        this._applet.settings.connect("arrange-pinnedApps", Lang.bind(this, this.on_arrange_pinned));
+    },
+
+    on_arrange_pinned: function () {
+        this._draggable.inhibit = !this._applet.settings.getValue("arrange-pinnedApps");
     },
 
     on_panel_edit_mode_changed: function () {
         this._draggable.inhibit = global.settings.get_boolean("panel-edit-mode");
         this.actor.reactive = !global.settings.get_boolean("panel-edit-mode");
-    },
-
-    _onDragBegin: function () {
-        this.rightClickMenu.close(false);
-        this.hoverMenu.close(false);
     },
 
     _onDragEnd: function () {
@@ -507,14 +508,8 @@ AppGroup.prototype = {
         return true;
     },
 
-    acceptDrop: function (source, actor, x, y, time) {
-        return false;
-    },
-
     getDragActor: function () {
-        return new Clutter.Clone({
-            source: this.actor
-        });
+        return this.app.create_icon_texture(this._applet._panelHeight);
     },
 
     // Returns the original actor that should align with the actor
@@ -763,6 +758,10 @@ AppGroup.prototype = {
 
     _windowTitleChanged: function (metaWindow) {
         // We only really want to track title changes of the last focused app
+        if (!this._appButton) {
+            throw 'Error: got a _windowTitleChanged callback but this._appButton is undefined';
+            return;
+        }
         if (metaWindow != this.lastFocused || this.isFavapp) return;
 
         let titleType = this._applet.settings.getValue("title-display");
@@ -883,15 +882,17 @@ AppGroup.prototype = {
     destroy: function () {
         // Unwatch all workspaces before we destroy all our actors
         // that callbacks depend on
-        this.unwatchWorkspace(null);
         this.metaWindows.forEach(function (win, data) {
             data['signals'].forEach(function (s) {
                 win.disconnect(s);
             });
         });
+        this.unwatchWorkspace(null);
+        this.rightClickMenu.destroy();
+        this.hoverMenu.destroy();
         this._appButton.destroy();
         this._windowButtonBox.destroy();
-        this.hoverMenu.destroy();
+        this.myactor.destroy();
         this.actor.destroy();
         /*this._appButton = null;
         this._windowButtonBox = null;
@@ -913,24 +914,17 @@ AppList.prototype = {
         this.orientation = orientation;
         this._applet = applet;
 
-        this.actor = new St.BoxLayout({
-            reactive: true,
-            track_hover: true
-        });
-
-        this.myactorbox = new SpecialButtons.MyAppletBox(applet);
-        this.myactor = this.myactorbox.actor;
-
-        this.actor.add(this.myactor);
+        this.myactorbox = new SpecialButtons.MyAppletBox(this);
+        this.actor = this.myactorbox.actor;
 
         if (orientation == St.Side.TOP) {
-            this.myactor.add_style_class_name('window-list-box-top');
-            this.myactor.style = 'margin-top: 0px; padding-top: 0px;';
-            //this.myactor.set_style('padding-left: 3px');
+            this.actor.add_style_class_name('window-list-box-top');
+            this.actor.style = 'margin-top: 0px; padding-top: 0px;';
+            //this.actor.set_style('padding-left: 3px');
         } else {
-            this.myactor.add_style_class_name('window-list-box-bottom');
-            this.myactor.style = 'margin-bottom: 0px; padding-bottom: 0px;';
-            //this.myactor.set_style('padding-left: 3px');
+            this.actor.add_style_class_name('window-list-box-bottom');
+            this.actor.style = 'margin-bottom: 0px; padding-bottom: 0px;';
+            //this.actor.set_style('padding-left: 3px');
         }
 
         this.metaWorkspace = metaWorkspace;
@@ -1030,7 +1024,7 @@ AppList.prototype = {
                 appGroup.hideAppButton();
             }
 
-            this.myactor.add_actor(appGroup.actor);
+            this.actor.add_actor(appGroup.actor);
 
             // We also need to monitor the state 'cause some pesky apps (namely: plugin_container left over after fullscreening a flash video)
             // don't report having zero windows after they close
@@ -1132,18 +1126,18 @@ MyApplet.prototype = {
             this.execInstallLanguage();
             Gettext.bindtextdomain(this._uuid, GLib.get_home_dir() + "/.local/share/locale");
             this.settings = new Settings.AppletSettings(this, "WindowListGroup@jake.phy@gmail.com", instance_id);
-            this.settings.bindProperty(Settings.BindingDirection.IN, "group-apps", "groupApps", null, null);
-            this.settings.bindProperty(Settings.BindingDirection.IN, "show-pinned", "showPinned", null, null);
-            this.settings.bindProperty(Settings.BindingDirection.IN, "enable-hover-peek", "enablePeek", null, null);
-            this.settings.bindProperty(Settings.BindingDirection.IN, "enable-hover-peek", "enablePeek", null, null);
+            this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "group-apps", "groupApps", null, null);
+            this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "show-pinned", "showPinned", null, null);
+            this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "arrange-pinnedApps", "arrangePinned", null, null);
+            this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "enable-hover-peek", "enablePeek", null, null);
             this.settings.bindProperty(Settings.BindingDirection.IN, "onclick-thumbnails", "onclickThumbs", null, null);
             this.settings.bindProperty(Settings.BindingDirection.IN, "hover-peek-opacity", "peekOpacity", null, null);
             this.settings.bindProperty(Settings.BindingDirection.IN, "thumbnail-timeout", "thumbTimeout", null, null);
             this.settings.bindProperty(Settings.BindingDirection.IN, "thumbnail-size", "thumbSize", null, null);
             //this.settings.bindProperty(Settings.BindingDirection.IN, "sort-thumbnails", "sortThumbs", null, null);
-            this.settings.bindProperty(Settings.BindingDirection.IN, "vertical-thumbnails", "verticalThumbs", null, null);
-            this.settings.bindProperty(Settings.BindingDirection.IN, "stack-thumbnails", "stackThumbs", null, null);
-            this.settings.bindProperty(Settings.BindingDirection.IN, "show-thumbnails", "showThumbs", null, null);
+            this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "vertical-thumbnails", "verticalThumbs", null, null);
+            this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "stack-thumbnails", "stackThumbs", null, null);
+            this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "show-thumbnails", "showThumbs", null, null);
             this.settings.bindProperty(Settings.BindingDirection.IN, "number-display", "numDisplay", null, null);
             this.settings.bindProperty(Settings.BindingDirection.IN, "title-display", "titleDisplay", null, null);
             this.settings.bindProperty(Settings.BindingDirection.IN, "icon-padding", "iconPadding", null, null);
@@ -1151,10 +1145,7 @@ MyApplet.prototype = {
             this.orientation = orientation;
             this.dragInProgress = false;
 
-            this._box = new St.Bin({
-                reactive: true,
-                track_hover: true
-            });
+            this._box = new St.Bin();
 
             this.actor.add(this._box);
             this.actor.reactive = global.settings.get_boolean("panel-edit-mode");
@@ -1324,7 +1315,8 @@ MyApplet.prototype = {
         // this.actor can only have one child, so setting the child
         // will automatically unparent anything that was previously there, which
         // is exactly what we want.
-        this._box.child = this.metaWorkspaces.get(metaWorkspace)['appList'].actor;
+        this._box.set_child(this.metaWorkspaces.get(metaWorkspace)['appList'].actor);
+        this.applistActor = this.metaWorkspaces.get(metaWorkspace)['appList'].actor;
         this.metaWorkspaces.get(metaWorkspace)['appList']._refreshApps();
     },
 
