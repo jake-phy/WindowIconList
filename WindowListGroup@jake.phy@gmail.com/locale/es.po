@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Window List Group 2.8\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-07-26 03:03-0500\n"
+"POT-Creation-Date: 2014-07-26 08:08-0500\n"
 "PO-Revision-Date: 2014-07-26 03:02-0600\n"
 "Last-Translator: Lester Carballo Pérez <lestcape@gmail.com>\n"
 "Language-Team: jake-phy <jake.phy@gmail.com>\n"
@@ -18,83 +18,83 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 "X-Generator: Poedit 1.5.4\n"
 
-#: specialMenus.js:62
+#: specialMenus.js:63
 msgid "Close"
 msgstr "Cerrar"
 
-#: specialMenus.js:65 specialMenus.js:197
+#: specialMenus.js:66 specialMenus.js:198
 msgid "Minimize"
 msgstr "Minimizar"
 
-#: specialMenus.js:68 specialMenus.js:194
+#: specialMenus.js:69 specialMenus.js:195
 msgid "Maximize"
 msgstr "Maximizar"
 
-#: specialMenus.js:71
+#: specialMenus.js:72
 msgid "Move to left workspace"
 msgstr "Mover al área de trabajo de la izquierda"
 
-#: specialMenus.js:74
+#: specialMenus.js:75
 msgid "Move to right workspace"
 msgstr "Mover al área de trabajo de la derecha"
 
-#: specialMenus.js:77 specialMenus.js:184
+#: specialMenus.js:78 specialMenus.js:185
 msgid "Visible on all workspaces"
 msgstr "Mostrar en todas las áreas de trabajo"
 
-#: specialMenus.js:80
+#: specialMenus.js:81
 msgid "New Window"
 msgstr "Nueva Ventana"
 
-#: specialMenus.js:83
+#: specialMenus.js:84
 msgid "Go to Settings"
 msgstr "Ir a configuraciones"
 
-#: specialMenus.js:86
+#: specialMenus.js:87
 msgid "ReArrange"
 msgstr "Reordenar"
 
-#: specialMenus.js:89
+#: specialMenus.js:90
 msgid "Show Pinned"
 msgstr "Mostrar Fijadas "
 
-#: specialMenus.js:92
+#: specialMenus.js:93
 msgid "Group Apps"
 msgstr "Agrupar aplicaciones"
 
-#: specialMenus.js:95
+#: specialMenus.js:96
 msgid "Show Thumbs"
 msgstr "Mostrar Miniaturas"
 
-#: specialMenus.js:98
+#: specialMenus.js:99
 msgid "Vertical Thumbs"
 msgstr "Miniaturas verticales"
 
-#: specialMenus.js:101
+#: specialMenus.js:102
 msgid "Stack Thumbs"
 msgstr "Aplicar Miniaturas"
 
-#: specialMenus.js:104
+#: specialMenus.js:105
 msgid "Hover to Peek"
 msgstr "Realizar Vistazo cuando el ratón está encima"
 
-#: specialMenus.js:110 specialMenus.js:255
+#: specialMenus.js:111 specialMenus.js:256
 msgid "Unpin App"
 msgstr "No fijar la aplicación"
 
-#: specialMenus.js:113 specialMenus.js:251
+#: specialMenus.js:114 specialMenus.js:252
 msgid "Pin App"
 msgstr "Fijar la aplicación"
 
-#: specialMenus.js:180
+#: specialMenus.js:181
 msgid "Only on this workspace"
 msgstr "Solo en esta área de trabajo"
 
-#: specialMenus.js:192
+#: specialMenus.js:193
 msgid "Unmaximize"
 msgstr "No maximizada"
 
-#: specialMenus.js:196
+#: specialMenus.js:197
 msgid "Restore"
 msgstr "Restaurar"
 
@@ -200,14 +200,10 @@ msgstr "porcentaje"
 msgid "Enable hover peek"
 msgstr "Habilitar vistazo cuando el ratón se encuentra sobre el área."
 
-#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->enable-hover-
 #. peek->tooltip
-#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
-#. WindowListGroup@jake.phy@gmail.com->settings-schema.json->group-
-#. apps->tooltip
-msgid "Group the open app instances into single icon"
-msgstr "Agrupar las instancias de aplicaciones abiertas en un solo icono"
+msgid "Enable Hover peek when mouse is over thumbnail"
+msgstr ""
 
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->icon-
 #. padding->description
@@ -339,6 +335,11 @@ msgstr "Configuración del Vistazo"
 #. apps->description
 msgid "Group apps into single icon"
 msgstr "Agrupar las aplicaciones en un solo icono."
+
+#. WindowListGroup@jake.phy@gmail.com->settings-schema.json->group-
+#. apps->tooltip
+msgid "Group the open app instances into single icon"
+msgstr "Agrupar las instancias de aplicaciones abiertas en un solo icono"
 
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->arrange-
 #. pinnedApps->description

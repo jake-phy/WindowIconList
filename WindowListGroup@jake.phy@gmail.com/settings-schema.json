@@ -77,7 +77,7 @@
     "type" : "checkbox",
     "default" : true,
     "description": "Enable hover peek",
-    "tooltip": "Group the open app instances into single icon"
+    "tooltip": "Enable Hover peek when mouse is over thumbnail"
  },
  "hover-peek-time" : {
     "type": "spinbutton",
