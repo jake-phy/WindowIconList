@@ -914,7 +914,7 @@ AppList.prototype = {
         this.orientation = orientation;
         this._applet = applet;
 
-        this.myactorbox = new SpecialButtons.MyAppletBox(this);
+        this.myactorbox = new SpecialButtons.MyAppletBox(this._applet);
         this.actor = this.myactorbox.actor;
 
         if (orientation == St.Side.TOP) {
