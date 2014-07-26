@@ -9,6 +9,7 @@
 // Copyright (C) 2011 R M Yorston
 // Licence: GPLv2+
 // http://intgat.tigress.co.uk/rmy/extensions/gnome-Cinnamon-frippery-0.2.3.tgz
+const AppletManager = imports.ui.appletManager;
 const Applet = imports.ui.applet;
 const Clutter = imports.gi.Clutter;
 const Lang = imports.lang;
@@ -23,9 +24,9 @@ const Signals = imports.signals;
 const DND = imports.ui.dnd;
 const AppFavorites = imports.ui.appFavorites;
 const Settings = imports.ui.settings;
+const Gettext = imports.gettext;
 const Gio = imports.gi.Gio;
 const GLib = imports.gi.GLib;
-const Gettext = imports.gettext;
 
 const SPINNER_ANIMATION_TIME = 1;
 
@@ -253,6 +254,21 @@ SignalTracker.prototype = {
         this._data = [];
     }
 };
+
+let appFavoritesInstance = null;
+
+function GetAppFavorites() {
+    if (appFavoritesInstance == null) {
+        for (let appletId in AppletManager.appletObj) {
+           if(AppletManager.appletObj[appletId]._uuid == 'WindowListGroup@jake.phy@gmail.com') {
+              appFavoritesInstance = AppletManager.appletObj[appletId].pinnedAppsContr;
+              break;
+           }
+        }
+    }
+    return appFavoritesInstance;
+}
+
 
 function PinnedFavs() {
     this._init.apply(this, arguments);
