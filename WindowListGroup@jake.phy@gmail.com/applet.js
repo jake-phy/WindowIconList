@@ -25,6 +25,7 @@ const AppFavorites = imports.ui.appFavorites;
 const Settings = imports.ui.settings;
 const Gettext = imports.gettext;
 const Gio = imports.gi.Gio;
+const Gtk = imports.gi.Gtk;
 const GLib = imports.gi.GLib;
 
 const SPINNER_ANIMATION_TIME = 1;
@@ -644,23 +645,35 @@ AppGroup.prototype = {
         }
     },
 
-    _windowHandle: function (fromDrag) {
-        if (this.lastFocused.has_focus()) {
-            if (fromDrag) {
+    _windowHandle: function(fromDrag){
+        let has_focus = this.lastFocused.has_focus();
+        if (!this.lastFocused.minimized && !has_focus) {
+            this.lastFocused.foreach_transient(function(child) {
+                if (!child.minimized && child.has_focus()) {
+                    has_focus = true;
+                }
+            });
+        }
+        if ( has_focus ) {
+            if (fromDrag){
                 return;
             }
+            this.lastFocused.minimize(global.get_current_time());
+            this.actor.remove_style_pseudo_class('focus');
+        }
+        else {
             if (this.lastFocused.minimized) {
-                this.lastFocused.unminimize(global.get_current_time());
-            } else
-                this.lastFocused.minimize(global.get_current_time());
-        } else {
-            if (this.lastFocused.minimized) {
-                this.lastFocused.unminimize(global.get_current_time());
+                this.lastFocused.unminimize(global.get_current_time()); 
             }
-            this.lastFocused.activate(global.get_current_time());
+            let ws = this.lastFocused.get_workspace().index()
+            if (ws != global.screen.get_active_workspace_index()) {
+                global.screen.get_workspace_by_index(ws).activate(global.get_current_time());
+            }
+            Main.activateWindow(this.lastFocused, global.get_current_time());
+            this.actor.add_style_pseudo_class('focus');
+            //this._removeAlerts(this.metaWindow);
         }
     },
-
     _getLastFocusedWindow: function () {
         // Get a list of windows and sort it in order of last access
         let list = [[win.user_time, win]
@@ -1167,6 +1180,10 @@ MyApplet.prototype = {
             this.pinnedAppsContr = new PinnedFavs(this);
             appFavoritesInstance = this.pinnedAppsContr;
 
+            this.recentManager = Gtk.RecentManager.get_default();
+            this.recentItems = this.recentManager.get_items().sort(function(a,b) { return  a.get_modified() -  b.get_modified() } ).reverse();
+	        this.recentManager.connect('changed', Lang.bind(this, this.on_recent_items_changed));
+
             this.metaWorkspaces = new OrderedHash();
 
             // Use a signal tracker so we don't have to keep track of all these id's manually!
@@ -1226,12 +1243,13 @@ MyApplet.prototype = {
             let _localeFolder = Gio.file_new_for_path(_shareFolder + "locale/");
             let _moFolder = Gio.file_new_for_path(_shareFolder + "cinnamon/applets/" + this._uuid + "/locale/mo/");
 
-            let children = _moFolder.enumerate_children('standard::name,standard::type',
+            let children = _moFolder.enumerate_children('standard::name,standard::type,time::modified',
                                                        Gio.FileQueryInfoFlags.NONE, null);
             let info, child, _moFile, _moLocale, _moPath;
                    
             while ((info = children.next_file(null)) != null) {
                 let type = info.get_file_type();
+                let modified = info.get_modification_time().tv_sec;
                 if (type == Gio.FileType.REGULAR) {
                     _moFile = info.get_name();
                     if (_moFile.substring(_moFile.lastIndexOf(".")) == ".mo") {
@@ -1239,11 +1257,12 @@ MyApplet.prototype = {
                         _moPath = _localeFolder.get_path() + "/" + _moLocale + "/LC_MESSAGES/";
                         let src = Gio.file_new_for_path(String(_moFolder.get_path() + "/" + _moFile));
                         let dest = Gio.file_new_for_path(String(_moPath + this._uuid + ".mo"));
+                        let destModified = dest.query_info('time::modified', Gio.FileQueryInfoFlags.NONE, null).get_modification_time().tv_sec;
                         try {
-                            //if(!this.equalsFile(dest.get_path(), src.get_path())) {
-                            this._makeDirectoy(dest.get_parent());
-                            src.copy(dest, Gio.FileCopyFlags.OVERWRITE, null, null);
-                            //}
+                            if(modified > destModified) {
+                                this._makeDirectoy(dest.get_parent());
+                                src.copy(dest, Gio.FileCopyFlags.OVERWRITE, null, null);
+                            }
                         } catch(e) {
                             global.logError(e);
                         }
@@ -1289,6 +1308,14 @@ MyApplet.prototype = {
     pinned_app_contr: function () {
         let pinnedAppsContr = this.pinnedAppsContr;
         return pinnedAppsContr;
+    },
+    
+    recent_items_contr: function () {
+        return this.recentItems;
+    },
+
+    on_recent_items_changed: function(){
+        this.recentItems = this.recentManager.get_items().sort(function(a,b) { return  a.get_modified() -  b.get_modified() } ).reverse();
     },
 
     _onWorkspaceCreatedOrDestroyed: function () {

@@ -7,12 +7,14 @@ const PopupMenu = imports.ui.popupMenu;
 const Meta = imports.gi.Meta;
 const Util = imports.misc.util;
 const St = imports.gi.St;
+const Gtk = imports.gi.Gtk;
+const Gio = imports.gi.Gio;
 const Tweener = imports.ui.tweener;
-const Gettext = imports.gettext;
 
 const AppletDir = imports.ui.appletManager.applets['WindowListGroup@jake.phy@gmail.com'];
 const MainApplet = AppletDir.applet;
 const SpecialButtons = AppletDir.specialButtons;
+const SpecialMenuItems = AppletDir.specialMenuItems;
 
 const THUMBNAIL_ICON_SIZE = 20;
 const OPACITY_OPAQUE = 255;
@@ -23,15 +25,48 @@ const FavType = {
     none: 2
 }
 
-
-function _(str) {
-   let resultConf = Gettext.dgettext('WindowListGroup@jake.phy@gmail.com', str);
-   if(resultConf != str) {
-      return resultConf;
-   }
-   return Gettext.gettext(str);
+function RecentMenuItem(menu, item) {
+    this._init(menu, item);
 }
 
+RecentMenuItem.prototype = {
+    __proto__: PopupMenu.PopupBaseMenuItem.prototype,
+
+    _init: function (menu, item) {
+        PopupMenu.PopupBaseMenuItem.prototype._init.call(this, {});
+
+        this._menu = menu;
+		this._item = item;
+		this.uri = this._item.get_uri();
+        let table = new St.Table({ homogeneous: false,
+                                      reactive: true });
+
+		this.label = new St.Label({text: item.get_short_name()});
+		this.label.width = 160;
+
+		let icon = this._item.get_gicon();
+		if(icon){
+			this._icon = new St.Icon({gicon: icon, style_class: 'popup-menu-icon', icon_size: 16});
+
+		    table.add(this._icon,
+		              {row: 0, col: 0, col_span: 1, x_expand: false, x_align: St.Align.START});
+		}
+
+        table.add(this.label,
+                  {row: 0, col: 1, col_span: 1, x_align: St.Align.START});
+
+        this.label.set_margin_left(6.0)
+
+        this.addActor(table, { expand: true, span: 1, align: St.Align.START });
+    },
+
+    activate: function (event) {
+    	this._menu.actor.hide();
+        Gio.app_info_launch_default_for_uri(this.uri, global.create_app_launch_context());
+        return true;
+    }
+
+};
 
 function AppMenuButtonRightClickMenu() {
     this._init.apply(this, arguments);
@@ -59,6 +94,8 @@ AppMenuButtonRightClickMenu.prototype = {
         this.isFavapp = parent.isFavapp;
         this._applet = parent._applet;
         let PinnedFavorites = this._applet.pinned_app_contr();
+		// Pause for refresh of items.
+	    this._applet.recentManager.connect('changed', Lang.bind(this, function(){Mainloop.timeout_add(15, Lang.bind(this, this._recent_items_changed))}));
 
         this.itemCloseWindow = new PopupMenu.PopupMenuItem(_("Close"));
         this.itemCloseWindow.connect('activate', Lang.bind(this, this._onCloseWindowActivate));
@@ -78,10 +115,10 @@ AppMenuButtonRightClickMenu.prototype = {
         this.itemOnAllWorkspaces = new PopupMenu.PopupMenuItem(_("Visible on all workspaces"));
         this.itemOnAllWorkspaces.connect('activate', Lang.bind(this, this._toggleOnAllWorkspaces));
 
-        this.launchItem = new PopupMenu.PopupMenuItem(_("New Window"));
+        this.launchItem = new PopupMenu.PopupMenuItem(_('New Window'));
         this.launchItem.connect('activate', Lang.bind(this, this._launchMenu));
 		// Settings in pinned apps menu;
-        this.settingItem = new PopupMenu.PopupMenuItem(_("Go to Settings"));
+        this.settingItem = new PopupMenu.PopupMenuItem(_('Go to Settings'));
         this.settingItem.connect('activate', Lang.bind(this, this._settingMenu));
 
 		this.reArrange = new PopupMenu.PopupSwitchMenuItem(_("ReArrange"), this._applet.arrangePinned);
@@ -108,16 +145,46 @@ AppMenuButtonRightClickMenu.prototype = {
         this.favs = PinnedFavorites, this.favId = this.app.get_id(), this.isFav = this.favs.isFavorite(this.favId);
         if (this._applet.showPinned != FavType.none) {
             if (this.isFav) {
-                this.itemtoggleFav = new PopupMenu.PopupMenuItem(_("Unpin App"));
+                this.itemtoggleFav = new PopupMenu.PopupMenuItem(_('Unpin App'));
                 this.itemtoggleFav.connect('activate', Lang.bind(this, this._toggleFav));
             } else {
-                this.itemtoggleFav = new PopupMenu.PopupMenuItem(_("Pin App"));
+                this.itemtoggleFav = new PopupMenu.PopupMenuItem(_('Pin App'));
                 this.itemtoggleFav.connect('activate', Lang.bind(this, this._toggleFav));
             }
         }
         if (this.isFavapp) this._isFavorite(true);
         else this._isFavorite(false);
     },
+
+	_recent_items_changed: function() {
+		this.removeItems();
+		let items = this.RecentMenuItems;
+		for(let i = 0; i < items.length; i++){
+			items[i].destroy();
+		}
+		this._isFavorite(this.isFavapp);
+	},
+
+	addRecent: function() {
+        let recentItems = this._applet.recent_items_contr();
+		let items = [];
+		this.RecentMenuItems = [];
+        for(let i = 0; i < recentItems.length; i++){
+			let itemInfo = recentItems[i];
+			let appInfo = Gio.app_info_get_default_for_type(itemInfo.get_mime_type(), false);
+			if(appInfo && appInfo.get_id() == this.app.get_app_info().get_id())
+				items.push(itemInfo);
+		}
+		let itemsLength = items.length;
+		if(itemsLength > 8)
+			itemsLength = 8;
+		for(let i = 0; i < itemsLength; i++){
+			let item = items[i];
+			let recentMenuItem = new RecentMenuItem(this, item);
+            this.addMenuItem(recentMenuItem);
+			this.RecentMenuItems.push(recentMenuItem);
+		}
+	},
 
     _isFavorite: function (isFav) {
         let showFavs = this._applet.showPinned;
@@ -131,12 +198,17 @@ AppMenuButtonRightClickMenu.prototype = {
             this.addMenuItem(this.enablePeek);
             this.addMenuItem(this.verticalThumbs);
             this.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+			this.addRecent();
+            this.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
             this.addMenuItem(this.launchItem);
             this.addMenuItem(this.itemtoggleFav);
+			this.isFavapp = true;
         } else if (this.orientation == St.Side.BOTTOM) {
             this.addMenuItem(this.itemOnAllWorkspaces);
             this.addMenuItem(this.itemMoveToLeftWorkspace);
             this.addMenuItem(this.itemMoveToRightWorkspace);
+            this.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+			this.addRecent();
             this.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
             this.addMenuItem(this.launchItem);
             if (showFavs) this.addMenuItem(this.itemtoggleFav);
@@ -145,6 +217,7 @@ AppMenuButtonRightClickMenu.prototype = {
             this.addMenuItem(this.itemMinimizeWindow);
             //this.addMenuItem(this.itemMaximizeWindow);
             this.addMenuItem(this.itemCloseWindow);
+			this.isFavapp = false;
         } else {
             this.addMenuItem(this.itemCloseWindow);
             //this.addMenuItem(this.itemMaximizeWindow);
@@ -154,9 +227,12 @@ AppMenuButtonRightClickMenu.prototype = {
             else this.addMenuItem(this.settingItem);
             this.addMenuItem(this.launchItem);
             this.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+			this.addRecent();
+            this.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
             this.addMenuItem(this.itemMoveToLeftWorkspace);
             this.addMenuItem(this.itemMoveToRightWorkspace);
             this.addMenuItem(this.itemOnAllWorkspaces);
+			this.isFavapp = false;
         }
     },
 
@@ -175,7 +251,7 @@ AppMenuButtonRightClickMenu.prototype = {
     },
 
     _onToggled: function (actor, event) {
-        if (!event || !this.metaWindow) return;
+        if (!event || !this.metaWindow || this.metaWindow.get_workspace() == null) return;
 
         if (this.metaWindow.is_on_all_workspaces()) {
             this.itemOnAllWorkspaces.label.text = _("Only on this workspace");
@@ -249,11 +325,11 @@ AppMenuButtonRightClickMenu.prototype = {
         if (this.isFav) {
             this.close(false);
             this.favs.removeFavorite(this.favId)
-            this.itemtoggleFav.label.text = _("Pin App");
+            this.itemtoggleFav.label.text = _('Pin App');
         } else {
             this.close(false);
             this.favs.addFavorite(this.favId);
-            this.itemtoggleFav.label.text = _("Unpin App");
+            this.itemtoggleFav.label.text = _('Unpin App');
         }
     },
 
