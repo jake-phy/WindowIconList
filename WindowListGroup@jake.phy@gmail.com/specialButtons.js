@@ -11,6 +11,7 @@ const St = imports.gi.St;
 const Tweener = imports.ui.tweener;
 const Meta = imports.gi.Meta;
 const DND = imports.ui.dnd;
+const Gettext = imports.gettext;
 
 const BUTTON_BOX_ANIMATION_TIME = 0.5;
 const MAX_BUTTON_WIDTH = 150; // Pixels
@@ -22,6 +23,15 @@ const TitleDisplay = {
     none: 1,
     app: 2,
     title: 3
+}
+
+
+function _(str) {
+   let resultConf = Gettext.dgettext('WindowListGroup@jake.phy@gmail.com', str);
+   if(resultConf != str) {
+      return resultConf;
+   }
+   return Gettext.gettext(str);
 }
 
 

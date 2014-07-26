@@ -8,6 +8,7 @@ const Meta = imports.gi.Meta;
 const Util = imports.misc.util;
 const St = imports.gi.St;
 const Tweener = imports.ui.tweener;
+const Gettext = imports.gettext;
 
 const AppletDir = imports.ui.appletManager.applets['WindowListGroup@jake.phy@gmail.com'];
 const MainApplet = AppletDir.applet;
@@ -21,6 +22,16 @@ const FavType = {
     pinnedApps: 1,
     none: 2
 }
+
+
+function _(str) {
+   let resultConf = Gettext.dgettext('WindowListGroup@jake.phy@gmail.com', str);
+   if(resultConf != str) {
+      return resultConf;
+   }
+   return Gettext.gettext(str);
+}
+
 
 function AppMenuButtonRightClickMenu() {
     this._init.apply(this, arguments);
@@ -67,10 +78,10 @@ AppMenuButtonRightClickMenu.prototype = {
         this.itemOnAllWorkspaces = new PopupMenu.PopupMenuItem(_("Visible on all workspaces"));
         this.itemOnAllWorkspaces.connect('activate', Lang.bind(this, this._toggleOnAllWorkspaces));
 
-        this.launchItem = new PopupMenu.PopupMenuItem(_('New Window'));
+        this.launchItem = new PopupMenu.PopupMenuItem(_("New Window"));
         this.launchItem.connect('activate', Lang.bind(this, this._launchMenu));
 		// Settings in pinned apps menu;
-        this.settingItem = new PopupMenu.PopupMenuItem(_('Go to Settings'));
+        this.settingItem = new PopupMenu.PopupMenuItem(_("Go to Settings"));
         this.settingItem.connect('activate', Lang.bind(this, this._settingMenu));
 
 		this.reArrange = new PopupMenu.PopupSwitchMenuItem(_("ReArrange"), this._applet.arrangePinned);
@@ -97,10 +108,10 @@ AppMenuButtonRightClickMenu.prototype = {
         this.favs = PinnedFavorites, this.favId = this.app.get_id(), this.isFav = this.favs.isFavorite(this.favId);
         if (this._applet.showPinned != FavType.none) {
             if (this.isFav) {
-                this.itemtoggleFav = new PopupMenu.PopupMenuItem(_('Unpin App'));
+                this.itemtoggleFav = new PopupMenu.PopupMenuItem(_("Unpin App"));
                 this.itemtoggleFav.connect('activate', Lang.bind(this, this._toggleFav));
             } else {
-                this.itemtoggleFav = new PopupMenu.PopupMenuItem(_('Pin App'));
+                this.itemtoggleFav = new PopupMenu.PopupMenuItem(_("Pin App"));
                 this.itemtoggleFav.connect('activate', Lang.bind(this, this._toggleFav));
             }
         }
@@ -238,11 +249,11 @@ AppMenuButtonRightClickMenu.prototype = {
         if (this.isFav) {
             this.close(false);
             this.favs.removeFavorite(this.favId)
-            this.itemtoggleFav.label.text = _('Pin App');
+            this.itemtoggleFav.label.text = _("Pin App");
         } else {
             this.close(false);
             this.favs.addFavorite(this.favId);
-            this.itemtoggleFav.label.text = _('Unpin App');
+            this.itemtoggleFav.label.text = _("Unpin App");
         }
     },
 

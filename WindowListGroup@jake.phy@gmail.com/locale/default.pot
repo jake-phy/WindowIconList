@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-07-21 12:25-0500\n"
+"POT-Creation-Date: 2014-07-26 03:03-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,39 +17,83 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Language: \n"
 
-#: specialMenus.js:53
+#: specialMenus.js:62
 msgid "Close"
 msgstr ""
 
-#: specialMenus.js:56 specialMenus.js:160
+#: specialMenus.js:65 specialMenus.js:197
 msgid "Minimize"
 msgstr ""
 
-#: specialMenus.js:59 specialMenus.js:157
+#: specialMenus.js:68 specialMenus.js:194
 msgid "Maximize"
 msgstr ""
 
-#: specialMenus.js:62
+#: specialMenus.js:71
 msgid "Move to left workspace"
 msgstr ""
 
-#: specialMenus.js:65
+#: specialMenus.js:74
 msgid "Move to right workspace"
 msgstr ""
 
-#: specialMenus.js:68 specialMenus.js:147
+#: specialMenus.js:77 specialMenus.js:184
 msgid "Visible on all workspaces"
 msgstr ""
 
-#: specialMenus.js:143
+#: specialMenus.js:80
+msgid "New Window"
+msgstr ""
+
+#: specialMenus.js:83
+msgid "Go to Settings"
+msgstr ""
+
+#: specialMenus.js:86
+msgid "ReArrange"
+msgstr ""
+
+#: specialMenus.js:89
+msgid "Show Pinned"
+msgstr ""
+
+#: specialMenus.js:92
+msgid "Group Apps"
+msgstr ""
+
+#: specialMenus.js:95
+msgid "Show Thumbs"
+msgstr ""
+
+#: specialMenus.js:98
+msgid "Vertical Thumbs"
+msgstr ""
+
+#: specialMenus.js:101
+msgid "Stack Thumbs"
+msgstr ""
+
+#: specialMenus.js:104
+msgid "Hover to Peek"
+msgstr ""
+
+#: specialMenus.js:110 specialMenus.js:255
+msgid "Unpin App"
+msgstr ""
+
+#: specialMenus.js:113 specialMenus.js:251
+msgid "Pin App"
+msgstr ""
+
+#: specialMenus.js:180
 msgid "Only on this workspace"
 msgstr ""
 
-#: specialMenus.js:155
+#: specialMenus.js:192
 msgid "Unmaximize"
 msgstr ""
 
-#: specialMenus.js:159
+#: specialMenus.js:196
 msgid "Restore"
 msgstr ""
 
@@ -58,10 +102,10 @@ msgstr ""
 msgid "Thumbnail Size:"
 msgstr ""
 
-#. #-#-#-#-#  myapplet.pot (PACKAGE VERSION)  #-#-#-#-#
+#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->thumbnail-
 #. size->tooltip
-#. #-#-#-#-#  myapplet.pot (PACKAGE VERSION)  #-#-#-#-#
+#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->hover-peek-
 #. opacity->tooltip
 msgid "Opacity of the windows on peek."
@@ -92,10 +136,10 @@ msgstr ""
 msgid "The animation time for the windows on hover peek"
 msgstr ""
 
-#. #-#-#-#-#  myapplet.pot (PACKAGE VERSION)  #-#-#-#-#
+#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->hover-peek-
 #. time->units
-#. #-#-#-#-#  myapplet.pot (PACKAGE VERSION)  #-#-#-#-#
+#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->thumbnail-
 #. timeout->units
 msgid "milliseconds"
@@ -113,10 +157,10 @@ msgid ""
 "diplay app name, none: don't display anything"
 msgstr ""
 
-#. #-#-#-#-#  myapplet.pot (PACKAGE VERSION)  #-#-#-#-#
+#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->title-
 #. display->options
-#. #-#-#-#-#  myapplet.pot (PACKAGE VERSION)  #-#-#-#-#
+#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->number-
 #. display->options
 msgid "none"
@@ -152,10 +196,10 @@ msgstr ""
 msgid "Enable hover peek"
 msgstr ""
 
-#. #-#-#-#-#  myapplet.pot (PACKAGE VERSION)  #-#-#-#-#
+#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->enable-hover-
 #. peek->tooltip
-#. #-#-#-#-#  myapplet.pot (PACKAGE VERSION)  #-#-#-#-#
+#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->group-
 #. apps->tooltip
 msgid "Group the open app instances into single icon"
@@ -186,10 +230,10 @@ msgstr ""
 msgid "Show the pinned apps or just show the open windows"
 msgstr ""
 
-#. #-#-#-#-#  myapplet.pot (PACKAGE VERSION)  #-#-#-#-#
+#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
 #. WindowListGroup@jake.phy@gmail.com->settings-
 #. schema.json->Space2->description
-#. #-#-#-#-#  myapplet.pot (PACKAGE VERSION)  #-#-#-#-#
+#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
 #. WindowListGroup@jake.phy@gmail.com->settings-
 #. schema.json->Space1->description
 msgid " "
@@ -282,4 +326,14 @@ msgstr ""
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->group-
 #. apps->description
 msgid "Group apps into single icon"
+msgstr ""
+
+#. WindowListGroup@jake.phy@gmail.com->settings-schema.json->arrange-
+#. pinnedApps->description
+msgid "Arrange pinned apps"
+msgstr ""
+
+#. WindowListGroup@jake.phy@gmail.com->settings-schema.json->arrange-
+#. pinnedApps->tooltip
+msgid "Arrange pinned apps into a different order"
 msgstr ""
