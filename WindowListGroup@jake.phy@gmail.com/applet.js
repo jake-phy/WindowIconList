@@ -23,9 +23,9 @@ const Signals = imports.signals;
 const DND = imports.ui.dnd;
 const AppFavorites = imports.ui.appFavorites;
 const Settings = imports.ui.settings;
-const Gettext = imports.gettext;
 const Gio = imports.gi.Gio;
 const GLib = imports.gi.GLib;
+const Gettext = imports.gettext;
 
 const SPINNER_ANIMATION_TIME = 1;
 
@@ -914,7 +914,7 @@ AppList.prototype = {
         this.orientation = orientation;
         this._applet = applet;
 
-        this.myactorbox = new SpecialButtons.MyAppletBox(this);
+        this.myactorbox = new SpecialButtons.MyAppletBox(this._applet);
         this.actor = this.myactorbox.actor;
 
         if (orientation == St.Side.TOP) {
@@ -1238,14 +1238,12 @@ MyApplet.prototype = {
                             //}
                         } catch(e) {
                             global.logError(e);
-                            Main.notify("Error1", e.message);
                         }
                     }
                 }
             }
         } catch(e) {
             global.logError(e);
-            Main.notify("Error2", e.message);
         }
     },
 
