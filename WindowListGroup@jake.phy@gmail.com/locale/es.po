@@ -7,50 +7,94 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Window List Group 2.8\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-07-21 12:25-0500\n"
-"PO-Revision-Date: 2014-07-21 13:59-0600\n"
+"POT-Creation-Date: 2014-07-26 03:03-0500\n"
+"PO-Revision-Date: 2014-07-26 03:02-0600\n"
 "Last-Translator: Lester Carballo Pérez <lestcape@gmail.com>\n"
 "Language-Team: jake-phy <jake.phy@gmail.com>\n"
+"Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: es\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 "X-Generator: Poedit 1.5.4\n"
 
-#: specialMenus.js:53
+#: specialMenus.js:62
 msgid "Close"
 msgstr "Cerrar"
 
-#: specialMenus.js:56 specialMenus.js:160
+#: specialMenus.js:65 specialMenus.js:197
 msgid "Minimize"
 msgstr "Minimizar"
 
-#: specialMenus.js:59 specialMenus.js:157
+#: specialMenus.js:68 specialMenus.js:194
 msgid "Maximize"
 msgstr "Maximizar"
 
-#: specialMenus.js:62
+#: specialMenus.js:71
 msgid "Move to left workspace"
 msgstr "Mover al área de trabajo de la izquierda"
 
-#: specialMenus.js:65
+#: specialMenus.js:74
 msgid "Move to right workspace"
 msgstr "Mover al área de trabajo de la derecha"
 
-#: specialMenus.js:68 specialMenus.js:147
+#: specialMenus.js:77 specialMenus.js:184
 msgid "Visible on all workspaces"
 msgstr "Mostrar en todas las áreas de trabajo"
 
-#: specialMenus.js:143
+#: specialMenus.js:80
+msgid "New Window"
+msgstr "Nueva Ventana"
+
+#: specialMenus.js:83
+msgid "Go to Settings"
+msgstr "Ir a configuraciones"
+
+#: specialMenus.js:86
+msgid "ReArrange"
+msgstr "Reordenar"
+
+#: specialMenus.js:89
+msgid "Show Pinned"
+msgstr "Mostrar Fijadas "
+
+#: specialMenus.js:92
+msgid "Group Apps"
+msgstr "Agrupar aplicaciones"
+
+#: specialMenus.js:95
+msgid "Show Thumbs"
+msgstr "Mostrar Miniaturas"
+
+#: specialMenus.js:98
+msgid "Vertical Thumbs"
+msgstr "Miniaturas verticales"
+
+#: specialMenus.js:101
+msgid "Stack Thumbs"
+msgstr "Aplicar Miniaturas"
+
+#: specialMenus.js:104
+msgid "Hover to Peek"
+msgstr "Realizar Vistazo cuando el ratón está encima"
+
+#: specialMenus.js:110 specialMenus.js:255
+msgid "Unpin App"
+msgstr "No fijar la aplicación"
+
+#: specialMenus.js:113 specialMenus.js:251
+msgid "Pin App"
+msgstr "Fijar la aplicación"
+
+#: specialMenus.js:180
 msgid "Only on this workspace"
 msgstr "Solo en esta área de trabajo"
 
-#: specialMenus.js:155
+#: specialMenus.js:192
 msgid "Unmaximize"
 msgstr "No maximizada"
 
-#: specialMenus.js:159
+#: specialMenus.js:196
 msgid "Restore"
 msgstr "Restaurar"
 
@@ -59,10 +103,10 @@ msgstr "Restaurar"
 msgid "Thumbnail Size:"
 msgstr "Tamaño de las Miniaturas:"
 
-#. #-#-#-#-#  myapplet.pot (PACKAGE VERSION)  #-#-#-#-#
+#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->thumbnail-
 #. size->tooltip
-#. #-#-#-#-#  myapplet.pot (PACKAGE VERSION)  #-#-#-#-#
+#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->hover-peek-
 #. opacity->tooltip
 msgid "Opacity of the windows on peek."
@@ -93,10 +137,10 @@ msgstr "Tiempo de desvanecimiento de las ventanas:"
 msgid "The animation time for the windows on hover peek"
 msgstr "Tiempo de animación de las ventanas, al realizar un vistazo"
 
-#. #-#-#-#-#  myapplet.pot (PACKAGE VERSION)  #-#-#-#-#
+#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->hover-peek-
 #. time->units
-#. #-#-#-#-#  myapplet.pot (PACKAGE VERSION)  #-#-#-#-#
+#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->thumbnail-
 #. timeout->units
 msgid "milliseconds"
@@ -117,10 +161,10 @@ msgstr ""
 "título de la ventana, aplicación: muestra el nombre de la aplicación, nada: "
 "no muestra nada"
 
-#. #-#-#-#-#  myapplet.pot (PACKAGE VERSION)  #-#-#-#-#
+#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->title-
 #. display->options
-#. #-#-#-#-#  myapplet.pot (PACKAGE VERSION)  #-#-#-#-#
+#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->number-
 #. display->options
 msgid "none"
@@ -156,10 +200,10 @@ msgstr "porcentaje"
 msgid "Enable hover peek"
 msgstr "Habilitar vistazo cuando el ratón se encuentra sobre el área."
 
-#. #-#-#-#-#  myapplet.pot (PACKAGE VERSION)  #-#-#-#-#
+#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->enable-hover-
 #. peek->tooltip
-#. #-#-#-#-#  myapplet.pot (PACKAGE VERSION)  #-#-#-#-#
+#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->group-
 #. apps->tooltip
 msgid "Group the open app instances into single icon"
@@ -191,10 +235,10 @@ msgid "Show the pinned apps or just show the open windows"
 msgstr ""
 "Mostrar las aplicaciones fijas o simplemente mostrar las ventanas abiertas"
 
-#. #-#-#-#-#  myapplet.pot (PACKAGE VERSION)  #-#-#-#-#
+#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
 #. WindowListGroup@jake.phy@gmail.com->settings-
 #. schema.json->Space2->description
-#. #-#-#-#-#  myapplet.pot (PACKAGE VERSION)  #-#-#-#-#
+#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
 #. WindowListGroup@jake.phy@gmail.com->settings-
 #. schema.json->Space1->description
 msgid " "
@@ -295,3 +339,13 @@ msgstr "Configuración del Vistazo"
 #. apps->description
 msgid "Group apps into single icon"
 msgstr "Agrupar las aplicaciones en un solo icono."
+
+#. WindowListGroup@jake.phy@gmail.com->settings-schema.json->arrange-
+#. pinnedApps->description
+msgid "Arrange pinned apps"
+msgstr "Ordenar aplicaciones fijas"
+
+#. WindowListGroup@jake.phy@gmail.com->settings-schema.json->arrange-
+#. pinnedApps->tooltip
+msgid "Arrange pinned apps into a different order"
+msgstr "Ordenar aplicaciones fijas en un orden diferente"

@@ -254,6 +254,13 @@ SignalTracker.prototype = {
     }
 };
 
+let appFavoritesInstance = null;
+
+function GetAppFavorites() {
+    return appFavoritesInstance;
+}
+
+
 function PinnedFavs() {
     this._init.apply(this, arguments);
 }
@@ -1158,6 +1165,7 @@ MyApplet.prototype = {
             }
 
             this.pinnedAppsContr = new PinnedFavs(this);
+            appFavoritesInstance = this.pinnedAppsContr;
 
             this.metaWorkspaces = new OrderedHash();
 
@@ -1238,14 +1246,12 @@ MyApplet.prototype = {
                             //}
                         } catch(e) {
                             global.logError(e);
-                            Main.notify("Error1", e.message);
                         }
                     }
                 }
             }
         } catch(e) {
             global.logError(e);
-            Main.notify("Error2", e.message);
         }
     },
 
