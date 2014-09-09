@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Window List Group 2.8\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-07-26 08:08-0500\n"
-"PO-Revision-Date: 2014-07-26 03:02-0600\n"
+"PO-Revision-Date: 2014-09-09 13:31-0600\n"
 "Last-Translator: Lester Carballo Pérez <lestcape@gmail.com>\n"
 "Language-Team: jake-phy <jake.phy@gmail.com>\n"
 "Language: es\n"
@@ -203,7 +203,7 @@ msgstr "Habilitar vistazo cuando el ratón se encuentra sobre el área."
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->enable-hover-
 #. peek->tooltip
 msgid "Enable Hover peek when mouse is over thumbnail"
-msgstr ""
+msgstr "Activar vistazo flotante cuando el ratón está sobre la miniatura"
 
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->icon-
 #. padding->description

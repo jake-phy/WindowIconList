@@ -255,13 +255,6 @@ SignalTracker.prototype = {
     }
 };
 
-let appFavoritesInstance = null;
-
-function GetAppFavorites() {
-    return appFavoritesInstance;
-}
-
-
 function PinnedFavs() {
     this._init.apply(this, arguments);
 }
@@ -500,7 +493,7 @@ AppGroup.prototype = {
     },
 
     handleDragOver: function (source, actor, x, y, time) {
-        if (source instanceof AppGroup || source.isDraggableApp) return DND.DragMotionResult.CONTINUE;
+        if (source instanceof AppGroup || source.isDraggableApp || (source instanceof DND.LauncherDraggable)) return DND.DragMotionResult.CONTINUE;
 
         if (typeof (this.appList.dragEnterTime) == 'undefined') {
             this.appList.dragEnterTime = time;
@@ -1178,7 +1171,6 @@ MyApplet.prototype = {
             }
 
             this.pinnedAppsContr = new PinnedFavs(this);
-            appFavoritesInstance = this.pinnedAppsContr;
 
             this.recentManager = Gtk.RecentManager.get_default();
             this.recentItems = this.recentManager.get_items().sort(function(a,b) { return  a.get_modified() -  b.get_modified() } ).reverse();
@@ -1235,6 +1227,10 @@ MyApplet.prototype = {
             Main.notify("Error", e.message);
             global.logError(e);
         }
+    },
+
+    acceptNewLauncher: function(path) {
+        this.pinnedAppsContr.addFavorite(path);
     },
 
     execInstallLanguage: function() {

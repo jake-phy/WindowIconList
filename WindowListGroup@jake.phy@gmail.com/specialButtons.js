@@ -622,7 +622,7 @@ MyAppletBox.prototype = {
     },
 
     handleDragOver: function (source, actor, x, y, time) {
-        if (!source.isDraggableApp) return DND.DragMotionResult.NO_DROP;
+        if (!(source.isDraggableApp || (source instanceof DND.LauncherDraggable))) return DND.DragMotionResult.NO_DROP;
 
         let children = this.actor.get_children();
         let windowPos = children.indexOf(source.actor);
@@ -681,9 +681,10 @@ MyAppletBox.prototype = {
     },
 
     acceptDrop: function (source, actor, x, y, time) {
-        if (!(source.isDraggableApp)) return false;
+        if (!(source.isDraggableApp || (source instanceof DND.LauncherDraggable))) return false;
 
-        if (!(source.isFavapp || source.wasFavapp || source.isDraggableApp) || source.isNotFavapp) {
+        if (!(source.isFavapp || source.wasFavapp || source.isDraggableApp ||
+            (source instanceof DND.LauncherDraggable)) || source.isNotFavapp) {
             this.actor.move_child(source.actor, this._dragPlaceholderPos);
             this._clearDragPlaceholder();
             actor.destroy();
@@ -697,7 +698,10 @@ MyAppletBox.prototype = {
             return false;
         }
 
-        let id = app.get_id();
+        let id;
+        if (source instanceof DND.LauncherDraggable) id = source.getId();
+        else id = app.get_id();
+
         let favorites = this._applet.pinned_app_contr().getFavoriteMap();
         let srcIsFavorite = (id in favorites);
         let favPos = this._dragPlaceholderPos;
