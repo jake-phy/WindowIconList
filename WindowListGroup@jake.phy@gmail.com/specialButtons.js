@@ -172,46 +172,6 @@ IconLabelButton.prototype = {
         }
         this._numLabel.allocate(childBox, flags);
     },
-
-    show: function (animate, targetWidth) {
-        if (!animate) {
-            this.actor.show();
-            return;
-        }
-
-        let width = this.oldWidth || targetWidth;
-        if (!width) {
-            let [minWidth, naturalWidth] = this.actor.get_preferred_width(-1);
-            width = naturalWidth;
-        }
-
-        this.actor.show();
-        Tweener.addTween(this.actor, {
-            width: width,
-            time: BUTTON_BOX_ANIMATION_TIME,
-            transition: "easeOutQuad"
-        });
-    },
-
-    hide: function (animate) {
-        if (!animate) {
-            this.actor.hide();
-            return;
-        }
-
-        this.oldWidth = this.actor.width;
-        Tweener.addTween(this.actor, {
-            width: 1,
-            // FIXME: if this is set to 0, a whole bunch of "Clutter-CRITICAL **: clutter_paint_volume_set_width: assertion `width >= 0.0f' failed" messages appear
-            time: BUTTON_BOX_ANIMATION_TIME,
-            transition: "easeOutQuad",
-            onCompleteScope: this,
-            onComplete: function () {
-                this.actor.hide();
-            }
-        });
-    },
-
     showLabel: function (animate, targetWidth) {
         //this._label.width = 150;
         let [minWidth, naturalWidth] = this._label.get_preferred_width(-1);
@@ -513,47 +473,6 @@ ButtonBox.prototype = {
         this.actor.style = "spacing: 2px;";
     },
 
-    show: function (animate, targetWidth) {
-        if (!animate) {
-            this.actor.show();
-            return;
-        }
-
-        let width = this.oldWidth || targetWidth;
-        if (!width) {
-            let [minWidth, naturalWidth] = this.actor.get_preferred_width(-1);
-            width = naturalWidth;
-        }
-
-        this.actor.width = 3;
-        this.actor.show();
-        Tweener.addTween(this.actor, {
-            width: width,
-            time: BUTTON_BOX_ANIMATION_TIME,
-            transition: "easeOutQuad"
-        });
-    },
-
-    hide: function (animate) {
-        if (!animate) {
-            this.actor.hide();
-            return;
-        }
-
-        this.oldWidth = this.actor.width;
-        Tweener.addTween(this.actor, {
-            width: 3,
-            // FIXME: if this is set to 0, a whole bunch of "Clutter-CRITICAL **: clutter_paint_volume_set_width: assertion `width >= 0.0f' failed" messages appear
-            time: BUTTON_BOX_ANIMATION_TIME,
-            transition: "easeOutQuad",
-            onCompleteScope: this,
-            onComplete: function () {
-                this.actor.width = 0;
-                this.actor.hide();
-            }
-        });
-    },
-
     add: function (button) {
         this.actor.add_actor(button.actor);
         this.hidefav();
@@ -683,8 +602,7 @@ MyAppletBox.prototype = {
     acceptDrop: function (source, actor, x, y, time) {
         if (!(source.isDraggableApp || (source instanceof DND.LauncherDraggable))) return false;
 
-        if (!(source.isFavapp || source.wasFavapp || source.isDraggableApp ||
-            (source instanceof DND.LauncherDraggable)) || source.isNotFavapp) {
+        if (!(source.isFavapp || source.wasFavapp || source.isDraggableApp || (source instanceof DND.LauncherDraggable)) || source.isNotFavapp) {
             this.actor.move_child(source.actor, this._dragPlaceholderPos);
             this._clearDragPlaceholder();
             actor.destroy();
@@ -701,7 +619,6 @@ MyAppletBox.prototype = {
         let id;
         if (source instanceof DND.LauncherDraggable) id = source.getId();
         else id = app.get_id();
-
         let favorites = this._applet.pinned_app_contr().getFavoriteMap();
         let srcIsFavorite = (id in favorites);
         let favPos = this._dragPlaceholderPos;

@@ -101,110 +101,6 @@ const unzip = function (a) {
     return [ret1, ret2];
 }
 
-// A hash-like object that preserves order
-// and is sortable
-
-function OrderedHash() {
-    this._init.apply(this, arguments);
-}
-
-OrderedHash.prototype = {
-    _init: function (keys, items) {
-        this._items = items || [];
-        this._keys = keys || [];
-    },
-
-    toString: function () {
-        let ret = [this._keys[i] + ': ' + this._items[i]
-            for each(i in range(this._keys.length))];
-        return '{' + ret.join(', ') + '}';
-    },
-
-    set: function (key, val) {
-        let i = this._keys.indexOf(key);
-        if (i == -1) {
-            this._keys.push(key);
-            this._items.push(val);
-        } else {
-            this._items[i] = val;
-        }
-        return val;
-    },
-
-    // Given an array of keys, the entries [key: initializer(key)]
-    // are added
-    setKeys: function (keys, initializer) {
-        keys.forEach(Lang.bind(this, function (key) {
-            this.set(key, initializer(key));
-        }));
-    },
-
-    get: function (key) {
-        let i = this._keys.indexOf(key);
-        if (i == -1) {
-            return undefined;
-        }
-        return this._items[i];
-    },
-
-    // returns [key, items] corresponding
-    // to the index
-    getPair: function (index) {
-        index = index || 0;
-        return [this._keys[index], this._items[index]];
-    },
-
-    contains: function (key) {
-        return this._keys.indexOf(key) != -1;
-    },
-
-    remove: function (key) {
-        let i = this._keys.indexOf(key);
-        let ret = null;
-        if (i != -1) {
-            this._keys.splice(i, 1);
-            ret = this._items.splice(i, 1)[0];
-        }
-        return ret;
-    },
-
-    keys: function () {
-        return this._keys.slice();
-    },
-
-    items: function () {
-        return this._items.slice();
-    },
-
-    sort: function (sortFunc) {
-        this.sortByKeys(sortFunc);
-    },
-
-    sortByKeys: function (sortFunc) {
-        let pairs = zip(this._keys, this._items);
-        pairs.sort(Lang.bind(this, function (a, b) {
-            return sortFunc(a[0], b[0]);
-        }));
-        [this._keys, this._items] = unzip(pairs);
-    },
-
-    sortByItems: function (sortFunc) {
-        let pairs = zip(this._keys, this._items);
-        pairs.sort(Lang.bind(this, function (a, b) {
-            return sortFunc(a[1], b[1]);
-        }));
-        [this._keys, this._items] = unzip(pairs);
-    },
-
-    // Call forFunc(key, item) on each (key, item) pair.
-    forEach: function (forFunc) {
-        let pairs = zip(this._keys, this._items);
-        pairs.forEach(function (a) {
-            forFunc(a[0], a[1]);
-        });
-    }
-};
-
 // Connects and keeps track of signal IDs so that signals
 // can be easily disconnected
 
@@ -255,6 +151,7 @@ SignalTracker.prototype = {
     }
 };
 
+
 function PinnedFavs() {
     this._init.apply(this, arguments);
 }
@@ -264,7 +161,7 @@ PinnedFavs.prototype = {
     _init: function (applet) {
         this._applet = applet;
         this._favorites = {};
-        this._applet.settings.connect('changed::pinned-apps', Lang.bind(this, this._reload));
+        this._applet.settings.connect('changed::pinned-apps', Lang.bind(this, function() { this._onFavsChanged(); } ));
         this._reload();
     },
 
@@ -326,7 +223,7 @@ PinnedFavs.prototype = {
             ids.push(appId);
         else
             ids.splice(pos, 0, appId);
-        this._applet.pinnedApps = ids;
+        this._applet.settings.setValue("pinned-apps", ids);
         this._favorites[appId] = app;
         return true;
     },
@@ -345,7 +242,7 @@ PinnedFavs.prototype = {
         if (pos > old_index)
             pos = pos - 1;
         ids.splice(pos, 0, ids.splice(old_index, 1)[0]);
-        this._applet.pinnedApps = ids;
+        this._applet.settings.setValue("pinned-apps", ids);
 
     },
 
@@ -361,50 +258,10 @@ PinnedFavs.prototype = {
     },
 
     removeFavorite: function (appId) {
-        let app = this._favorites[appId];
         this._removeFavorite(appId);
     }
 };
 Signals.addSignalMethods(PinnedFavs.prototype);
-
-// Tracks what applications are associated with the
-// given metawindows.  Will return tracker.get_window_app
-// if it is non-null.  Otherwise, it will look it up in
-// its internal database.  If that fails, it will throw an exception
-// This is a work around for https://bugzilla.gnome.org/show_bug.cgi?id=666472
-
-function AppTracker() {
-    this._init.apply(this, arguments);
-}
-
-AppTracker.prototype = {
-    _init: function (tracker) {
-        this.tracker = tracker || Cinnamon.WindowTracker.get_default();
-        this.hash = new OrderedHash();
-    },
-
-    get_window_app: function (metaWindow) {
-        let app = this.tracker.get_window_app(metaWindow);
-        // If we found a valid app, we should add it to our hash,
-        // otherwise, try to look it up in our hash
-        if (app == null) {
-            app = this.hash.get(metaWindow);
-        } else {
-            this.hash.set(metaWindow, app);
-        }
-
-        if (!app) throw {
-            name: 'AppTrackerError',
-            message: 'get_window_app returned null and there was no record of metaWindow in internal database'
-        };
-
-        return app;
-    },
-
-    is_window_interesting: function (metaWindow) {
-        return this.tracker.is_window_interesting(metaWindow);
-    }
-};
 
 // AppGroup is a container that keeps track
 // of all windows of @app (all windows on workspaces
@@ -422,8 +279,8 @@ AppGroup.prototype = {
         this.isFavapp = isFavapp;
         this.isNotFavapp = !isFavapp;
         this.orientation = orientation;
-        this.metaWindows = new OrderedHash();
-        this.metaWorkspaces = new OrderedHash();
+        this.metaWindows = {};
+        this.metaWorkspaces = {};
         this.actor = new St.Bin({
             reactive: true,
             can_focus: true,
@@ -443,9 +300,6 @@ AppGroup.prototype = {
 
         this.myactor.add(this._appButton.actor);
         this.myactor.add(this._windowButtonBox.actor);
-
-        this.appButtonVisible = true;
-        this.windowButtonsVisible = true;
 
         this._appButton.actor.connect('button-release-event', Lang.bind(this, this._onAppButtonRelease));
         //global.screen.connect('event', Lang.bind(this, this._onAppKeyPress));
@@ -522,14 +376,14 @@ AppGroup.prototype = {
     // Add a workspace to the list of workspaces that are watched for
     // windows being added and removed
     watchWorkspace: function (metaWorkspace) {
-        if (!this.metaWorkspaces.contains(metaWorkspace)) {
+        if (!this.metaWorkspaces[metaWorkspace]) {
             // We use connect_after so that the window-tracker time to identify the app, otherwise get_window_app might return null!
             let windowAddedSignal = metaWorkspace.connect_after('window-added', Lang.bind(this, this._windowAdded));
             let windowRemovedSignal = metaWorkspace.connect_after('window-removed', Lang.bind(this, this._windowRemoved));
-            this.metaWorkspaces.set(metaWorkspace, {
+            this.metaWorkspaces[metaWorkspace] = {
                 workspace: metaWorkspace,
                 signals: [windowAddedSignal, windowRemovedSignal]
-            });
+            };
         }
         this._calcWindowNumber(metaWorkspace);
         this._applet.settings.connect("changed::number-display", Lang.bind(this, function () {
@@ -541,46 +395,39 @@ AppGroup.prototype = {
     // @metaWorkspace: if null, will remove all signals
     unwatchWorkspace: function (metaWorkspace) {
         function removeSignals(obj) {
-            obj.signals.forEach(function (s) {
-                obj.workspace.disconnect(s);
-            });
+            let signals = obj.signals;
+            for(let i = 0; i < signals.length; i++) {
+                obj.workspace.disconnect(signals[i]);
+            };
         }
 
         if (metaWorkspace == null) {
-            for each(let k in this.metaWorkspaces.keys()) {
-                removeSignals(this.metaWorkspaces.get(k));
-                this.metaWorkspaces.remove(k);
+            for(let k in this.metaWorkspaces) {
+                removeSignals(this.metaWorkspaces[k]);
+                delete this.metaWorkspaces[k];
             }
-        } else if (this.metaWorkspaces.contains(metaWorkspace)) {
-            removeSignals(this.metaWorkspaces.get(metaWorkspace));
-            this.metaWorkspaces.remove(metaWorkspace);
+        } else if (this.metaWorkspaces[metaWorkspace]) {
+            removeSignals(this.metaWorkspaces[metaWorkspace]);
+            delete this.metaWorkspaces[metaWorkspace];
         } else {
             global.log('Warning: tried to remove watch on an unwatched workspace');
         }
     },
 
-    hideWindowButtons: function (animate) {
-        this._windowButtonBox.hide(animate);
-        this.windowButtonsVisible = false;
+    hideWindowButtons: function () {
+        this._windowButtonBox.actor.hide();
     },
 
-    showWindowButtons: function (animate) {
-        let targetWidth = null;
-        if (animate) targetWidth = this.actor.width;
-        this._windowButtonBox.show(animate, targetWidth);
-        this.windowButtonsVisible = true;
+    showWindowButtons: function () {
+        this._windowButtonBox.actor.show();
     },
 
-    hideAppButton: function (animate) {
-        this._appButton.hide(animate);
-        this.appButtonVisible = false;
+    hideAppButton: function () {
+        this._appButton.actor.hide();
     },
 
-    showAppButton: function (animate) {
-        let targetWidth = null;
-        if (animate) targetWidth = this.actor.width;
-        this._appButton.show(animate, targetWidth);
-        this.appButtonVisible = true;
+    showAppButton: function () {
+        this._appButton.actor.show();
     },
 
     hideAppButtonLabel: function (animate) {
@@ -624,12 +471,16 @@ AppGroup.prototype = {
 
     },
 
-    _newAppKeyNumber: function (number) {
-        if (number < 10)
+    _newAppKeyNumber: function (number) {   
+        if(this.hotKeyId)
+            Main.keybindingManager.removeHotKey(this.hotKeyId)
+        if (number < 10){
             Main.keybindingManager.addHotKey('launch-app-key-' + number.toString(), "<Super>" + number.toString(), Lang.bind(this, this._onAppKeyPress));
+            this.hotKeyId = 'launch-app-key-' + number.toString();
+        }
     },
 
-    _onAppKeyPress: function (number) {
+    _onAppKeyPress: function () {
         if (this.isFavapp) {
             this.app.open_new_window(-1);
             this._animate();
@@ -669,11 +520,15 @@ AppGroup.prototype = {
     },
     _getLastFocusedWindow: function () {
         // Get a list of windows and sort it in order of last access
-        let list = [[win.user_time, win]
-            for each(win in this.metaWindows.keys())]
+        let list = [];
+        for(win in this.metaWindows){
+            log("test");
+            list.push([ this.metaWindows[win].win.user_time,  this.metaWindows[win].win] );
+        }
         list.sort(function (a, b) {
             return a[0] - b[0];
         });
+        log(list);
         if (list[0]) return list[0][1];
         else return null
     },
@@ -692,7 +547,7 @@ AppGroup.prototype = {
                 return false;
             }
         }));
-        this.metaWindows = new OrderedHash();
+        this.metaWindows = {};
         this._windowButtonBox.clear();
         this._loadWinBoxFavs();
         windowList.forEach(Lang.bind(this, function (win) {
@@ -712,13 +567,16 @@ AppGroup.prototype = {
 
     _windowAdded: function (metaWorkspace, metaWindow) {
         let tracker = Cinnamon.WindowTracker.get_default();
-        if (tracker.get_window_app(metaWindow) == this.app && !this.metaWindows.contains(metaWindow) && tracker.is_window_interesting(metaWindow)) {
-            let button = new SpecialButtons.WindowButton({
-                parent: this,
-                isFavapp: false,
-                metaWindow: metaWindow,
-            });
-            this._windowButtonBox.add(button);
+        if (tracker.get_window_app(metaWindow) == this.app && !this.metaWindows[metaWindow] && tracker.is_window_interesting(metaWindow)) {
+            let button = null;
+            if(this._applet.groupApps == false){
+                button = new SpecialButtons.WindowButton({
+                    parent: this,
+                    isFavapp: false,
+                    metaWindow: metaWindow,
+                });
+                this._windowButtonBox.add(button);
+            }
             if (metaWindow) {
                 this.lastFocused = metaWindow;
                 this.rightClickMenu.setMetaWindow(this.lastFocused);
@@ -734,10 +592,7 @@ AppGroup.prototype = {
                 signals: signals,
                 windowButton: button
             };
-            this.metaWindows.set(metaWindow, data);
-            this.metaWindows.sort(function (w1, w2) {
-                return w1.get_stable_sequence() - w2.get_stable_sequence();
-            });
+            this.metaWindows[metaWindow] = {win: metaWindow, data: data};
             if (this.isFavapp) {
                 this._isFavorite(false);
             }
@@ -746,19 +601,29 @@ AppGroup.prototype = {
     },
 
     _windowRemoved: function (metaWorkspace, metaWindow) {
-        let deleted = this.metaWindows.remove(metaWindow);
+        let deleted;
+        if(this.metaWindows[metaWindow])
+            deleted = this.metaWindows[metaWindow].data;
         if (deleted != null) {
+            let signals = deleted.signals;
+            let button = deleted.windowButton;
             // Clean up all the signals we've connected
-            deleted['signals'].forEach(function (s) {
-                metaWindow.disconnect(s);
-            });
-            this._windowButtonBox.remove(deleted['windowButton']);
-            deleted['windowButton'].destroy();
-
+            for(let i = 0; i < signals.length; i++) {
+                metaWindow.disconnect(signals[i]);
+            };
+            if(button){
+                this._windowButtonBox.remove(button);
+                button.destroy();
+            }   
+            delete this.metaWindows[metaWindow];
 
             // Make sure we don't leave our appButton hanging!
             // That is, we should no longer display the old app in our title
-            let nextWindow = this.metaWindows.keys()[0];
+            let nextWindow
+            for(i in this.metaWindows){
+                nextWindow = this.metaWindows[i].win;
+                break;
+            }
             if (nextWindow) {
                 this.lastFocused = nextWindow;
                 this._windowTitleChanged(this.lastFocused);
@@ -810,7 +675,7 @@ AppGroup.prototype = {
 
     _updateFocusedStatus: function (force) {
         let changed = false;
-        let focusState = this.metaWindows.keys().some(function (win) {
+        let focusState = this.metaWindows.keys().some(function (win, data) {
             return win.appears_focused;
         });
         if (this.focusState != focusState || force)
@@ -827,7 +692,7 @@ AppGroup.prototype = {
     },
 
     _loadWinBoxFavs: function () {
-        if (this.isFavapp || this.wasFavapp) {
+        if (this._applet.groupApps == false && this.isFavapp || this.wasFavapp ) {
             let button = new SpecialButtons.WindowButton({
                 parent: this,
                 isFavapp: true,
@@ -895,11 +760,13 @@ AppGroup.prototype = {
     destroy: function () {
         // Unwatch all workspaces before we destroy all our actors
         // that callbacks depend on
-        this.metaWindows.forEach(function (win, data) {
-            data['signals'].forEach(function (s) {
-                win.disconnect(s);
+        
+        for(i in this.metaWindows){
+            let metewindow = this.metaWindows[i];
+            metewindow.data['signals'].forEach(function (s) {
+                metewindow.win.disconnect(s);
             });
-        });
+        };
         this.unwatchWorkspace(null);
         this.rightClickMenu.destroy();
         this.hoverMenu.destroy();
@@ -926,7 +793,6 @@ AppList.prototype = {
     _init: function (applet, metaWorkspace, orientation) {
         this.orientation = orientation;
         this._applet = applet;
-
         this.myactorbox = new SpecialButtons.MyAppletBox(this._applet);
         this.actor = this.myactorbox.actor;
 
@@ -941,9 +807,9 @@ AppList.prototype = {
         }
 
         this.metaWorkspace = metaWorkspace;
-        this._appList = new OrderedHash();
+        this._appList = {};
         // We need a backup database of the associated app for each metaWindow since something get_window_app will return null
-        this._tracker = new AppTracker(Cinnamon.WindowTracker.get_default());
+        this._tracker = Cinnamon.WindowTracker.get_default();
         // Connect all the signals
         this._setSignals();
         this._refreshList();
@@ -958,23 +824,10 @@ AppList.prototype = {
         // We use connect_after so that the window-tracker time to identify the app
         this.signals.push(this.metaWorkspace.connect_after('window-added', Lang.bind(this, this._windowAdded)));
         this.signals.push(this.metaWorkspace.connect_after('window-removed', Lang.bind(this, this._windowRemoved)));
-        this._applet.settings.connect('changed::pinned-apps', Lang.bind(this, this._refreshList));
-        this._applet.settings.connect("changed::group-apps", Lang.bind(this, this._groupApps));
+        this._applet.pinned_app_contr().connect("changed", Lang.bind(this, this._refreshList));
+        this._applet.settings.connect("changed::group-apps", Lang.bind(this, this._refreshList));
         this._applet.settings.connect("changed::show-pinned", Lang.bind(this, this._refreshList));
-        global.settings.connect('changed::panel-edit-mode', Lang.bind(this, this.on_panel_edit_mode_changed));
-    },
-
-    _groupApps: function () {
-        let groupApps = this._applet.settings.getValue("group-apps");
-        this._appList.forEach(function (app, data) {
-            if (groupApps == true){
-                data['appGroup']._appButton.show(true);
-                data['appGroup']._windowButtonBox.hide(true);
-            } else {
-                data['appGroup']._appButton.hide(true);
-                data['appGroup']._windowButtonBox.show(true);
-            }
-        });
+        global.settings.connect("changed::panel-edit-mode", Lang.bind(this, this.on_panel_edit_mode_changed));
     },
 
     // Gets a list of every app on the current workspace
@@ -986,31 +839,33 @@ AppList.prototype = {
     },
 
     _refreshList: function () {
-        this._appList.forEach(function (app, data) {
-            data['appGroup'].destroy();
-        });
-        this._appList = new OrderedHash();
+        for(i in this._appList) {
+            let list = this._appList[i];
+            list.appGroup.destroy();
+        };
+        this._appList = {};
         this._loadFavorites();
         this._refreshApps();
     },
 
     _appGroupNumber: function (parentApp) {
         let i = 0;
-        let number;
-        this._appList.forEach(function (app, data) {
+        for(l in this._appList) {
+            let list = this._appList[l];
             ++i;
-            if (app == parentApp)
-                number = i;
-        });
-        return number;
+            if (list.appGroup.app == parentApp)
+                break;
+        };
+        return i;
     },
 
     _refreshAppGroupNumber: function () {
-        let i = 1;
-        this._appList.forEach(function (app, data) {
-            data['appGroup']._newAppKeyNumber(i);
-            ++i;
-        });
+        let i = 0;
+        for(l in this._appList) {
+            let list = this._appList[l];
+            i = i + 1;
+            list.appGroup._newAppKeyNumber(i);
+        };
     },
 
     _windowAdded: function (metaWorkspace, metaWindow, favapp, isFavapp) {
@@ -1020,14 +875,10 @@ AppList.prototype = {
         //let tracker = Cinnamon.WindowTracker.get_default();
         let tracker = this._tracker;
         let app;
-        try {
-            if (favapp) app = favapp;
-            else app = tracker.get_window_app(metaWindow);
-        } catch (e) {
-            //log(e.name + ': ' + e.message);
-            return;
-        }
-        if (!this._appList.contains(app)) {
+        if (favapp) app = favapp;
+        else app = tracker.get_window_app(metaWindow);
+        if(!app) return;
+        if (!this._appList[app]) {
             let appGroup = new AppGroup(this._applet, this, app, isFavapp, this.orientation);
             appGroup._updateMetaWindows(metaWorkspace);
             appGroup.watchWorkspace(metaWorkspace);
@@ -1036,21 +887,20 @@ AppList.prototype = {
             } else {
                 appGroup.hideAppButton();
             }
-
             this.actor.add_actor(appGroup.actor);
 
             // We also need to monitor the state 'cause some pesky apps (namely: plugin_container left over after fullscreening a flash video)
             // don't report having zero windows after they close
             app.connect('notify::state', Lang.bind(this, function (app) {
-                if (app.state == Cinnamon.AppState.STOPPED && this._appList.contains(app)) {
+                if (app.state == Cinnamon.AppState.STOPPED && this._appList[app]) {
                     this._removeApp(app);
                     appGroup._calcWindowNumber(metaWorkspace);
                 }
             }));
 
-            this._appList.set(app, {
+            this._appList[app] = {
                 appGroup: appGroup,
-            });
+            };
             let appGroupNum = this._appGroupNumber(app);
             appGroup._newAppKeyNumber(appGroupNum);
 
@@ -1061,7 +911,7 @@ AppList.prototype = {
 
     _removeApp: function (app) {
         // This function may get called multiple times on the same app and so the app may have already been removed
-        let appGroup = this._appList.get(app);
+        let appGroup = this._appList[app];
         if (appGroup) {
             if (appGroup['appGroup'].wasFavapp || appGroup['appGroup'].isFavapp) {
                 appGroup['appGroup']._isFavorite(true);
@@ -1069,7 +919,7 @@ AppList.prototype = {
                 Mainloop.timeout_add(0, Lang.bind(this, this._refreshApps));
                 return;
             }
-            this._appList.remove(app);
+            delete this._appList[app];
             appGroup['appGroup'].destroy();
             Mainloop.timeout_add(15, Lang.bind(this, function () {
                 this._refreshApps();
@@ -1096,13 +946,9 @@ AppList.prototype = {
         // to has no windows left.  If so, we need to remove the corresponding AppGroup
         //let tracker = Cinnamon.WindowTracker.get_default();
         let tracker = this._tracker;
-        let app;
-        try {
-            app = tracker.get_window_app(metaWindow);
-        } catch (e) {
-            //log(e.name + ': ' + e.message);
-            return;
-        }
+        let app = tracker.get_window_app(metaWindow);
+        if(!app) return;
+
         let hasWindowsOnWorkspace = app.get_windows().some(function (win) {
             return win.get_workspace() == metaWorkspace
         });
@@ -1115,9 +961,10 @@ AppList.prototype = {
         this.signals.forEach(Lang.bind(this, function (s) {
             this.metaWorkspace.disconnect(s);
         }));
-        this._appList.forEach(function (app, data) {
-            data['appGroup'].destroy();
-        });
+        for(let i in this._appList) {
+            this._appList[i].appGroup.destroy();
+        };
+        this._appList.destroy();
         this._appList = null;
     }
 };
@@ -1136,7 +983,7 @@ MyApplet.prototype = {
         Applet.Applet.prototype._init.call(this, orientation, panel_height, instance_id);
         try {
             this._uuid = metadata["uuid"];
-            this.execInstallLanguage();
+            //this.execInstallLanguage();
             Gettext.bindtextdomain(this._uuid, GLib.get_home_dir() + "/.local/share/locale");
             this.settings = new Settings.AppletSettings(this, "WindowListGroup@jake.phy@gmail.com", instance_id);
             this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "group-apps", "groupApps", null, null);
@@ -1154,7 +1001,11 @@ MyApplet.prototype = {
             this.settings.bindProperty(Settings.BindingDirection.IN, "number-display", "numDisplay", null, null);
             this.settings.bindProperty(Settings.BindingDirection.IN, "title-display", "titleDisplay", null, null);
             this.settings.bindProperty(Settings.BindingDirection.IN, "icon-padding", "iconPadding", null, null);
-            this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "pinned-apps", "pinnedApps", null, null);
+            //this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "pinned-apps", "pinnedApps", null, null);
+            this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "pinned-recent", "pinnedRecent", null, null);
+            this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "show-recent", "showRecent", null, null);
+            this.settings.bindProperty(Settings.BindingDirection.IN, "firefox-menu", "firefoxMenu", null, null);
+            this.settings.bindProperty(Settings.BindingDirection.IN, "appmenu-number", "appMenuNum", null, null);
             this.orientation = orientation;
             this.dragInProgress = false;
 
@@ -1176,7 +1027,7 @@ MyApplet.prototype = {
             this.recentItems = this.recentManager.get_items().sort(function(a,b) { return  a.get_modified() -  b.get_modified() } ).reverse();
 	        this.recentManager.connect('changed', Lang.bind(this, this.on_recent_items_changed));
 
-            this.metaWorkspaces = new OrderedHash();
+            this.metaWorkspaces = {};
 
             // Use a signal tracker so we don't have to keep track of all these id's manually!
             //  global.window_manager.connect('switch-workspace', Lang.bind(this, this._onSwitchWorkspace));
@@ -1229,10 +1080,6 @@ MyApplet.prototype = {
         }
     },
 
-    acceptNewLauncher: function(path) {
-        this.pinnedAppsContr.addFavorite(path);
-    },
-
     execInstallLanguage: function() {
         try {
             let _shareFolder = GLib.get_home_dir() + "/.local/share/";
@@ -1255,7 +1102,10 @@ MyApplet.prototype = {
                         let dest = Gio.file_new_for_path(String(_moPath + this._uuid + ".mo"));
                         let destModified = dest.query_info('time::modified', Gio.FileQueryInfoFlags.NONE, null).get_modification_time().tv_sec;
                         try {
-                            if(modified > destModified) {
+                            if(dest && modified > destModified) {
+                                this._makeDirectoy(dest.get_parent());
+                                src.copy(dest, Gio.FileCopyFlags.OVERWRITE, null, null);
+                            }else if (!dest){
                                 this._makeDirectoy(dest.get_parent());
                                 src.copy(dest, Gio.FileCopyFlags.OVERWRITE, null, null);
                             }
@@ -1296,18 +1146,30 @@ MyApplet.prototype = {
     },
 
     on_panel_height_changed: function () {
-        this.metaWorkspaces.forEach(Lang.bind(this, function (ws, data) {
-            data['appList']._refreshList();
-        }));
+        for(let workSpace in this.metaWorkspaces){
+            this.metaWorkspaces[workSpace].appList._refreshList();
+        }
     },
 
     pinned_app_contr: function () {
         let pinnedAppsContr = this.pinnedAppsContr;
         return pinnedAppsContr;
     },
+
+    acceptNewLauncher: function(path) {
+        this.pinnedAppsContr.addFavorite(path);
+    },
     
     recent_items_contr: function () {
         return this.recentItems;
+    },
+
+    recent_items_manager: function () {
+        return this.recentManager;
+    },
+
+    _pinnedRecentChanged: function () {
+        return;
     },
 
     on_recent_items_changed: function(){
@@ -1319,34 +1181,35 @@ MyApplet.prototype = {
         // We'd like to know what workspaces in this.metaWorkspaces have been destroyed and
         // so are no longer in the workspaces list.  For each of those, we should destroy them
         let toDelete = [];
-        this.metaWorkspaces.forEach(Lang.bind(this, function (ws, data) {
-            if (workspaces.indexOf(ws) == -1) {
-                data['appList'].destroy();
-                toDelete.push(ws);
+        for(let workSpace in this.metaWorkspaces){
+            if (workspaces.indexOf(this.metaWorkspaces[workSpace].ws) == -1) {
+                this.metaWorkspaces[workSpace].appList.destroy();
+                toDelete.push(this.metaWorkspaces[workSpace].ws);
             }
-        }));
-        toDelete.forEach(Lang.bind(this, function (item) {
-            this.metaWorkspaces.remove(item);
-        }));
+        }
+        for(let i = 0;i<toDelete.length;i++){
+            delete this.metaWorkspaces[toDelete[i]];
+        }
     },
 
     _onSwitchWorkspace: function (winManager, previousWorkspaceIndex, currentWorkspaceIndex) {
         let metaWorkspace = global.screen.get_workspace_by_index(currentWorkspaceIndex);
         // If the workspace we switched to isn't in our list,
         // we need to create an AppList for it
-        if (!this.metaWorkspaces.contains(metaWorkspace)) {
+        if (!this.metaWorkspaces[metaWorkspace]) {
             let appList = new AppList(this, metaWorkspace, this.orientation);
-            this.metaWorkspaces.set(metaWorkspace, {
-                'appList': appList
-            });
+            this.metaWorkspaces[metaWorkspace] = {
+                ws: metaWorkspace,
+                appList: appList
+            };
         }
 
         // this.actor can only have one child, so setting the child
         // will automatically unparent anything that was previously there, which
         // is exactly what we want.
-        this._box.set_child(this.metaWorkspaces.get(metaWorkspace)['appList'].actor);
-        this.applistActor = this.metaWorkspaces.get(metaWorkspace)['appList'].actor;
-        this.metaWorkspaces.get(metaWorkspace)['appList']._refreshApps();
+        let list = this.metaWorkspaces[metaWorkspace].appList;
+        this._box.set_child(list.actor);
+        list._refreshApps();
     },
 
     _onOverviewShow: function () {

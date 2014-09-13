@@ -34,6 +34,10 @@
     "type": "generic",
     "default": ["firefox.desktop","mintInstall.desktop","cinnamon-settings.desktop","xchat.desktop","gnome-terminal.desktop","nautilus.desktop","gedit.desktop"]
  },
+ "pinned-recent" : {
+    "type": "generic",
+    "default": {}
+ },
  "show-pinned" : {
     "type" : "checkbox",
     "default" : true,
@@ -153,5 +157,43 @@
     "default" : false,
     "description": "Open Thumbnails OnClick",
     "tooltip": "Open the thumbnails on click, if there is more than 1 windows open."
+ },
+ "Space3" : {
+    "type" : "header",
+    "description": " "
+ },
+ "AppMenu" : {
+    "type" : "header",
+    "description": "AppMenu Settings"
+ },
+ "seperator4" : {
+    "type" : "separator"
+ },
+ "show-recent" : {
+    "type" : "checkbox",
+    "default" : true,
+    "description": "Open Thumbnails OnClick",
+    "tooltip": "Open the thumbnails on click, if there is more than 1 windows open."
+ },
+ "firefox-menu" : {
+    "type": "combobox",
+    "default" : 1,
+    "description" : "Firefox AppMenu:",
+    "options" : {
+        "Most Visited" : 1,
+        "Recent History" : 2,
+        "Bookmarks" : 3
+    },
+    "tooltip" : "Most Visited: show the sites you visit most, Recent Histor: display the the last pages you visited, Bookmarks: show your favorite bookmarks"
+ },
+ "appmenu-number" : {
+    "type": "spinbutton",
+    "default" : 10,
+    "min" : 0,
+    "max" : 50,
+    "step" : 1,
+    "units" : "number",
+    "description" : "Number of menu Items:",
+    "tooltip" : "The number of AppMenu Items"
  }
 }
