@@ -14,7 +14,7 @@ const Tweener = imports.ui.tweener;
 const AppletDir = imports.ui.appletManager.applets['WindowListGroup@jake.phy@gmail.com'];
 const MainApplet = AppletDir.applet;
 const SpecialButtons = AppletDir.specialButtons;
-const SpecialMenuItems = AppletDir.specialMenuItems;
+//const SpecialMenuItems = AppletDir.specialMenuItems;
 
 const THUMBNAIL_ICON_SIZE = 20;
 const OPACITY_OPAQUE = 255;
