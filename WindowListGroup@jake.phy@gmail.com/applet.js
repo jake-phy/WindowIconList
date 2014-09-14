@@ -522,7 +522,6 @@ AppGroup.prototype = {
         // Get a list of windows and sort it in order of last access
         let list = [];
         for(win in this.metaWindows){
-            log("test");
             list.push([ this.metaWindows[win].win.user_time,  this.metaWindows[win].win] );
         }
         list.sort(function (a, b) {

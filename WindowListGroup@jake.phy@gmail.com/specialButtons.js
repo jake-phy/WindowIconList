@@ -234,7 +234,7 @@ AppButton.prototype = {
 
         let tracker = Cinnamon.WindowTracker.get_default();
         this._trackerSignal = tracker.connect('notify::focus-app', Lang.bind(this, this._onFocusChange));
-        this._attention = global.display.connect('window-demands-attention', Lang.bind(this, this._onAttentionRequest));
+        this._attention = global.settings.connect('changed::window-list-applet-alert', Lang.bind(this, this._onAttentionRequest));
     },
 
     _onFocusChange: function () {
@@ -252,8 +252,29 @@ AppButton.prototype = {
     },
 
     _onAttentionRequest: function () {
-        if (!this.isFavapp)
-            this.actor.add_style_class_name('window-list-item-demands-attention');
+        if (this.isFavapp) return true;
+        let active = global.settings.get_boolean('window-list-applet-alert');
+        if (active) {
+            this._urgent_signal = global.display.connect('window-marked-urgent', Lang.bind(this, this._onWindowDemandsAttention));
+        } else {
+            if (this._urgent_signal) {
+                global.display.disconnect(this._urgent_signal);
+            }
+        }
+    },
+
+    _onWindowDemandsAttention : function(display, window) {
+        if (this._needsAttention) {
+            return false;
+        }
+        let windows = this.parent.metaWindows;
+        for (w in windows) {
+            if ( windows[w].win == window ) {
+                this._needsAttention = true;
+                this.actor.add_style_class_name('window-list-item-demands-attention');
+                return;
+            }
+        }
     },
 
     _isFavorite: function (isFav) {
@@ -269,7 +290,7 @@ AppButton.prototype = {
     destroy: function () {
         let tracker = Cinnamon.WindowTracker.get_default();
         tracker.disconnect(this._trackerSignal);
-        global.display.disconnect(this._attention);
+        global.settings.disconnect(this._attention);
         this._container.destroy_children();
         this._container.destroy();
         this.actor.destroy();
@@ -318,7 +339,7 @@ WindowButton.prototype = {
         if (this.metaWindow) {
             this.signals.push(this.metaWindow.connect('notify::appears-focused', Lang.bind(this, this._onFocusChange)));
             this.signals.push(this.metaWindow.connect('notify::title', Lang.bind(this, this._onTitleChange)));
-            this._attention = global.display.connect('window-demands-attention', Lang.bind(this, this._onAttentionRequest));
+            this._attention = global.settings.connect('changed::window-list-applet-alert', Lang.bind(this, this._onAttentionRequest));
             this._applet.settings.connect("changed::title-display", Lang.bind(this, function () {
                 this._onTitleChange();
             }));
@@ -337,7 +358,7 @@ WindowButton.prototype = {
             this.signals.forEach(Lang.bind(this, function (s) {
                 this.metaWindow.disconnect(s);
             }));
-            global.display.disconnect(this._attention);
+            global.settings.disconnect(this._attention);
         }
         this.rightClickMenu.destroy();
         this._container.destroy_children();
@@ -346,8 +367,26 @@ WindowButton.prototype = {
     },
 
     _onAttentionRequest: function () {
-        if (!this.isFavapp )
+        if (this.isFavapp) return true;
+        let active = global.settings.get_boolean('window-list-applet-alert');
+        if (active) {
+            this._urgent_signal = global.display.connect('window-marked-urgent', Lang.bind(this, this._onWindowDemandsAttention));
+        } else {
+            if (this._urgent_signal) {
+                global.display.disconnect(this._urgent_signal);
+            }
+        }
+    },
+
+    _onWindowDemandsAttention : function(display, window) {
+        if (this._needsAttention) {
+            return false;
+        }
+        if ( this.metaWindow == window ) {
+            this._needsAttention = true;
             this.actor.add_style_class_name('window-list-item-demands-attention');
+            return;
+        }
     },
 
     _onButtonRelease: function (actor, event) {
