@@ -1,3 +1,4 @@
+/* jshint moz:true */
 const Lang = imports.lang;
 const PopupMenu = imports.ui.popupMenu;
 const St = imports.gi.St;
@@ -45,8 +46,8 @@ PinnedRecentItem.prototype = {
 		this.pinIcon = new St.Icon({icon_name: pinIcon, style_class: 'popup-menu-icon', icon_size: 16, icon_type: St.IconType.FULLCOLOR});
 		bin.set_child(this.pinIcon);
 		
-		bin.connect('enter-event', Lang.bind(this, function(){ this.unPinRecent = true }));
-		bin.connect('leave-event', Lang.bind(this, function(){ this.unPinRecent = false }));
+		bin.connect('enter-event', Lang.bind(this, function(){ this.unPinRecent = true; }));
+		bin.connect('leave-event', Lang.bind(this, function(){ this.unPinRecent = false; }));
 
 		table.add(this._icon,
 		          {row: 0, col: 0, col_span: 1, x_expand: false, x_align: St.Align.START});
@@ -57,9 +58,7 @@ PinnedRecentItem.prototype = {
         table.add(bin,
                   {row: 0, col: 2, col_span: 1, x_align: St.Align.END});
 
-		
-
-        this.label.set_margin_left(6.0)
+        this.label.set_margin_left(6.0);
 
         this.addActor(table, { expand: true, span: 2, align: St.Align.START });
     },
@@ -115,8 +114,8 @@ RecentMenuItem.prototype = {
 		this.pinIcon = new St.Icon({icon_name: pinIcon, style_class: 'popup-menu-icon', icon_size: 16, icon_type: St.IconType.FULLCOLOR});
 		bin.set_child(this.pinIcon);
 		
-		bin.connect('enter-event', Lang.bind(this, function(){ this.pinRecent = true }));
-		bin.connect('leave-event', Lang.bind(this, function(){ this.pinRecent = false }));
+		bin.connect('enter-event', Lang.bind(this, function(){ this.pinRecent = true; }));
+		bin.connect('leave-event', Lang.bind(this, function(){ this.pinRecent = false; }));
 
 		this.icon = this._item.get_gicon();
 
@@ -135,7 +134,7 @@ RecentMenuItem.prototype = {
 
 		
 
-        this.label.set_margin_left(6.0)
+        this.label.set_margin_left(6.0);
 
         this.addActor(table, { expand: true, span: 2, align: St.Align.START });
     },
@@ -149,7 +148,7 @@ RecentMenuItem.prototype = {
 			let stored = this._menu._applet.pinnedRecent;
 			let appName = this._menu.app.get_name();
 			if(stored[appName]){
-				stored[appName].infos[this.uri] = {uri: this.uri}
+				stored[appName].infos[this.uri] = {uri: this.uri};
 			}else{
 				stored[appName] = {infos: {}};
 				stored[appName].infos[this.uri] = {uri: this.uri};
@@ -194,7 +193,7 @@ PlaceMenuItem.prototype = {
         table.add(this.label,
                   {row: 0, col: 1, col_span: 1, x_align: St.Align.START});
 
-        this.label.set_margin_left(6.0)
+        this.label.set_margin_left(6.0);
 
         this.addActor(table, { expand: true, span: 2, align: St.Align.START });
     },
@@ -231,7 +230,7 @@ IconMenuItem.prototype = {
         table.add(this.label,
                   {row: 0, col: 1, col_span: 1, x_align: St.Align.START});
 
-        this.label.set_margin_left(6.0)
+        this.label.set_margin_left(6.0);
 
         this.addActor(table, { expand: true, span: 2, align: St.Align.START });
     }
@@ -268,8 +267,8 @@ FirefoxMenuItem.prototype = {
 		this.pinIcon = new St.Icon({icon_name: "list-add", style_class: 'popup-menu-icon', icon_size: 16, icon_type:St.IconType.FULLCOLOR});
 		bin.set_child(this.pinIcon);
 		
-		bin.connect('enter-event', Lang.bind(this, function(){ this.pinRecent = true }));
-		bin.connect('leave-event', Lang.bind(this, function(){ this.pinRecent = false }));
+		bin.connect('enter-event', Lang.bind(this, function(){ this.pinRecent = true; }));
+		bin.connect('leave-event', Lang.bind(this, function(){ this.pinRecent = false; }));
 
         this.icon = new St.Icon({icon_name: "window-new", icon_size: 16, icon_type: St.IconType.FULLCOLOR});
         if (this.icon)
@@ -282,7 +281,7 @@ FirefoxMenuItem.prototype = {
         table.add(bin,
                   {row: 0, col: 2, col_span: 1, x_align: St.Align.END});
 
-        this.label.set_margin_left(6.0)
+        this.label.set_margin_left(6.0);
 
         this.addActor(table, { expand: true, span: 2, align: St.Align.START });
     },
@@ -292,7 +291,7 @@ FirefoxMenuItem.prototype = {
 			let stored = this._menu._applet.pinnedRecent;
 			let appName = this._menu.app.get_name();
 			if(stored[appName]){
-				stored[appName].infos[this.uri] = {uri: this.uri, title: this.title}
+				stored[appName].infos[this.uri] = {uri: this.uri, title: this.title};
 			}else{
 				stored[appName] = {infos: {}};
 				stored[appName].infos[this.uri] = {uri: this.uri, title: this.title};
@@ -333,7 +332,7 @@ IconNameMenuItem.prototype = {
         table.add(this.label,
                   {row: 0, col: 1, col_span: 1, x_align: St.Align.START});
 
-        this.label.set_margin_left(6.0)
+        this.label.set_margin_left(6.0);
 
         this.addActor(table, { expand: true, span: 2, align: St.Align.START });
     }

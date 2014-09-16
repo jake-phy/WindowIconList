@@ -1,3 +1,4 @@
+/* jshint moz:true */
 let Gda;
 const GLib = imports.gi.GLib;
 
@@ -9,7 +10,7 @@ try {
 function getFirefoxHistory(applet) {
     let history = [];
 
-    if (typeof Gda == 'undefined') {
+    if (!Gda) {
 		log(" Gda Library not found install gir1.2-gda package");
         return null;
     }
@@ -51,7 +52,7 @@ function getFirefoxHistory(applet) {
         }
     }
 
-    if (typeof profilePath == 'undefined') {
+    if (!profilePath) {
         return history;
     }
 

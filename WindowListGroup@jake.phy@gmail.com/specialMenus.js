@@ -1,3 +1,4 @@
+/* jshint moz:true */
 const Clutter = imports.gi.Clutter;
 const Lang = imports.lang;
 const Main = imports.ui.main;
@@ -26,7 +27,7 @@ const FavType = {
     favorites: 0,
     pinnedApps: 1,
     none: 2
-}
+};
 
 function AppMenuButtonRightClickMenu() {
     this._init.apply(this, arguments);
@@ -89,7 +90,10 @@ AppMenuButtonRightClickMenu.prototype = {
 		this.specialSection = new PopupMenu.PopupMenuSection();
 		this.addSpecialItems();
 
-        this.favs = PinnedFavorites, this.favId = this.app.get_id(), this.isFav = this.favs.isFavorite(this.favId);
+        this.favs = PinnedFavorites;
+        this.favId = this.app.get_id();
+        this.isFav = this.favs.isFavorite(this.favId);
+
         if (this._applet.showPinned != FavType.none) {
             if (this.isFav) {
                 this.itemtoggleFav = new SpecialMenuItems.IconNameMenuItem(_('Unpin from Panel'), "remove");
@@ -172,15 +176,15 @@ AppMenuButtonRightClickMenu.prototype = {
 		}else if(this.app.get_id() == 'firefox.desktop' || this.app.get_id() == 'firefox web browser.desktop'){
 			let historys = FireFox.getFirefoxHistory(this._applet);
 
-			if (historys == null) {
+			if (historys === null) {
 				let install = new PopupMenu.PopupMenuItem(_('Install Gda'));
         		install.connect('activate', Lang.bind(this, function(){
         			Util.spawnCommandLine('gnome-terminal -x bash -c "sudo apt-get install gir1.2-gda-5.0; echo "press enter and restart cinnamon"; read n1"');
 			    }));
 		    	this.addMenuItem(install);
-			}else if(historys.length != 0){
+			}else if(historys.length){
 	 			try{
-					historys.length = historys.length - pinnedLength
+					historys.length = historys.length - pinnedLength;
 					for(let i = 0; i < historys.length; i++){
 						let history = historys[i];
 						if (this.pinnedItemsUris.indexOf(history.uri) != -1)
@@ -189,7 +193,7 @@ AppMenuButtonRightClickMenu.prototype = {
             			this.specialSection.actor.add(item.actor);
 						this.RecentMenuItems.push(item);
 					}
-				}catch(e){};
+				}catch(e){}
 			}
 			this._loadActions();
 			return;
@@ -203,7 +207,7 @@ AppMenuButtonRightClickMenu.prototype = {
     _loadActions: function(){
 		if(!this.appInfo) return;
 		let actions = this.appInfo.list_actions();
-		if(actions.length != 0 && this.RecentMenuItems.length !=0){
+		if(actions.length && this.RecentMenuItems.length){
 			let seperator = new PopupMenu.PopupSeparatorMenuItem();
 			this.specialSection.actor.add(seperator.actor);
 			this.RecentMenuItems.push(seperator);
@@ -225,14 +229,14 @@ AppMenuButtonRightClickMenu.prototype = {
 		let appName = this.app.get_name();
 		let pinnedLength;
 		if(pinnedRecent[appName]){
-			this.pinnedItems = pinnedRecent[appName]['infos'];
-			pinnedLength = Object.keys(this.pinnedItems).length
+			this.pinnedItems = pinnedRecent[appName].infos;
+			pinnedLength = Object.keys(this.pinnedItems).length;
 		}
 		if(this.pinnedItems){
 			for(let i in this.pinnedItems){
-				let item = this.pinnedItems[i]
+				let item = this.pinnedItems[i];
 				//log(item.title)
-				let recentMenuItem
+				let recentMenuItem;
 				if (item.title)
 				 	recentMenuItem = new SpecialMenuItems.PinnedRecentItem(this, item.uri, "list-remove", item.title);
 				else
@@ -247,7 +251,7 @@ AppMenuButtonRightClickMenu.prototype = {
 
     _listRecent: function(pinnedLength){
         let recentItems = this._applet.recent_items_contr();
-		let items = new Array();
+		let items = [];
         for(let id = 0; id < recentItems.length; id++){
 			let itemInfo = recentItems[id];
 			let mimeType = itemInfo.get_mime_type();
@@ -269,7 +273,7 @@ AppMenuButtonRightClickMenu.prototype = {
 
     _listDefaultPlaces: function(pattern){
 		let defaultPlaces = Main.placesManager.getDefaultPlaces();
-		var res = new Array();
+		var res = [];
 		for (let id = 0; id < defaultPlaces.length; id++) {
 		  if (!pattern || defaultPlaces[id].name.toLowerCase().indexOf(pattern)!=-1) res.push(defaultPlaces[id]);
 		}
@@ -278,7 +282,7 @@ AppMenuButtonRightClickMenu.prototype = {
 
     _listBookmarks: function(pattern){
 		let bookmarks = Main.placesManager.getBookmarks();
-		var res = new Array();
+		var res = [];
 		for (let id = 0; id < bookmarks.length; id++) {
 		  if (!pattern || bookmarks[id].name.toLowerCase().indexOf(pattern)!=-1) res.push(bookmarks[id]);
 		}
@@ -287,7 +291,7 @@ AppMenuButtonRightClickMenu.prototype = {
     
     _listDevices: function(pattern){
        let devices = Main.placesManager.getMounts();
-       var res = new Array();
+       var res = [];
        for (let id = 0; id < devices.length; id++) {
           if (!pattern || devices[id].name.toLowerCase().indexOf(pattern)!=-1) res.push(devices[id]);
        }
@@ -301,7 +305,7 @@ AppMenuButtonRightClickMenu.prototype = {
 			this.addMenuItem(this.subMenuItem);
             this._connectSubMenuSignals(this.subMenuItem, this.subMenuItem.menu);
             this.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-			if(this.RecentMenuItems.length != 0)
+			if(this.RecentMenuItems.length)
 				this.addMenuItem(this.specialSection);
             this.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
             this.addMenuItem(this.launchItem);
@@ -312,7 +316,7 @@ AppMenuButtonRightClickMenu.prototype = {
             this.addMenuItem(this.itemMoveToLeftWorkspace);
             this.addMenuItem(this.itemMoveToRightWorkspace);
             this.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-			if(this.RecentMenuItems.length != 0)
+			if(this.RecentMenuItems.length)
 				this.addMenuItem(this.specialSection);
             this.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
             this.addMenuItem(this.launchItem);
@@ -332,7 +336,7 @@ AppMenuButtonRightClickMenu.prototype = {
             else this.addMenuItem(this.settingItem);
             this.addMenuItem(this.launchItem);
             this.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-			if(this.RecentMenuItems.length != 0)
+			if(this.RecentMenuItems.length)
 				this.addMenuItem(this.specialSection);
             this.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
             this.addMenuItem(this.itemMoveToLeftWorkspace);
@@ -357,7 +361,7 @@ AppMenuButtonRightClickMenu.prototype = {
     },
 
     _onToggled: function (actor, event) {
-        if (!event || !this.metaWindow || this.metaWindow.get_workspace() == null) return;
+        if (!event || !this.metaWindow || !this.metaWindow.get_workspace()) return;
 
         if (this.metaWindow.is_on_all_workspaces()) {
             this.itemOnAllWorkspaces.label.text = _("Only on this workspace");
@@ -430,7 +434,7 @@ AppMenuButtonRightClickMenu.prototype = {
     _toggleFav: function (actor, event) {
         if (this.isFav) {
             this.close(false);
-            this.favs.removeFavorite(this.favId)
+            this.favs.removeFavorite(this.favId);
         } else {
             this.close(false);
             this.favs.addFavorite(this.favId);
@@ -536,7 +540,7 @@ AppThumbnailHoverMenu.prototype = {
         this.actor.connect('leave-event', Lang.bind(this, this._onMenuLeave));
 
         this.actor.connect('button-release-event', Lang.bind(this, this._onButtonPress));
-        this._applet.settings.connect('thumbnail-timeout', Lang.bind(this, function () { this.hoverTime =  this._applet.settings.getValue("thumbnail-timeout")}));
+        this._applet.settings.connect('thumbnail-timeout', Lang.bind(this, function () { this.hoverTime =  this._applet.settings.getValue("thumbnail-timeout"); }));
         this.hoverTime =  this._applet.settings.getValue("thumbnail-timeout");
     },
 
@@ -720,8 +724,8 @@ PopupMenuAppSwitcherItem.prototype = {
     _refresh: function () {
         // Check to see if this.metaWindow has changed.  If so, we need to recreate
         // our thumbnail, etc.
-		if(this.metaWindowThumbnai && !this.metaWindowThumbnail.needs_refresh())
-			this.metaWindowThumbnail == null;
+		if(this.metaWindowThumbnail && !this.metaWindowThumbnail.needs_refresh())
+			this.metaWindowThumbnail = null;
         if (this.metaWindowThumbnail && this.metaWindowThumbnail.metaWindow == this.metaWindow) {
             this.metaWindowThumbnail._isFavorite(this.isFavapp);
         } else {
@@ -778,7 +782,7 @@ PopupMenuAppSwitcherItem.prototype = {
 	},
 	
 	addWindowsLoop: function(i, winLength, actor, windows,containerNum) {
-		for(let i = i; i < winLength; i++) {
+		for(; i < winLength; i++) {
 			let metaWindow = windows[i];
 			if (this.appThumbnails[metaWindow]) {
 	            this.appThumbnails[metaWindow].thumbnail._isFavorite(this.isFavapp);
@@ -872,7 +876,7 @@ WindowThumbnail.prototype = {
         this.button.hide();
 		bin.add_actor(this._container);
 		bin.add_actor(this.button);
-		bin.style = "padding-bottom: 3px;"
+		bin.style = "padding-bottom: 3px;";
         this.actor.add_actor(bin);
         this.actor.add_actor(this.thumbnailActor);
 
@@ -1003,7 +1007,7 @@ WindowThumbnail.prototype = {
 
     _hoverPeek: function (opacity, metaWin) {
     	let applet = this._applet;
-        if (applet.enablePeek == false) return;
+        if (!applet.enablePeek) return;
 
         function setOpacity(window_actor, target_opacity) {
             Tweener.addTween(window_actor, {
@@ -1013,7 +1017,7 @@ WindowThumbnail.prototype = {
             });
         }
 
-        let above_current = new Array();
+        let above_current = [];
 
         global.get_window_actors().forEach(function (wa) {
             var meta_win = wa.get_meta_window();
