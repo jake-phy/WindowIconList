@@ -386,8 +386,9 @@ WindowButton.prototype = {
         if ( this.metaWindow == window ) {
             this._needsAttention = true;
             this.actor.add_style_class_name('window-list-item-demands-attention');
-            return;
+            return true;
         }
+        return false;
     },
 
     _onButtonRelease: function (actor, event) {
