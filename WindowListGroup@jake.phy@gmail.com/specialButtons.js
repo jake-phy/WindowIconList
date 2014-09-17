@@ -253,7 +253,7 @@ AppButton.prototype = {
     },
 
     _onAttentionRequest: function () {
-        if (this.isFavapp) return true;
+        if (this.isFavapp) return false;
         let active = global.settings.get_boolean('window-list-applet-alert');
         if (active) {
             this._urgent_signal = global.display.connect('window-marked-urgent', Lang.bind(this, this._onWindowDemandsAttention));
@@ -262,6 +262,7 @@ AppButton.prototype = {
                 global.display.disconnect(this._urgent_signal);
             }
         }
+        return true;
     },
 
     _onWindowDemandsAttention : function(display, window) {
@@ -273,9 +274,10 @@ AppButton.prototype = {
             if ( windows[w].win == window ) {
                 this._needsAttention = true;
                 this.actor.add_style_class_name('window-list-item-demands-attention');
-                return;
+                return true;
             }
         }
+        return false;
     },
 
     _isFavorite: function (isFav) {
@@ -377,6 +379,7 @@ WindowButton.prototype = {
                 global.display.disconnect(this._urgent_signal);
             }
         }
+        return true;
     },
 
     _onWindowDemandsAttention : function(display, window) {

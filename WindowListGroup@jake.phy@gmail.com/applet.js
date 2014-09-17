@@ -177,7 +177,7 @@ PinnedFavs.prototype = {
             let app = appSys.lookup_app(id);
             return app;
         }).filter(function (app) {
-            return app !== null;
+            return app !== undefined && app !== null;
         });
         this._favorites = {};
         for (let i = 0; i < apps.length; i++) {
@@ -527,7 +527,7 @@ AppGroup.prototype = {
         list.sort(function (a, b) {
             return a[0] - b[0];
         });
-        log(list);
+        log(list[0]);
         if (list[0]) return list[0][1];
         else return null;
     },

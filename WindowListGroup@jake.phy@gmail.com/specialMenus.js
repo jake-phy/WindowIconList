@@ -724,7 +724,7 @@ PopupMenuAppSwitcherItem.prototype = {
     _refresh: function () {
         // Check to see if this.metaWindow has changed.  If so, we need to recreate
         // our thumbnail, etc.
-		if(this.metaWindowThumbnail && !this.metaWindowThumbnail.needs_refresh())
+		if(this.metaWindowThumbnail && this.metaWindowThumbnail.needs_refresh())
 			this.metaWindowThumbnail = null;
         if (this.metaWindowThumbnail && this.metaWindowThumbnail.metaWindow == this.metaWindow) {
             this.metaWindowThumbnail._isFavorite(this.isFavapp);
@@ -782,7 +782,7 @@ PopupMenuAppSwitcherItem.prototype = {
 	},
 	
 	addWindowsLoop: function(i, winLength, actor, windows,containerNum) {
-		for(; i < winLength; i++) {
+		for(let i = 0; i < winLength; i++) {
 			let metaWindow = windows[i];
 			if (this.appThumbnails[metaWindow]) {
 	            this.appThumbnails[metaWindow].thumbnail._isFavorite(this.isFavapp);
