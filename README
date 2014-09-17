@@ -1,7 +1,7 @@
 Window List With App Grouping
 =============
 
-** Mint Cinnamon Applet for Pinned Apps and Previews **
+**Mint Cinnamon Applet for Pinned Apps and Previews**
 
 How to Install
 --------------
