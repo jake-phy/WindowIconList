@@ -569,7 +569,7 @@ AppGroup.prototype = {
         let tracker = Cinnamon.WindowTracker.get_default();
         if (tracker.get_window_app(metaWindow) == this.app && !this.metaWindows[metaWindow] && tracker.is_window_interesting(metaWindow)) {
             let button = null;
-            if(this._applet.groupApps){
+            if(this._applet.groupApps === false){
                 button = new SpecialButtons.WindowButton({
                     parent: this,
                     isFavapp: false,
@@ -691,7 +691,7 @@ AppGroup.prototype = {
     },
 
     _loadWinBoxFavs: function () {
-        if (this._applet.groupApps && this.isFavapp || this.wasFavapp ) {
+        if (this._applet.groupApps === false && this.isFavapp || this.wasFavapp ) {
             let button = new SpecialButtons.WindowButton({
                 parent: this,
                 isFavapp: true,
