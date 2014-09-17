@@ -12,4 +12,5 @@ settings are in the right click menu of favorites if favorites are enabled else 
 website: https://github.com/jake-phy/WindowIconList/
 
 Original code can be found at [https://github.com/siefkenj/gnome-shell-windowlist/](https://github.com/siefkenj/gnome-shell-windowlist/)
+
 Original extension here [https://extensions.gnome.org/extension/25/window-list/](https://extensions.gnome.org/extension/25/window-list/)
