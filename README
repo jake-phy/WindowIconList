@@ -6,6 +6,7 @@ Window List With App Grouping
 How to Install
 --------------
 Run the configure.py script
+
 settings are in the right click menu of favorites if favorites are enabled else it's in the normal right click list 
 
 website: https://github.com/jake-phy/WindowIconList/
