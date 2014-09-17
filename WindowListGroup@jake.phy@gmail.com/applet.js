@@ -540,7 +540,7 @@ AppGroup.prototype = {
         // Get a list of all interesting windows that are part of this app on the current workspace
         let windowList = metaWorkspace.list_windows().filter(Lang.bind(this, function (metaWindow) {
             try {
-                return tracker.get_window_app(metaWindow) == this.app && tracker.is_window_interesting(metaWindow);
+                return tracker.get_window_app(metaWindow) == this.app && tracker.is_window_interesting(metaWindow) && Main.isInteresting(metaWindow);
             } catch (e) {
                 log(e.name + ': ' + e.message);
                 return false;
@@ -716,7 +716,7 @@ AppGroup.prototype = {
         }
 
         let windowNum = this.app.get_windows().filter(function (win) {
-            return win.get_workspace() == metaWorkspace;
+            return win.get_workspace() == metaWorkspace && Main.isInteresting(win);
         }).length;
         let numDisplay = this._applet.settings.getValue("number-display");
         this._appButton._numLabel.text = windowNum.toString();
