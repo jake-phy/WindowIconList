@@ -31,7 +31,6 @@ const GLib = imports.gi.GLib;
 
 const SPINNER_ANIMATION_TIME = 1;
 
-
 function _(str) {
    let resultConf = Gettext.dgettext('WindowListGroup@jake.phy@gmail.com', str);
    if(resultConf != str) {
@@ -178,7 +177,7 @@ PinnedFavs.prototype = {
             let app = appSys.lookup_app(id);
             return app;
         }).filter(function (app) {
-            return app !== null && app !== undefined;
+            return app !== null;
         });
         this._favorites = {};
         for (let i = 0; i < apps.length; i++) {
@@ -604,7 +603,7 @@ AppGroup.prototype = {
         let deleted;
         if(this.metaWindows[metaWindow])
             deleted = this.metaWindows[metaWindow].data;
-        if (!deleted) {
+        if (deleted) {
             let signals = deleted.signals;
             let button = deleted.windowButton;
             // Clean up all the signals we've connected
@@ -761,7 +760,9 @@ AppGroup.prototype = {
 
         for(let i in this.metaWindows){
             let metewindow = this.metaWindows[i];
-            metewindow.data.signals.forEach(metewindow.win.disconnect);
+            metewindow.data.signals.forEach(function(s) {
+                metewindow.win.disconnect(s);
+            });
         }
         this.unwatchWorkspace(null);
         this.rightClickMenu.destroy();
