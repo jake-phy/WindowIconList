@@ -9,6 +9,7 @@
 // Copyright (C) 2011 R M Yorston
 // Licence: GPLv2+
 // http://intgat.tigress.co.uk/rmy/extensions/gnome-Cinnamon-frippery-0.2.3.tgz
+/* jshint moz:true */
 const Applet = imports.ui.applet;
 const Clutter = imports.gi.Clutter;
 const Lang = imports.lang;
@@ -50,37 +51,37 @@ const TitleDisplay = {
     app: 2,
     title: 3,
     focused: 4
-}
+};
 const NumberDisplay = {
     smart: 1,
     normal: 2,
     none: 3,
     all: 4
-}
+};
 const SortThumbs = {
     focused: 1,
     opened: 2
-}
+};
 
 // Some functional programming tools
 const dir = function (obj) {
     let props = [afor(a in obj)];
     props.concat(Object.getOwnPropertyNames(obj));
     return props;
-}
+};
 
 const range = function (a, b) {
-    let ret = []
+    let ret = [];
         // if b is unset, we want a to be the upper bound on the range
-    if (b == null) {
-        [a, b] = [0, a]
+    if (b === null || b === undefined) {
+        [a, b] = [0, a];
     }
 
     for (let i = a; i < b; i++) {
         ret.push(i);
     }
     return ret;
-}
+};
 
 const zip = function (a, b) {
     let ret = [];
@@ -88,7 +89,7 @@ const zip = function (a, b) {
         ret.push([a[i], b[i]]);
     }
     return ret;
-}
+};
 
 const unzip = function (a) {
     let ret1 = [],
@@ -99,7 +100,7 @@ const unzip = function (a) {
     });
 
     return [ret1, ret2];
-}
+};
 
 // Connects and keeps track of signal IDs so that signals
 // can be easily disconnected
@@ -120,10 +121,10 @@ SignalTracker.prototype = {
     //              object: object to connect to
     //}
     connect: function (params) {
-        let signalName = params['signalName'];
-        let callback = params['callback'];
-        let bind = params['bind'];
-        let object = params['object'];
+        let signalName = params.signalName;
+        let callback = params.callback;
+        let bind = params.bind;
+        let object = params.object;
         let signalID = null;
 
         signalID = object.connect(signalName, Lang.bind(bind, callback));
@@ -142,7 +143,7 @@ SignalTracker.prototype = {
 
     disconnectAll: function () {
         this._data.forEach(function (data) {
-            data['object'].disconnect(data['signalID']);
+            data.object.disconnect(data.signalID);
             for (let prop in data) {
                 data[prop] = null;
             }
@@ -177,7 +178,7 @@ PinnedFavs.prototype = {
             let app = appSys.lookup_app(id);
             return app;
         }).filter(function (app) {
-            return app != null;
+            return app !== null && app !== undefined;
         });
         this._favorites = {};
         for (let i = 0; i < apps.length; i++) {
@@ -310,7 +311,7 @@ AppGroup.prototype = {
         this._menuManager.addMenu(this.rightClickMenu);
 
         // Set up the hover menu for this._appButton
-        this.hoverMenu = new SpecialMenus.AppThumbnailHoverMenu(this)
+        this.hoverMenu = new SpecialMenus.AppThumbnailHoverMenu(this);
         this._hoverMenuManager = new SpecialMenus.HoverMenuController(this);
         this._hoverMenuManager.addMenu(this.hoverMenu);
 
@@ -398,10 +399,10 @@ AppGroup.prototype = {
             let signals = obj.signals;
             for(let i = 0; i < signals.length; i++) {
                 obj.workspace.disconnect(signals[i]);
-            };
+            }
         }
 
-        if (metaWorkspace == null) {
+        if (!metaWorkspace) {
             for(let k in this.metaWorkspaces) {
                 removeSignals(this.metaWorkspaces[k]);
                 delete this.metaWorkspaces[k];
@@ -473,7 +474,7 @@ AppGroup.prototype = {
 
     _newAppKeyNumber: function (number) {   
         if(this.hotKeyId)
-            Main.keybindingManager.removeHotKey(this.hotKeyId)
+            Main.keybindingManager.removeHotKey(this.hotKeyId);
         if (number < 10){
             Main.keybindingManager.addHotKey('launch-app-key-' + number.toString(), "<Super>" + number.toString(), Lang.bind(this, this._onAppKeyPress));
             this.hotKeyId = 'launch-app-key-' + number.toString();
@@ -509,7 +510,7 @@ AppGroup.prototype = {
             if (this.lastFocused.minimized) {
                 this.lastFocused.unminimize(global.get_current_time()); 
             }
-            let ws = this.lastFocused.get_workspace().index()
+            let ws = this.lastFocused.get_workspace().index();
             if (ws != global.screen.get_active_workspace_index()) {
                 global.screen.get_workspace_by_index(ws).activate(global.get_current_time());
             }
@@ -521,7 +522,7 @@ AppGroup.prototype = {
     _getLastFocusedWindow: function () {
         // Get a list of windows and sort it in order of last access
         let list = [];
-        for(win in this.metaWindows){
+        for(let win in this.metaWindows){
             list.push([ this.metaWindows[win].win.user_time,  this.metaWindows[win].win] );
         }
         list.sort(function (a, b) {
@@ -529,7 +530,7 @@ AppGroup.prototype = {
         });
         log(list);
         if (list[0]) return list[0][1];
-        else return null
+        else return null;
     },
 
     // updates the internal list of metaWindows
@@ -568,7 +569,7 @@ AppGroup.prototype = {
         let tracker = Cinnamon.WindowTracker.get_default();
         if (tracker.get_window_app(metaWindow) == this.app && !this.metaWindows[metaWindow] && tracker.is_window_interesting(metaWindow)) {
             let button = null;
-            if(this._applet.groupApps == false){
+            if(this._applet.groupApps === false){
                 button = new SpecialButtons.WindowButton({
                     parent: this,
                     isFavapp: false,
@@ -603,13 +604,13 @@ AppGroup.prototype = {
         let deleted;
         if(this.metaWindows[metaWindow])
             deleted = this.metaWindows[metaWindow].data;
-        if (deleted != null) {
+        if (!deleted) {
             let signals = deleted.signals;
             let button = deleted.windowButton;
             // Clean up all the signals we've connected
             for(let i = 0; i < signals.length; i++) {
                 metaWindow.disconnect(signals[i]);
-            };
+            }
             if(button){
                 this._windowButtonBox.remove(button);
                 button.destroy();
@@ -618,8 +619,8 @@ AppGroup.prototype = {
 
             // Make sure we don't leave our appButton hanging!
             // That is, we should no longer display the old app in our title
-            let nextWindow
-            for(i in this.metaWindows){
+            let nextWindow;
+            for(let i in this.metaWindows){
                 nextWindow = this.metaWindows[i].win;
                 break;
             }
@@ -637,7 +638,6 @@ AppGroup.prototype = {
         // We only really want to track title changes of the last focused app
         if (!this._appButton) {
             throw 'Error: got a _windowTitleChanged callback but this._appButton is undefined';
-            return;
         }
         if (metaWindow != this.lastFocused || this.isFavapp) return;
 
@@ -691,7 +691,7 @@ AppGroup.prototype = {
     },
 
     _loadWinBoxFavs: function () {
-        if (this._applet.groupApps == false && this.isFavapp || this.wasFavapp ) {
+        if (this._applet.groupApps === false && this.isFavapp || this.wasFavapp ) {
             let button = new SpecialButtons.WindowButton({
                 parent: this,
                 isFavapp: true,
@@ -714,7 +714,6 @@ AppGroup.prototype = {
     _calcWindowNumber: function (metaWorkspace) {
         if (!this._appButton) {
             throw 'Error: got a _calcWindowNumber callback but this._appButton is undefined';
-            return;
         }
 
         let windowNum = this.app.get_windows().filter(function (win) {
@@ -740,7 +739,7 @@ AppGroup.prototype = {
     },
 
     _animate: function () {
-        this.actor.set_z_rotation_from_gravity(0.0, Clutter.Gravity.CENTER)
+        this.actor.set_z_rotation_from_gravity(0.0, Clutter.Gravity.CENTER);
         Tweener.addTween(this.actor, {
             opacity: 70,
             time: 1.0,
@@ -759,13 +758,11 @@ AppGroup.prototype = {
     destroy: function () {
         // Unwatch all workspaces before we destroy all our actors
         // that callbacks depend on
-        
-        for(i in this.metaWindows){
+
+        for(let i in this.metaWindows){
             let metewindow = this.metaWindows[i];
-            metewindow.data['signals'].forEach(function (s) {
-                metewindow.win.disconnect(s);
-            });
-        };
+            metewindow.data.signals.forEach(metewindow.win.disconnect);
+        }
         this.unwatchWorkspace(null);
         this.rightClickMenu.destroy();
         this.hoverMenu.destroy();
@@ -780,7 +777,7 @@ AppGroup.prototype = {
         this.hoverMenu = null;*/
     }
 };
-Signals.addSignalMethods(AppGroup.prototype)
+Signals.addSignalMethods(AppGroup.prototype);
 
 // List of running apps
 
@@ -838,10 +835,10 @@ AppList.prototype = {
     },
 
     _refreshList: function () {
-        for(i in this._appList) {
+        for(let i in this._appList) {
             let list = this._appList[i];
             list.appGroup.destroy();
-        };
+        }
         this._appList = {};
         this._loadFavorites();
         this._refreshApps();
@@ -849,22 +846,22 @@ AppList.prototype = {
 
     _appGroupNumber: function (parentApp) {
         let i = 0;
-        for(l in this._appList) {
+        for(let l in this._appList) {
             let list = this._appList[l];
             ++i;
             if (list.appGroup.app == parentApp)
                 break;
-        };
+        }
         return i;
     },
 
     _refreshAppGroupNumber: function () {
         let i = 0;
-        for(l in this._appList) {
+        for(let l in this._appList) {
             let list = this._appList[l];
             i = i + 1;
             list.appGroup._newAppKeyNumber(i);
-        };
+        }
     },
 
     _windowAdded: function (metaWorkspace, metaWindow, favapp, isFavapp) {
@@ -912,14 +909,14 @@ AppList.prototype = {
         // This function may get called multiple times on the same app and so the app may have already been removed
         let appGroup = this._appList[app];
         if (appGroup) {
-            if (appGroup['appGroup'].wasFavapp || appGroup['appGroup'].isFavapp) {
-                appGroup['appGroup']._isFavorite(true);
+            if (appGroup.appGroup.wasFavapp || appGroup.appGroup.isFavapp) {
+                appGroup.appGroup._isFavorite(true);
                 // have to delay to fix openoffice start-center bug 
                 Mainloop.timeout_add(0, Lang.bind(this, this._refreshApps));
                 return;
             }
             delete this._appList[app];
-            appGroup['appGroup'].destroy();
+            appGroup.appGroup.destroy();
             Mainloop.timeout_add(15, Lang.bind(this, function () {
                 this._refreshApps();
                 this._refreshAppGroupNumber();
@@ -929,7 +926,7 @@ AppList.prototype = {
     },
 
     _loadFavorites: function () {
-        if (this._applet.settings.getValue("show-pinned") == false) return;
+        if (!this._applet.settings.getValue("show-pinned")) return;
         let launchers = this._applet.settings.getValue("pinned-apps"),
             appSys = Cinnamon.AppSystem.get_default();
         for (let i = 0; i < launchers.length; ++i) {
@@ -949,7 +946,7 @@ AppList.prototype = {
         if(!app) return;
 
         let hasWindowsOnWorkspace = app.get_windows().some(function (win) {
-            return win.get_workspace() == metaWorkspace
+            return win.get_workspace() == metaWorkspace;
         });
         if (app && !hasWindowsOnWorkspace) {
             this._removeApp(app);
@@ -962,7 +959,7 @@ AppList.prototype = {
         }));
         for(let i in this._appList) {
             this._appList[i].appGroup.destroy();
-        };
+        }
         this._appList.destroy();
         this._appList = null;
     }
@@ -981,7 +978,7 @@ MyApplet.prototype = {
     _init: function (metadata, orientation, panel_height, instance_id) {
         Applet.Applet.prototype._init.call(this, orientation, panel_height, instance_id);
         try {
-            this._uuid = metadata["uuid"];
+            this._uuid = metadata.uuid;
             //this.execInstallLanguage();
             Gettext.bindtextdomain(this._uuid, GLib.get_home_dir() + "/.local/share/locale");
             this.settings = new Settings.AppletSettings(this, "WindowListGroup@jake.phy@gmail.com", instance_id);
@@ -1023,7 +1020,7 @@ MyApplet.prototype = {
             this.pinnedAppsContr = new PinnedFavs(this);
 
             this.recentManager = Gtk.RecentManager.get_default();
-            this.recentItems = this.recentManager.get_items().sort(function(a,b) { return  a.get_modified() -  b.get_modified() } ).reverse();
+            this.recentItems = this.recentManager.get_items().sort(function(a,b) { return  a.get_modified() -  b.get_modified(); } ).reverse();
 	        this.recentManager.connect('changed', Lang.bind(this, this.on_recent_items_changed));
 
             this.metaWorkspaces = {};
@@ -1089,7 +1086,7 @@ MyApplet.prototype = {
                                                        Gio.FileQueryInfoFlags.NONE, null);
             let info, child, _moFile, _moLocale, _moPath;
                    
-            while ((info = children.next_file(null)) != null) {
+            while ((info = children.next_file(null)) !== null) {
                 let type = info.get_file_type();
                 let modified = info.get_modification_time().tv_sec;
                 if (type == Gio.FileType.REGULAR) {
@@ -1172,7 +1169,7 @@ MyApplet.prototype = {
     },
 
     on_recent_items_changed: function(){
-        this.recentItems = this.recentManager.get_items().sort(function(a,b) { return  a.get_modified() -  b.get_modified() } ).reverse();
+        this.recentItems = this.recentManager.get_items().sort(function(a,b) { return  a.get_modified() -  b.get_modified(); } ).reverse();
     },
 
     _onWorkspaceCreatedOrDestroyed: function () {

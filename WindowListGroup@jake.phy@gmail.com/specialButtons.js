@@ -2,6 +2,7 @@
 /* -*- mode: js2; js2-basic-offset: 4; indent-tabs-mode: nil -*- */
 // Some app-buttons that display an icon
 // and an label
+/* jshint moz:true */
 const Clutter = imports.gi.Clutter;
 const Lang = imports.lang;
 const Params = imports.misc.params;
@@ -23,7 +24,7 @@ const TitleDisplay = {
     none: 1,
     app: 2,
     title: 3
-}
+};
 
 
 function _(str) {
@@ -46,7 +47,7 @@ function IconLabelButton() {
 
 IconLabelButton.prototype = {
     _init: function (parent) {
-        if (parent.icon == null) throw 'IconLabelButton icon argument must be non-null';
+        if (parent.icon === null) throw 'IconLabelButton icon argument must be non-null';
         this._applet = parent._applet;
         this._icon = parent.icon;
         this.actor = new St.Bin({
@@ -69,7 +70,7 @@ IconLabelButton.prototype = {
         this._container = new Cinnamon.GenericContainer({
             name: 'iconLabelButton'
         });
-        this.actor.set_child(this._container)
+        this.actor.set_child(this._container);
         this._container.connect('get-preferred-width', Lang.bind(this, this._getPreferredWidth));
         this._container.connect('get-preferred-height', Lang.bind(this, this._getPreferredHeight));
         this._container.connect('allocate', Lang.bind(this, this._allocate));
@@ -87,7 +88,7 @@ IconLabelButton.prototype = {
 
         this.setIconPadding();
 
-        this._applet.settings.connect("changed::icon-padding", Lang.bind(this, this.setIconPadding))
+        this._applet.settings.connect("changed::icon-padding", Lang.bind(this, this.setIconPadding));
     },
 
     setIconPadding: function () {
@@ -225,7 +226,7 @@ AppButton.prototype = {
     _init: function (parent) {
         this.icon_size = Math.floor(parent._applet._panelHeight - 4);
         this.app = parent.app;
-        this.icon = this.app.create_icon_texture(this.icon_size)
+        this.icon = this.app.create_icon_texture(this.icon_size);
         this._applet = parent._applet;
         this._parent = parent;
         this.isFavapp = parent.isFavapp;
@@ -268,7 +269,7 @@ AppButton.prototype = {
             return false;
         }
         let windows = this.parent.metaWindows;
-        for (w in windows) {
+        for (let w in windows) {
             if ( windows[w].win == window ) {
                 this._needsAttention = true;
                 this.actor.add_style_class_name('window-list-item-demands-attention');
@@ -322,12 +323,12 @@ WindowButton.prototype = {
         this.app = parent.app;
         this.isFavapp = params.isFavapp;
         this.orientation = parent.orientation;
-        if (this.app == null) {
+        if (!this.app) {
             let tracker = Cinnamom.WindowTracker.get_default();
             this.app = tracker.get_window_app(metaWindow);
         }
         this.icon_size = Math.floor(this._applet._panelHeight - 4);
-        this.icon = this.app.create_icon_texture(this.icon_size)
+        this.icon = this.app.create_icon_texture(this.icon_size);
         IconLabelButton.prototype._init.call(this, this);
         this.signals = [];
         this._numLabel.hide();
@@ -651,7 +652,7 @@ MyAppletBox.prototype = {
         let app = source.app;
 
         // Don't allow favoriting of transient apps
-        if (app == null || app.is_window_backed()) {
+        if (!app || app.is_window_backed()) {
             return false;
         }
 
