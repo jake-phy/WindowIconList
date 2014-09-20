@@ -744,7 +744,7 @@ PopupMenuAppSwitcherItem.prototype = {
             let metaWorkspace = null;
             if (this.metaWindow) metaWorkspace = this.metaWindow.get_workspace();
             //let isDifferent = (win != this.metaWindow);
-            let isSameWorkspace = (win.get_workspace() == metaWorkspace);
+            let isSameWorkspace = (win.get_workspace() == metaWorkspace) && Main.isInteresting(win);
             return isSameWorkspace;
         })).reverse();
         // Update appThumbnails to include new programs
