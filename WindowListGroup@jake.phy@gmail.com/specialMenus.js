@@ -54,6 +54,8 @@ AppMenuButtonRightClickMenu.prototype = {
         this.app = parent.app;
         this.isFavapp = parent.isFavapp;
         this._applet = parent._applet;
+	this.showCloseAll = this._applet.settings.getValue("closeall-menu-item");
+        
         let PinnedFavorites = this._applet.pinned_app_contr();
 
 		this.appInfo = this.app.get_app_info();
@@ -329,11 +331,11 @@ AppMenuButtonRightClickMenu.prototype = {
             //this.addMenuItem(this.itemMinimizeWindow);
             //this.addMenuItem(this.itemMaximizeWindow);
             this.addMenuItem(this.itemCloseWindow);
-            this.addMenuItem(this.itemCloseAllWindow);
+            if(this.showCloseAll) { this.addMenuItem(this.itemCloseAllWindow); }
 			this.isFavapp = false;
         } else {
             this.addMenuItem(this.itemCloseWindow);
-            this.addMenuItem(this.itemCloseAllWindow);
+            if(this.showCloseAll) { this.addMenuItem(this.itemCloseAllWindow); }
             //this.addMenuItem(this.itemMaximizeWindow);
             //this.addMenuItem(this.itemMinimizeWindow);
             //this.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
