@@ -18,39 +18,39 @@ PinnedRecentItem.prototype = {
         PopupMenu.PopupBaseMenuItem.prototype._init.call(this, {});
 
         this._menu = menu;
-		if (menu.app.get_id() != 'firefox.desktop' && menu.app.get_id() != 'firefox web browser.desktop'){
-			this._item = this._menu._applet.recent_items_manager().lookup_item(uri);
-			let icon = this._item.get_gicon();
-			this._icon = new St.Icon({gicon: icon, style_class: 'popup-menu-icon', icon_size: 16});
-			title = this._item.get_short_name();
-		} else {
-        	this._icon = new St.Icon({icon_name: "window-new", icon_size: 16, icon_type: St.IconType.FULLCOLOR});
-		}
+        if (menu.app.get_id() != 'firefox.desktop' && menu.app.get_id() != 'firefox web browser.desktop'){
+            this._item = this._menu._applet.recent_items_manager().lookup_item(uri);
+            let icon = this._item.get_gicon();
+            this._icon = new St.Icon({gicon: icon, style_class: 'popup-menu-icon', icon_size: 16});
+            title = this._item.get_short_name();
+        } else {
+            this._icon = new St.Icon({icon_name: "window-new", icon_size: 16, icon_type: St.IconType.FULLCOLOR});
+        }
 
-		this.uri = uri;
+        this.uri = uri;
         let table = new St.Table({ homogeneous: false,
                                       reactive: true });
-		table.width = 194;
+        table.width = 194;
 
-		this.label = new St.Label();
-		this.label.text = title;
-		this.label.width = 168;
+        this.label = new St.Label();
+        this.label.text = title;
+        this.label.width = 168;
 
-		let bin = new St.Bin({
-			reactive: true,
+        let bin = new St.Bin({
+            reactive: true,
             can_focus: true,
             x_fill: true,
             y_fill: false,
             track_hover: true
-		});
-		this.pinIcon = new St.Icon({icon_name: pinIcon, style_class: 'popup-menu-icon', icon_size: 16, icon_type: St.IconType.FULLCOLOR});
-		bin.set_child(this.pinIcon);
-		
-		bin.connect('enter-event', Lang.bind(this, function(){ this.unPinRecent = true; }));
-		bin.connect('leave-event', Lang.bind(this, function(){ this.unPinRecent = false; }));
+        });
+        this.pinIcon = new St.Icon({icon_name: pinIcon, style_class: 'popup-menu-icon', icon_size: 16, icon_type: St.IconType.FULLCOLOR});
+        bin.set_child(this.pinIcon);
+        
+        bin.connect('enter-event', Lang.bind(this, function(){ this.unPinRecent = true; }));
+        bin.connect('leave-event', Lang.bind(this, function(){ this.unPinRecent = false; }));
 
-		table.add(this._icon,
-		          {row: 0, col: 0, col_span: 1, x_expand: false, x_align: St.Align.START});
+        table.add(this._icon,
+                  {row: 0, col: 0, col_span: 1, x_expand: false, x_align: St.Align.START});
 
         table.add(this.label,
                   {row: 0, col: 1, col_span: 1, x_align: St.Align.START});
@@ -68,18 +68,18 @@ PinnedRecentItem.prototype = {
     },
 
     activate: function (event, keepMenu) {
-		if (this.unPinRecent){
-			let stored = this._menu._applet.pinnedRecent;
-			let appName = this._menu.app.get_name();
-			if(stored[appName]){
-				delete stored[appName].infos[this.uri];
-			}
-			this._menu._applet.pinnedRecent = stored;
-    		this._menu.toggle();
-        	return;
-		}
+        if (this.unPinRecent){
+            let stored = this._menu._applet.pinnedRecent;
+            let appName = this._menu.app.get_name();
+            if(stored[appName]){
+                delete stored[appName].infos[this.uri];
+            }
+            this._menu._applet.pinnedRecent = stored;
+            this._menu.toggle();
+            return;
+        }
         Gio.app_info_launch_default_for_uri(this.uri,  global.create_app_launch_context());
-    	this._menu.toggle();
+        this._menu.toggle();
     },
 
 };
@@ -95,36 +95,36 @@ RecentMenuItem.prototype = {
         PopupMenu.PopupBaseMenuItem.prototype._init.call(this, {});
 
         this._menu = menu;
-		this._item = item;
-		this.uri = this._item.get_uri();
+        this._item = item;
+        this.uri = this._item.get_uri();
         let table = new St.Table({ homogeneous: false,
                                       reactive: true });
 
-		this.label = new St.Label({text: item.get_short_name()});
-		this.label.width = 168;
-		table.width = 194;
+        this.label = new St.Label({text: item.get_short_name()});
+        this.label.width = 168;
+        table.width = 194;
 
-		let bin = new St.Bin({
-			reactive: true,
+        let bin = new St.Bin({
+            reactive: true,
             can_focus: true,
             x_fill: true,
             y_fill: false,
             track_hover: true
-		});
-		this.pinIcon = new St.Icon({icon_name: pinIcon, style_class: 'popup-menu-icon', icon_size: 16, icon_type: St.IconType.FULLCOLOR});
-		bin.set_child(this.pinIcon);
-		
-		bin.connect('enter-event', Lang.bind(this, function(){ this.pinRecent = true; }));
-		bin.connect('leave-event', Lang.bind(this, function(){ this.pinRecent = false; }));
+        });
+        this.pinIcon = new St.Icon({icon_name: pinIcon, style_class: 'popup-menu-icon', icon_size: 16, icon_type: St.IconType.FULLCOLOR});
+        bin.set_child(this.pinIcon);
+        
+        bin.connect('enter-event', Lang.bind(this, function(){ this.pinRecent = true; }));
+        bin.connect('leave-event', Lang.bind(this, function(){ this.pinRecent = false; }));
 
-		this.icon = this._item.get_gicon();
+        this.icon = this._item.get_gicon();
 
-		if(this.icon){
-			this._icon = new St.Icon({gicon: this.icon, style_class: 'popup-menu-icon', icon_size: 16});
+        if(this.icon){
+            this._icon = new St.Icon({gicon: this.icon, style_class: 'popup-menu-icon', icon_size: 16});
 
-		    table.add(this._icon,
-		              {row: 0, col: 0, col_span: 1, x_expand: false, x_align: St.Align.START});
-		}
+            table.add(this._icon,
+                      {row: 0, col: 0, col_span: 1, x_expand: false, x_align: St.Align.START});
+        }
 
         table.add(this.label,
                   {row: 0, col: 1, col_span: 1, x_align: St.Align.START});
@@ -132,7 +132,7 @@ RecentMenuItem.prototype = {
         table.add(bin,
                   {row: 0, col: 2, col_span: 1, x_align: St.Align.END});
 
-		
+        
 
         this.label.set_margin_left(6.0);
 
@@ -144,20 +144,20 @@ RecentMenuItem.prototype = {
     },
 
     activate: function (event, keepMenu) {
-		if (this.pinRecent){
-			let stored = this._menu._applet.pinnedRecent;
-			let appName = this._menu.app.get_name();
-			if(stored[appName]){
-				stored[appName].infos[this.uri] = {uri: this.uri};
-			}else{
-				stored[appName] = {infos: {}};
-				stored[appName].infos[this.uri] = {uri: this.uri};
-			}
-			this._menu._applet.pinnedRecent = stored;
-    		this._menu.toggle();
-			return;
-		}
-    	this._menu.toggle();
+        if (this.pinRecent){
+            let stored = this._menu._applet.pinnedRecent;
+            let appName = this._menu.app.get_name();
+            if(stored[appName]){
+                stored[appName].infos[this.uri] = {uri: this.uri};
+            }else{
+                stored[appName] = {infos: {}};
+                stored[appName].infos[this.uri] = {uri: this.uri};
+            }
+            this._menu._applet.pinnedRecent = stored;
+            this._menu.toggle();
+            return;
+        }
+        this._menu.toggle();
         Gio.app_info_launch_default_for_uri(this.uri, global.create_app_launch_context());
     },
 
@@ -173,13 +173,13 @@ PlaceMenuItem.prototype = {
         PopupMenu.PopupBaseMenuItem.prototype._init.call(this, {});
 
         this._menu = menu;
-		this.place = place;
+        this.place = place;
         let table = new St.Table({ homogeneous: false,
                                       reactive: true });
 
-		this.label = new St.Label({text: place.name});
-		this.label.width = 184;
-		table.width = 194;
+        this.label = new St.Label({text: place.name});
+        this.label.width = 184;
+        table.width = 194;
 
 
         this.icon = place.iconFactory(16);
@@ -187,8 +187,8 @@ PlaceMenuItem.prototype = {
             this.icon = new St.Icon({icon_name: "folder", icon_size: 16, icon_type: St.IconType.FULLCOLOR});
         if (this.icon)
 
-	    table.add(this.icon,
-	              {row: 0, col: 0, col_span: 1, x_expand: false, x_align: St.Align.START});
+        table.add(this.icon,
+                  {row: 0, col: 0, col_span: 1, x_expand: false, x_align: St.Align.START});
 
         table.add(this.label,
                   {row: 0, col: 1, col_span: 1, x_align: St.Align.START});
@@ -199,7 +199,7 @@ PlaceMenuItem.prototype = {
     },
 
     activate: function (event, keepMenu) {
-    	this._menu.toggle();
+        this._menu.toggle();
         this.place.launch();
     },
 
@@ -218,14 +218,14 @@ IconMenuItem.prototype = {
         let table = new St.Table({ homogeneous: false,
                                       reactive: true });
 
-		this.label = new St.Label();
-		this.label.text = text;
-		this.label.width = 184;
-		table.width = 194;
+        this.label = new St.Label();
+        this.label.text = text;
+        this.label.width = 184;
+        table.width = 194;
 
 
-	    table.add(icon,
-	              {row: 0, col: 0, col_span: 1, x_expand: false, x_align: St.Align.START});
+        table.add(icon,
+                  {row: 0, col: 0, col_span: 1, x_expand: false, x_align: St.Align.START});
 
         table.add(this.label,
                   {row: 0, col: 1, col_span: 1, x_align: St.Align.START});
@@ -247,33 +247,33 @@ FirefoxMenuItem.prototype = {
         PopupMenu.PopupBaseMenuItem.prototype._init.call(this, {});
 
         this._menu = menu;
-		this.uri = info.uri;
-		this.title = info.title;
+        this.uri = info.uri;
+        this.title = info.title;
         let table = new St.Table({ homogeneous: false,
                                       reactive: true });
 
-		this.label = new St.Label({text: info.title});
-		let tooltip = new Tooltips.Tooltip(this.actor, info.title);
-		this.label.width = 168;
-		table.width = 194;
+        this.label = new St.Label({text: info.title});
+        let tooltip = new Tooltips.Tooltip(this.actor, info.title);
+        this.label.width = 168;
+        table.width = 194;
 
-		let bin = new St.Bin({
-			reactive: true,
+        let bin = new St.Bin({
+            reactive: true,
             can_focus: true,
             x_fill: true,
             y_fill: false,
             track_hover: true
-		});
-		this.pinIcon = new St.Icon({icon_name: "list-add", style_class: 'popup-menu-icon', icon_size: 16, icon_type:St.IconType.FULLCOLOR});
-		bin.set_child(this.pinIcon);
-		
-		bin.connect('enter-event', Lang.bind(this, function(){ this.pinRecent = true; }));
-		bin.connect('leave-event', Lang.bind(this, function(){ this.pinRecent = false; }));
+        });
+        this.pinIcon = new St.Icon({icon_name: "list-add", style_class: 'popup-menu-icon', icon_size: 16, icon_type:St.IconType.FULLCOLOR});
+        bin.set_child(this.pinIcon);
+        
+        bin.connect('enter-event', Lang.bind(this, function(){ this.pinRecent = true; }));
+        bin.connect('leave-event', Lang.bind(this, function(){ this.pinRecent = false; }));
 
         this.icon = new St.Icon({icon_name: "window-new", icon_size: 16, icon_type: St.IconType.FULLCOLOR});
         if (this.icon)
-	    	table.add(this.icon,
-	              	{row: 0, col: 0, col_span: 1, x_expand: false, x_align: St.Align.START});
+            table.add(this.icon,
+                    {row: 0, col: 0, col_span: 1, x_expand: false, x_align: St.Align.START});
 
         table.add(this.label,
                   {row: 0, col: 1, col_span: 1, x_align: St.Align.START});
@@ -287,20 +287,20 @@ FirefoxMenuItem.prototype = {
     },
 
     activate: function (event, keepMenu) {
-		if (this.pinRecent){
-			let stored = this._menu._applet.pinnedRecent;
-			let appName = this._menu.app.get_name();
-			if(stored[appName]){
-				stored[appName].infos[this.uri] = {uri: this.uri, title: this.title};
-			}else{
-				stored[appName] = {infos: {}};
-				stored[appName].infos[this.uri] = {uri: this.uri, title: this.title};
-			}
-			this._menu._applet.pinnedRecent = stored;
-    		this._menu.toggle();
-			return;
-		}
-    	this._menu.toggle();
+        if (this.pinRecent){
+            let stored = this._menu._applet.pinnedRecent;
+            let appName = this._menu.app.get_name();
+            if(stored[appName]){
+                stored[appName].infos[this.uri] = {uri: this.uri, title: this.title};
+            }else{
+                stored[appName] = {infos: {}};
+                stored[appName].infos[this.uri] = {uri: this.uri, title: this.title};
+            }
+            this._menu._applet.pinnedRecent = stored;
+            this._menu.toggle();
+            return;
+        }
+        this._menu.toggle();
         Gio.app_info_launch_default_for_uri(this.uri, global.create_app_launch_context());
     }
 
@@ -319,15 +319,15 @@ IconNameMenuItem.prototype = {
         let table = new St.Table({ homogeneous: false,
                                       reactive: true });
 
-		this.label = new St.Label({text: text});
-		this.label.width = 184;
-		table.width = 194;
+        this.label = new St.Label({text: text});
+        this.label.width = 184;
+        table.width = 194;
 
-		if(icon){
-        	this.icon = new St.Icon({icon_name: icon, icon_size: 16, icon_type: iconType || St.IconType.FULLCOLOR});
-	    	table.add(this.icon,
-	              	{row: 0, col: 0, col_span: 1, x_expand: false, x_align: St.Align.START});
-		}
+        if(icon){
+            this.icon = new St.Icon({icon_name: icon, icon_size: 16, icon_type: iconType || St.IconType.FULLCOLOR});
+            table.add(this.icon,
+                    {row: 0, col: 0, col_span: 1, x_expand: false, x_align: St.Align.START});
+        }
 
         table.add(this.label,
                   {row: 0, col: 1, col_span: 1, x_align: St.Align.START});
@@ -353,18 +353,18 @@ SwitchMenuItem.prototype = {
 
         let table = new St.Table({ homogeneous: false,
                                       reactive: true });
-		table.width = 174;
+        table.width = 174;
 
-		this.label = new St.Label({text: text});
-		this.label.width = 120;
+        this.label = new St.Label({text: text});
+        this.label.width = 120;
 
 
         table.add(this.label,
                   {row: 0, col: 0, col_span: 1, x_align: St.Align.END});
 
         this._statusBin = new St.Bin({ x_align: St.Align.END });
-	    table.add(this._statusBin,
-	              	{row: 0, col: 1, col_span: 1, x_expand: false, x_align: St.Align.END});
+        table.add(this._statusBin,
+                    {row: 0, col: 1, col_span: 1, x_expand: false, x_align: St.Align.END});
 
         this._statusLabel = new St.Label({ text: '',
                                            style_class: 'popup-inactive-menu-item'
@@ -383,27 +383,27 @@ SubMenuItem.prototype = {
 
     _init: function (text) {
         PopupMenu.PopupBaseMenuItem.prototype._init.call(this, {});
-		let arrow = new St.Icon({icon_name: "media-playback-start", style_class: 'popup-menu-icon', icon_size: 16});
-		let icon = new St.Icon({icon_name: "preferences-system", style_class: 'popup-menu-icon', icon_size: 16});
-		icon.style = "padding-right: 5px;";
+        let arrow = new St.Icon({icon_name: "media-playback-start", style_class: 'popup-menu-icon', icon_size: 16});
+        let icon = new St.Icon({icon_name: "preferences-system", style_class: 'popup-menu-icon', icon_size: 16});
+        icon.style = "padding-right: 5px;";
         let table = new St.Table({ homogeneous: false,
                                       reactive: true });
-		table.width = 194;
+        table.width = 194;
 
-		this.label = new St.Label({text: text});
-		this.label.width = 168;
-		this.menu = new SubMenu(this.actor, arrow);
+        this.label = new St.Label({text: text});
+        this.label.width = 168;
+        this.menu = new SubMenu(this.actor, arrow);
         //this.menu.actor.set_style_class_name('menu-context-menu');
 
 
         table.add(icon,
                   {row: 0, col: 0, col_span: 1, x_expand: false, x_align: St.Align.START});
 
-	    table.add(this.label,
-	              	{row: 0, col: 1, col_span: 1, x_align: St.Align.START});
+        table.add(this.label,
+                    {row: 0, col: 1, col_span: 1, x_align: St.Align.START});
 
-	    table.add(arrow,
-	              	{row: 0, col: 2, col_span: 1, x_align: St.Align.END});
+        table.add(arrow,
+                    {row: 0, col: 2, col_span: 1, x_align: St.Align.END});
 
         this.addActor(table, { expand: false, span: 2, align: St.Align.START });
     },
@@ -456,14 +456,14 @@ SubMenu.prototype = {
         this.actor.show();
 
 
-		this.actor._arrow_rotation = this._arrow.rotation_angle_z;
+        this.actor._arrow_rotation = this._arrow.rotation_angle_z;
 
         if (animate) {
             let [minHeight, naturalHeight] = this.actor.get_preferred_height(-1);
             this.actor.height = 0;
             Tweener.addTween(this.actor,
                              { _arrow_rotation: -90,
-							   height: naturalHeight,
+                               height: naturalHeight,
                                time: 0.25,
                                onUpdateScope: this,
                                onUpdate: function() {
@@ -486,12 +486,12 @@ SubMenu.prototype = {
 
         this.isOpen = false;
 
-		this.actor._arrow_rotation = this._arrow.rotation_angle_z;
+        this.actor._arrow_rotation = this._arrow.rotation_angle_z;
 
         if (animate) {
             Tweener.addTween(this.actor,
                              { _arrow_rotation: 0,
-							   height: 0,
+                               height: 0,
                                time: 0.25,
                                onCompleteScope: this,
                                onComplete: function() {
