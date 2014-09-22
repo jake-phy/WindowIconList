@@ -21,6 +21,10 @@ msgstr ""
 msgid "Close"
 msgstr ""
 
+#: specialMenus.js
+msgid "Close All"
+msgstr ""
+
 #: specialMenus.js:66 specialMenus.js:198
 msgid "Minimize"
 msgstr ""

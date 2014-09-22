@@ -565,6 +565,7 @@ AppGroup.prototype = {
     },
 
     _windowAdded: function (metaWorkspace, metaWindow) {
+        //This is called when a new app is opened (a new icon is added to taskbar)
         let tracker = Cinnamon.WindowTracker.get_default();
         if (tracker.get_window_app(metaWindow) == this.app && !this.metaWindows[metaWindow] && tracker.is_window_interesting(metaWindow)) {
             let button = null;
@@ -759,9 +760,9 @@ AppGroup.prototype = {
         // that callbacks depend on
 
         for(let i in this.metaWindows){
-            let metewindow = this.metaWindows[i];
-            metewindow.data.signals.forEach(function(s) {
-                metewindow.win.disconnect(s);
+            let metawindow = this.metaWindows[i];
+            metawindow.data.signals.forEach(function(s) {
+                metawindow.win.disconnect(s);
             });
         }
         this.unwatchWorkspace(null);
