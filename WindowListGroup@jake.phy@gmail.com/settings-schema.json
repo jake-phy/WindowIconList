@@ -175,6 +175,12 @@
     "description": "Open Thumbnails OnClick",
     "tooltip": "Open the thumbnails on click, if there is more than 1 windows open."
  },
+ "closeall-menu-item" : {
+    "type" : "checkbox",
+    "default" : false,
+    "description": "Close All menu item",
+    "tooltip" : "Show a 'Close All' menu item to close all windows for an app."
+ },
  "firefox-menu" : {
     "type": "combobox",
     "default" : 1,

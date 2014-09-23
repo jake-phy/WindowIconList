@@ -54,6 +54,8 @@ AppMenuButtonRightClickMenu.prototype = {
         this.app = parent.app;
         this.isFavapp = parent.isFavapp;
         this._applet = parent._applet;
+	this.showCloseAll = this._applet.settings.getValue("closeall-menu-item");
+        
         let PinnedFavorites = this._applet.pinned_app_contr();
 
 		this.appInfo = this.app.get_app_info();
@@ -61,6 +63,9 @@ AppMenuButtonRightClickMenu.prototype = {
 		// Pause for refresh of SpecialItems.
 	    this._applet.recentManager.connect('changed', Lang.bind(this, function(){Mainloop.timeout_add(15, Lang.bind(this, this._recent_items_changed))}));
         this._applet.settings.connect('changed::pinned-recent', Lang.bind(this, this._recent_items_changed));
+
+        this.itemCloseAllWindow = new SpecialMenuItems.IconNameMenuItem(_("Close All"), "window-close");
+        this.itemCloseAllWindow.connect('activate', Lang.bind(this, this._onCloseAllActivate));
 
         this.itemCloseWindow = new SpecialMenuItems.IconNameMenuItem(_("Close"), "window-close");
         this.itemCloseWindow.connect('activate', Lang.bind(this, this._onCloseWindowActivate));
@@ -173,7 +178,7 @@ AppMenuButtonRightClickMenu.prototype = {
 				this.RecentMenuItems.push(item);
 			}
 			return;
-		}else if(this.app.get_id() == 'firefox.desktop' || this.app.get_id() == 'firefox web browser.desktop'){
+		} else if(this.app.get_id() == 'firefox.desktop' || this.app.get_id() == 'firefox web browser.desktop'){
 			let historys = FireFox.getFirefoxHistory(this._applet);
 
 			if (historys === null) {
@@ -182,8 +187,8 @@ AppMenuButtonRightClickMenu.prototype = {
         			Util.spawnCommandLine('gnome-terminal -x bash -c "sudo apt-get install gir1.2-gda-5.0; echo "press enter and restart cinnamon"; read n1"');
 			    }));
 		    	this.addMenuItem(install);
-			}else if(historys.length){
-	 			try{
+			} else if(historys.length){
+	 			try {
 					historys.length = historys.length - pinnedLength;
 					for(let i = 0; i < historys.length; i++){
 						let history = historys[i];
@@ -193,7 +198,7 @@ AppMenuButtonRightClickMenu.prototype = {
             			this.specialSection.actor.add(item.actor);
 						this.RecentMenuItems.push(item);
 					}
-				}catch(e){}
+				} catch(e){}
 			}
 			this._loadActions();
 			return;
@@ -326,9 +331,11 @@ AppMenuButtonRightClickMenu.prototype = {
             //this.addMenuItem(this.itemMinimizeWindow);
             //this.addMenuItem(this.itemMaximizeWindow);
             this.addMenuItem(this.itemCloseWindow);
+            if(this.showCloseAll) { this.addMenuItem(this.itemCloseAllWindow); }
 			this.isFavapp = false;
         } else {
             this.addMenuItem(this.itemCloseWindow);
+            if(this.showCloseAll) { this.addMenuItem(this.itemCloseAllWindow); }
             //this.addMenuItem(this.itemMaximizeWindow);
             //this.addMenuItem(this.itemMinimizeWindow);
             //this.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
@@ -385,6 +392,14 @@ AppMenuButtonRightClickMenu.prototype = {
     },
 
     _onWindowMinimized: function (actor, event) {},
+
+    _onCloseAllActivate: function (actor, event) {
+        var workspace = this.metaWindow.get_workspace(); 
+        var windows = this.app.get_windows();
+        for(var i = 0; i < windows.length; i++) {
+            windows[i].delete(global.get_current_time());
+        }
+    },
 
     _onCloseWindowActivate: function (actor, event) {
         this.metaWindow.delete(global.get_current_time());

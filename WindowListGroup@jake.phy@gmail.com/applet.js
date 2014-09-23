@@ -759,9 +759,9 @@ AppGroup.prototype = {
         // that callbacks depend on
 
         for(let i in this.metaWindows){
-            let metewindow = this.metaWindows[i];
-            metewindow.data.signals.forEach(function(s) {
-                metewindow.win.disconnect(s);
+            let metaWindow = this.metaWindows[i];
+            metaWindow.data.signals.forEach(function(s) {
+                metaWindow.win.disconnect(s);
             });
         }
         this.unwatchWorkspace(null);
