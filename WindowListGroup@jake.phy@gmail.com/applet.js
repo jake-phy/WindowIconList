@@ -301,8 +301,8 @@ AppGroup.prototype = {
             DND.LauncherDraggable.prototype._init.call(this);
         this._applet = applet;
         this.appList = appList;
-        this.launchersBox = appList; //This convert appList in a launcherBox(is requiere to be a launcher dragable object)
-                                     //but you have duplicate object this.appList then...
+        this.launchersBox = applet; //This convert the applet class in a launcherBox(is requiere to be a launcher dragable object)
+                                    //but you have duplicate object this._applet then...
         this.app = app;
         this.isFavapp = isFavapp;
         this.isNotFavapp = !isFavapp;
@@ -844,10 +844,6 @@ AppList.prototype = {
         this._refreshList();
     },
 
-    removeLauncher: function (appGroup) {
-        //Add code here to remove the launcher if you want.
-    },
-
     on_panel_edit_mode_changed: function () {
         this.actor.reactive = global.settings.get_boolean("panel-edit-mode");
     },
@@ -1191,6 +1187,10 @@ MyApplet.prototype = {
 
     acceptNewLauncher: function(path) {
         this.pinnedAppsContr.addFavorite(path);
+    },
+
+    removeLauncher: function (appGroup) {
+        //Add code here to remove the launcher if you want.
     },
     
     recent_items_contr: function () {
