@@ -624,8 +624,10 @@ AppGroup.prototype = {
     },
 
     _newAppKeyNumber: function (number) {
-        if (number < 10)
+        if (number < 10){
             Main.keybindingManager.addHotKey('launch-app-key-' + number.toString(), "<Super>" + number.toString(), Lang.bind(this, this._onAppKeyPress));
+            Main.keybindingManager.addHotKey('launch-new-app-key-' + number.toString(), "<Super><Shift>" + number.toString(), Lang.bind(this, this._onNewAppKeyPress));
+        }
     },
 
     _onAppKeyPress: function (number) {
@@ -635,6 +637,11 @@ AppGroup.prototype = {
         } else {
             this._windowHandle(false);
         }
+    },
+    
+    _onNewAppKeyPress: function (number) {
+        this.app.open_new_window(-1);
+        this._animate();
     },
 
     _windowHandle: function (fromDrag) {
