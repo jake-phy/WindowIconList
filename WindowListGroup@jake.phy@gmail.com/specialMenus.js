@@ -57,7 +57,6 @@ AppMenuButtonRightClickMenu.prototype = {
                 itemChangeMonitor.connect('activate', Lang.bind(this, function() {
                     this.metaWindow.move_to_monitor(index);
                 }));
-                itemChangeMonitor._monitorIndex = index;
                 this.monitorItems.push(itemChangeMonitor);
             }, this);
         }
