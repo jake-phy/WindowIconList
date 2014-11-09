@@ -48,7 +48,19 @@ AppMenuButtonRightClickMenu.prototype = {
         this.isFavapp = parent.isFavapp;
         this._applet = parent._applet;
         let PinnedFavorites = this._applet.pinned_app_contr();
-
+        
+        this.monitorItems = [];
+        if (Main.layoutManager.monitors.length > 1) {
+            Main.layoutManager.monitors.forEach(function(monitor, index) {
+                let itemChangeMonitor = new PopupMenu.PopupMenuItem(
+                    _("Move to monitor %d").format(index + 1));
+                itemChangeMonitor.connect('activate', Lang.bind(this, function() {
+                    this.metaWindow.move_to_monitor(index);
+                }));
+                this.monitorItems.push(itemChangeMonitor);
+            }, this);
+        }
+        
         this.itemCloseWindow = new PopupMenu.PopupMenuItem(_("Close"));
         this.itemCloseWindow.connect('activate', Lang.bind(this, this._onCloseWindowActivate));
 
@@ -123,6 +135,12 @@ AppMenuButtonRightClickMenu.prototype = {
             this.addMenuItem(this.launchItem);
             this.addMenuItem(this.itemtoggleFav);
         } else if (this.orientation == St.Side.BOTTOM) {
+            if(this.monitorItems.length){
+            	this.monitorItems.forEach(function(item){
+            		this.addMenuItem(item);
+            	}, this);
+            	this.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+            }
             this.addMenuItem(this.itemOnAllWorkspaces);
             this.addMenuItem(this.itemMoveToLeftWorkspace);
             this.addMenuItem(this.itemMoveToRightWorkspace);
@@ -146,6 +164,12 @@ AppMenuButtonRightClickMenu.prototype = {
             this.addMenuItem(this.itemMoveToLeftWorkspace);
             this.addMenuItem(this.itemMoveToRightWorkspace);
             this.addMenuItem(this.itemOnAllWorkspaces);
+            if(this.monitorItems.length){
+            	this.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+            	this.monitorItems.forEach(function(item){
+            		this.addMenuItem(item);
+            	}, this);
+            }
         }
     },
 
@@ -291,6 +315,7 @@ AppMenuButtonRightClickMenu.prototype = {
     setMetaWindow: function (metaWindow) {
         this.metaWindow = metaWindow;
     }
+    
 };
 
 function HoverMenuController(owner) {
