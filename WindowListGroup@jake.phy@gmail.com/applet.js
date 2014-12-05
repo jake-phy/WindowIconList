@@ -286,7 +286,7 @@ Signals.addSignalMethods(PinnedFavs.prototype);
 // of all windows of @app (all windows on workspaces
 // that are watched, that is).
 
-var ___proto = Object //This is needed to support the old cinnamon implementation
+var __proto = Object //This is needed to support the old cinnamon implementation
 if(DND.LauncherDraggable)
     __proto = DND.LauncherDraggable;
 
