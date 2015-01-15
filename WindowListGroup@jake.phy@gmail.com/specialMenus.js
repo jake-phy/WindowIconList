@@ -101,10 +101,10 @@ AppMenuButtonRightClickMenu.prototype = {
 
         if (this._applet.showPinned != FavType.none) {
             if (this.isFav) {
-                this.itemtoggleFav = new SpecialMenuItems.IconNameMenuItem(_('Unpin from Panel'), "remove");
+                this.itemtoggleFav = new SpecialMenuItems.IconNameMenuItem(_("Unpin from Panel"), "remove");
                 this.itemtoggleFav.connect('activate', Lang.bind(this, this._toggleFav));
             } else {
-                this.itemtoggleFav = new SpecialMenuItems.IconNameMenuItem(_('Pin to Panel'), "bookmark-new");
+                this.itemtoggleFav = new SpecialMenuItems.IconNameMenuItem(_("Pin to Panel"), "bookmark-new");
                 this.itemtoggleFav.connect('activate', Lang.bind(this, this._toggleFav));
             }
         }
@@ -148,7 +148,7 @@ AppMenuButtonRightClickMenu.prototype = {
 		this.verticalThumbs.connect('toggled', Lang.bind(this, function(item) { this._applet.verticalThumbs = item.state; }));
 		this.subMenuItem.menu.addMenuItem(this.verticalThumbs);
 
-        this.settingItem = new SpecialMenuItems.IconNameMenuItem(_('   Go to Settings'));
+        this.settingItem = new SpecialMenuItems.IconNameMenuItem(_("   Go to Settings"));
         this.settingItem.connect('activate', Lang.bind(this, this._settingMenu));
 		subMenu.addMenuItem(this.settingItem);
 	},
@@ -182,7 +182,7 @@ AppMenuButtonRightClickMenu.prototype = {
 			let historys = FireFox.getFirefoxHistory(this._applet);
 
 			if (historys === null) {
-				let install = new PopupMenu.PopupMenuItem(_('Install Gda'));
+				let install = new PopupMenu.PopupMenuItem(_("Install Gda"));
         		install.connect('activate', Lang.bind(this, function(){
         			Util.spawnCommandLine('gnome-terminal -x bash -c "sudo apt-get install gir1.2-gda-5.0; echo "press enter and restart cinnamon"; read n1"');
 			    }));
