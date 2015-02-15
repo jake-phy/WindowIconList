@@ -166,8 +166,8 @@ PinnedFavs.prototype = {
     },
 
     _onFavsChanged: function () {
-        this._reload();
-        this.emit('changed');
+        if(this._reload())
+            this.emit('changed');
     },
 
     _reload: function () {
@@ -179,11 +179,30 @@ PinnedFavs.prototype = {
         }).filter(function (app) {
             return app !== undefined && app !== null;
         });
-        this._favorites = {};
+        let needReaload = false;
+        let keys = Object.keys(this._favorites);
+
         for (let i = 0; i < apps.length; i++) {
             let app = apps[i];
-            this._favorites[app.get_id()] = app;
+            let id = app.get_id();
+            if(!this._favorites[id]) {
+                this._favorites[id] = app;
+                needReaload = true;
+            } else {
+                let index = keys.indexOf(id);
+                if(index != -1)
+                    keys.splice(index, 1);
+            }
         }
+        if(keys.length > 0) {
+            needReaload = true;
+            for (let i = 0; i < keys.length; i++) {
+                let key = keys[i];
+                if(keys in this._favorites)
+                    delete this._favorites[key];
+            }
+        }
+        return needReaload;
     },
 
     _getIds: function () {
@@ -224,7 +243,7 @@ PinnedFavs.prototype = {
         else
             ids.splice(pos, 0, appId);
         this._applet.settings.setValue("pinned-apps", ids);
-        this._favorites[appId] = app;
+        this._onFavsChanged();
         return true;
     },
 
@@ -243,7 +262,6 @@ PinnedFavs.prototype = {
             pos = pos - 1;
         ids.splice(pos, 0, ids.splice(old_index, 1)[0]);
         this._applet.settings.setValue("pinned-apps", ids);
-
     },
 
     _removeFavorite: function (appId) {
@@ -254,6 +272,7 @@ PinnedFavs.prototype = {
             return id != appId;
         });
         this._applet.settings.setValue("pinned-apps", ids);
+        this._onFavsChanged();
         return true;
     },
 
@@ -267,14 +286,23 @@ Signals.addSignalMethods(PinnedFavs.prototype);
 // of all windows of @app (all windows on workspaces
 // that are watched, that is).
 
+var __proto = Object //This is needed to support the old cinnamon implementation
+if(DND.LauncherDraggable)
+    __proto = DND.LauncherDraggable;
+
 function AppGroup() {
     this._init.apply(this, arguments);
 }
 
 AppGroup.prototype = {
+    __proto__: __proto.prototype,
     _init: function (applet, appList, app, isFavapp, orientation) {
+        if(DND.LauncherDraggable)
+            DND.LauncherDraggable.prototype._init.call(this);
         this._applet = applet;
         this.appList = appList;
+        this.launchersBox = applet; //This convert the applet class in a launcherBox(is requiere to be a launcher dragable object)
+                                    //but you have duplicate object this._applet then...
         this.app = app;
         this.isFavapp = isFavapp;
         this.isNotFavapp = !isFavapp;
@@ -323,6 +351,10 @@ AppGroup.prototype = {
         this.on_arrange_pinned();
         global.settings.connect('changed::panel-edit-mode', Lang.bind(this, this.on_panel_edit_mode_changed));
         this._applet.settings.connect("arrange-pinnedApps", Lang.bind(this, this.on_arrange_pinned));
+    },
+
+    getId: function() {
+        return this.app.get_id();
     },
 
     on_arrange_pinned: function () {
@@ -1155,6 +1187,10 @@ MyApplet.prototype = {
 
     acceptNewLauncher: function(path) {
         this.pinnedAppsContr.addFavorite(path);
+    },
+
+    removeLauncher: function (appGroup) {
+        //Add code here to remove the launcher if you want.
     },
     
     recent_items_contr: function () {
