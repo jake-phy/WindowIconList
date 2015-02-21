@@ -1,4 +1,10 @@
 Changelog
+2.8.0
+Added windows 7 styled right click menu. 
+	Added firefox appmenu.
+Can pin and unpin items without the appmenu closing.
+Can now close thumbnails without the thumbnail controller closing.  :)
+_____
 2.7.5
 Themeing
 	Fixed a bunch of padding and spacing issue's.
