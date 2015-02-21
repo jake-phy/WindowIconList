@@ -1033,6 +1033,7 @@ MyApplet.prototype = {
             //this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "pinned-apps", "pinnedApps", null, null);
             this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "pinned-recent", "pinnedRecent", null, null);
             this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "show-recent", "showRecent", null, null);
+            this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "appmenu-width", "appMenuWidth", null, null);
             this.settings.bindProperty(Settings.BindingDirection.IN, "firefox-menu", "firefoxMenu", null, null);
             this.settings.bindProperty(Settings.BindingDirection.IN, "appmenu-number", "appMenuNum", null, null);
             this.orientation = orientation;

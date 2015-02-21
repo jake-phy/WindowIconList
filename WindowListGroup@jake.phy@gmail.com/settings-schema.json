@@ -172,14 +172,24 @@
  "show-recent" : {
     "type" : "checkbox",
     "default" : true,
-    "description": "Open Thumbnails OnClick",
-    "tooltip": "Open the thumbnails on click, if there is more than 1 windows open."
+    "description": "Show Recent",
+    "tooltip": "Show Recent Menu Items"
  },
  "closeall-menu-item" : {
     "type" : "checkbox",
     "default" : false,
-    "description": "Close All menu item",
+    "description": "Close All Menu Items",
     "tooltip" : "Show a 'Close All' menu item to close all windows for an app."
+ },
+ "appmenu-width" : {
+    "type": "spinbutton",
+    "default" : 195,
+    "min" : 100,
+    "max" : 500,
+    "step" : 10,
+    "units" : "number",
+    "description": "Appmenu Width",
+    "tooltip" : "Set the width of the AppMenu."
  },
  "firefox-menu" : {
     "type": "combobox",
@@ -199,7 +209,7 @@
     "max" : 50,
     "step" : 1,
     "units" : "number",
-    "description" : "Number of menu Items:",
+    "description" : "Number of Menu Items:",
     "tooltip" : "The number of AppMenu Items"
  }
 }

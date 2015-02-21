@@ -54,7 +54,8 @@ AppMenuButtonRightClickMenu.prototype = {
         this.app = parent.app;
         this.isFavapp = parent.isFavapp;
         this._applet = parent._applet;
-	this.showCloseAll = this._applet.settings.getValue("closeall-menu-item");
+		this.showCloseAll = this._applet.settings.getValue("closeall-menu-item");
+		this.AppMenuWidth = this._applet.settings.getValue("appmenu-width");
         
         let PinnedFavorites = this._applet.pinned_app_contr();
 
@@ -63,36 +64,44 @@ AppMenuButtonRightClickMenu.prototype = {
 		// Pause for refresh of SpecialItems.
 	    this._applet.recentManager.connect('changed', Lang.bind(this, function(){Mainloop.timeout_add(15, Lang.bind(this, this._recent_items_changed))}));
         this._applet.settings.connect('changed::pinned-recent', Lang.bind(this, this._recent_items_changed));
+        this._applet.settings.connect('changed::show-recent', Lang.bind(this, this._recent_items_changed));
+        this._applet.settings.connect('changed::appmenu-width', Lang.bind(this, this._appMenu_width_changed));
 
-        this.itemCloseAllWindow = new SpecialMenuItems.IconNameMenuItem(_("Close All"), "window-close");
+        this.itemCloseAllWindow = new SpecialMenuItems.IconNameMenuItem(this,_("Close All"), "window-close");
         this.itemCloseAllWindow.connect('activate', Lang.bind(this, this._onCloseAllActivate));
 
-        this.itemCloseWindow = new SpecialMenuItems.IconNameMenuItem(_("Close"), "window-close");
+        this.itemCloseWindow = new SpecialMenuItems.IconNameMenuItem(this,_("Close"), "window-close");
         this.itemCloseWindow.connect('activate', Lang.bind(this, this._onCloseWindowActivate));
 
-        this.itemMinimizeWindow = new PopupMenu.PopupMenuItem(_("Minimize"));
+        this.itemMinimizeWindow = new SpecialMenuItems.IconNameMenuItem(this, _("Minimize"));
         this.itemMinimizeWindow.connect('activate', Lang.bind(this, this._onMinimizeWindowActivate));
 
-        this.itemMaximizeWindow = new PopupMenu.PopupMenuItem(_("Maximize"));
+        this.itemMaximizeWindow = new SpecialMenuItems.IconNameMenuItem(this, _("Maximize"));
         this.itemMaximizeWindow.connect('activate', Lang.bind(this, this._onMaximizeWindowActivate));
 
-        this.itemMoveToLeftWorkspace = new SpecialMenuItems.IconNameMenuItem(_("Move to left workspace"), "back");
+        this.itemMoveToLeftWorkspace = new SpecialMenuItems.IconNameMenuItem(this,_("Move to left workspace"), "back");
         this.itemMoveToLeftWorkspace.connect('activate', Lang.bind(this, this._onMoveToLeftWorkspace));
 
-        this.itemMoveToRightWorkspace = new SpecialMenuItems.IconNameMenuItem(_("Move to right workspace"), "next");
+        this.itemMoveToRightWorkspace = new SpecialMenuItems.IconNameMenuItem(this,_("Move to right workspace"), "next");
         this.itemMoveToRightWorkspace.connect('activate', Lang.bind(this, this._onMoveToRightWorkspace));
 
-        this.itemOnAllWorkspaces = new SpecialMenuItems.IconNameMenuItem(_("Visible on all workspaces"), "edit-copy");
+        this.itemOnAllWorkspaces = new SpecialMenuItems.IconNameMenuItem(this,_("Visible on all workspaces"), "edit-copy");
         this.itemOnAllWorkspaces.connect('activate', Lang.bind(this, this._toggleOnAllWorkspaces));
 
-        this.launchItem = new SpecialMenuItems.IconMenuItem(this.app.get_name(), this.app.create_icon_texture(16));
+        this.launchItem = new SpecialMenuItems.IconMenuItem(this, this.app.get_name(), this.app.create_icon_texture(16));
         this.launchItem.connect('activate', Lang.bind(this, function(){
 			this.appInfo.launch([], null);
 		}));
 		// Settings in pinned apps menu;
 		this._settingsMenu();
+		this.specialCont = new SpecialMenuItems.SubSection();
+		this.specialCont.box = new St.BoxLayout({
+			vertical: true,
+        });
 
-		this.specialSection = new PopupMenu.PopupMenuSection();
+		this.specialSection = new St.BoxLayout({vertical: true});
+		this.specialCont.box.add(this.specialSection);
+		this.specialCont.addActor(this.specialCont.box,{span: -1});
 		this.addSpecialItems();
 
         this.favs = PinnedFavorites;
@@ -101,10 +110,10 @@ AppMenuButtonRightClickMenu.prototype = {
 
         if (this._applet.showPinned != FavType.none) {
             if (this.isFav) {
-                this.itemtoggleFav = new SpecialMenuItems.IconNameMenuItem(_("Unpin from Panel"), "remove");
+                this.itemtoggleFav = new SpecialMenuItems.IconNameMenuItem(this,_("Unpin from Panel"), "remove");
                 this.itemtoggleFav.connect('activate', Lang.bind(this, this._toggleFav));
             } else {
-                this.itemtoggleFav = new SpecialMenuItems.IconNameMenuItem(_("Pin to Panel"), "bookmark-new");
+                this.itemtoggleFav = new SpecialMenuItems.IconNameMenuItem(this,_("Pin to Panel"), "bookmark-new");
                 this.itemtoggleFav.connect('activate', Lang.bind(this, this._toggleFav));
             }
         }
@@ -113,57 +122,95 @@ AppMenuButtonRightClickMenu.prototype = {
     },
 
     _settingsMenu: function(){
-		this.subMenuItem = new SpecialMenuItems.SubMenuItem(_("Settings"));
+		this.subMenuItem = new SpecialMenuItems.SubMenuItem(this, _("Settings"));
 		let subMenu = this.subMenuItem.menu;
 
-		this.reArrange = new SpecialMenuItems.SwitchMenuItem(_("ReArrange"), this._applet.arrangePinned);
+		this.reArrange = new SpecialMenuItems.SwitchMenuItem(this, _("ReArrange"), this._applet.arrangePinned);
 		this.reArrange.connect('toggled', Lang.bind(this, function(item) { this._applet.arrangePinned = item.state; }));
 		subMenu.addMenuItem(this.reArrange);
 
-		this.showPinned = new SpecialMenuItems.SwitchMenuItem(_("Show Pinned"), this._applet.showPinned);
+		this.showPinned = new SpecialMenuItems.SwitchMenuItem(this, _("Show Pinned"), this._applet.showPinned);
 		this.showPinned.connect('toggled', Lang.bind(this, function(item) { this._applet.showPinned = item.state; }));
 		subMenu.addMenuItem(this.showPinned);
 
-		this.groupApps = new SpecialMenuItems.SwitchMenuItem(_("Group Apps"), this._applet.groupApps);
+		this.groupApps = new SpecialMenuItems.SwitchMenuItem(this, _("Group Apps"), this._applet.groupApps);
 		this.groupApps.connect('toggled', Lang.bind(this, function(item) { this._applet.groupApps = item.state; }));
 		subMenu.addMenuItem(this.groupApps);
 
-		this.showThumbs = new SpecialMenuItems.SwitchMenuItem(_("Show Thumbs"), this._applet.showThumbs);
+		this.showThumbs = new SpecialMenuItems.SwitchMenuItem(this, _("Show Thumbs"), this._applet.showThumbs);
 		this.showThumbs.connect('toggled', Lang.bind(this, function(item) { this._applet.showThumbs = item.state; }));
 		subMenu.addMenuItem(this.showThumbs);
 
-		this.stackThumbs =  new SpecialMenuItems.SwitchMenuItem(_("Stack Thumbs"), this._applet.stackThumbs);
+		this.stackThumbs =  new SpecialMenuItems.SwitchMenuItem(this, _("Stack Thumbs"), this._applet.stackThumbs);
 		this.stackThumbs.connect('toggled', Lang.bind(this, function(item) { this._applet.stackThumbs = item.state; }));
 		this.subMenuItem.menu.addMenuItem(this.stackThumbs);
 
-		this.enablePeek = new SpecialMenuItems.SwitchMenuItem(_("Hover to Peek"), this._applet.enablePeek);
+		this.enablePeek = new SpecialMenuItems.SwitchMenuItem(this, _("Hover to Peek"), this._applet.enablePeek);
 		this.enablePeek.connect('toggled', Lang.bind(this, function(item) { this._applet.enablePeek = item.state; }));
 		this.subMenuItem.menu.addMenuItem(this.enablePeek);
 
-		this.showRecent = new SpecialMenuItems.SwitchMenuItem(_("Show Recent"), this._applet.showRecent);
+		this.showRecent = new SpecialMenuItems.SwitchMenuItem(this, _("Show Recent"), this._applet.showRecent);
 		this.showRecent.connect('toggled', Lang.bind(this, function(item) { this._applet.showRecent = item.state; }));
 		this.subMenuItem.menu.addMenuItem(this.showRecent);
 
-		this.verticalThumbs = new SpecialMenuItems.SwitchMenuItem(_("Vertical Thumbs"), this._applet.verticalThumbs);
+		this.verticalThumbs = new SpecialMenuItems.SwitchMenuItem(this, _("Vertical Thumbs"), this._applet.verticalThumbs);
 		this.verticalThumbs.connect('toggled', Lang.bind(this, function(item) { this._applet.verticalThumbs = item.state; }));
 		this.subMenuItem.menu.addMenuItem(this.verticalThumbs);
 
-        this.settingItem = new SpecialMenuItems.IconNameMenuItem(_("   Go to Settings"));
+        this.settingItem = new SpecialMenuItems.IconNameMenuItem(this,_("   Go to Settings"));
         this.settingItem.connect('activate', Lang.bind(this, this._settingMenu));
 		subMenu.addMenuItem(this.settingItem);
 	},
 
 	_recent_items_changed: function() {
-		let items = this.RecentMenuItems;
-		for(let i = 0; i < items.length; i++){
-			items[i].destroy();
+		this.specialCont.actor.track_hover = true;
+		let children = this.specialSection.get_children();
+		for(let i = 0;i < children.length;i++){
+			this.specialSection.remove_actor(children[i]);
 		}
 		this.addSpecialItems();
+		this.specialCont.actor.track_hover = false;
+	},
+
+	_appMenu_width_changed: function() {
+		this.AppMenuWidth = this._applet.settings.getValue("appmenu-width") || 295;
+		let children = this.RecentMenuItems.filter(Lang.bind(this, function (child) {
+			if(child instanceof PopupMenu.PopupSeparatorMenuItem)
+				return false;
+			else
+				return true; 
+		})); ;
+		for(let i = 0; i < children.length;i++) {
+			let item = children[i];
+			item.table.width = this.AppMenuWidth;
+			item.label.width = this.AppMenuWidth - 26;
+		}
+		children = this.subMenuItem.menu.box.get_children().map(function (actor) {
+            return actor._delegate;
+        });
+		for(let i = 0; i < children.length;i++) {
+			let item = children[i];
+			item.table.width = this.AppMenuWidth - 14;
+			item.label.width = this.AppMenuWidth - 74;
+		}
+		children = this.box.get_children().map(function (actor) {
+            return actor._delegate;
+        }).filter(Lang.bind(this, function (child) {
+			if(child instanceof SpecialMenuItems.IconNameMenuItem || child instanceof SpecialMenuItems.IconMenuItem || child instanceof SpecialMenuItems.SubMenuItem)
+				return true;
+			else
+				return false; 
+		})); 
+		for(let i = 0; i < children.length;i++) {
+			let item = children[i];
+			item.table.width = this.AppMenuWidth;
+			item.label.width = this.AppMenuWidth - 26;
+		}
 	},
 
 	addSpecialItems: function() {
-		if (!this._applet.showRecent) return;
 		this.RecentMenuItems = [];
+		if(!this._applet.showRecent) return;
 		// Load Pinned
 		let pinnedLength = this._listPinned() || 0;
 		// Load Places
@@ -174,7 +221,7 @@ AppMenuButtonRightClickMenu.prototype = {
             let places = defualtPlaces.concat(bookmarks).concat(devices);
             for (let i = 0; i < places.length; i++) {
 				let item = new SpecialMenuItems.PlaceMenuItem(this, places[i]);
-            	this.specialSection.actor.add(item.actor);
+            	this.specialSection.add(item.actor);
 				this.RecentMenuItems.push(item);
 			}
 			return;
@@ -182,20 +229,20 @@ AppMenuButtonRightClickMenu.prototype = {
 			let historys = FireFox.getFirefoxHistory(this._applet);
 
 			if (historys === null) {
-				let install = new PopupMenu.PopupMenuItem(_("Install Gda"));
+				let install = new SpecialMenuItems.IconNameMenuItem(this, _("Install Gda"));
         		install.connect('activate', Lang.bind(this, function(){
         			Util.spawnCommandLine('gnome-terminal -x bash -c "sudo apt-get install gir1.2-gda-5.0; echo "press enter and restart cinnamon"; read n1"');
 			    }));
-		    	this.addMenuItem(install);
+		    	this.addActor(install.actor);
 			} else if(historys.length){
 	 			try {
-					historys.length = historys.length - pinnedLength;
+					historys.length = historys.length;
 					for(let i = 0; i < historys.length; i++){
 						let history = historys[i];
 						if (this.pinnedItemsUris.indexOf(history.uri) != -1)
 						continue;
 						let item = new SpecialMenuItems.FirefoxMenuItem(this, history);
-            			this.specialSection.actor.add(item.actor);
+            			this.specialSection.add(item.actor);
 						this.RecentMenuItems.push(item);
 					}
 				} catch(e){}
@@ -214,16 +261,16 @@ AppMenuButtonRightClickMenu.prototype = {
 		let actions = this.appInfo.list_actions();
 		if(actions.length && this.RecentMenuItems.length){
 			let seperator = new PopupMenu.PopupSeparatorMenuItem();
-			this.specialSection.actor.add(seperator.actor);
+			this.specialSection.add(seperator.actor);
 			this.RecentMenuItems.push(seperator);
 		}
 		for(let i = 0; i < actions.length; i++){
 			let action = actions[i];
-			let actionItem = new SpecialMenuItems.IconNameMenuItem(this.appInfo.get_action_name(action), "window-new");
+			let actionItem = new SpecialMenuItems.IconNameMenuItem(this,this.appInfo.get_action_name(action), "window-new");
        		actionItem.connect('activate', Lang.bind(this, function(){
 			    this.appInfo.launch_action(action, global.create_app_launch_context());
 			}));
-            this.specialSection.actor.add(actionItem.actor);
+            this.specialSection.add(actionItem.actor);
 			this.RecentMenuItems.push(actionItem);
 		}
     },
@@ -246,7 +293,7 @@ AppMenuButtonRightClickMenu.prototype = {
 				 	recentMenuItem = new SpecialMenuItems.PinnedRecentItem(this, item.uri, "list-remove", item.title);
 				else
 					recentMenuItem = new SpecialMenuItems.PinnedRecentItem(this, item.uri, "list-remove");
-            	this.specialSection.actor.add(recentMenuItem.actor);
+            	this.specialSection.add(recentMenuItem.actor);
 				this.pinnedItemsUris.push(recentMenuItem.uri);
 				this.RecentMenuItems.push(recentMenuItem);
 			}
@@ -271,7 +318,7 @@ AppMenuButtonRightClickMenu.prototype = {
 		for(let i = 0; i < itemsLength; i++){
 			let item = items[i];
 			let recentMenuItem = new SpecialMenuItems.RecentMenuItem(this, item, 'list-add');
-            this.specialSection.actor.add(recentMenuItem.actor);
+            this.specialSection.add(recentMenuItem.actor);
 			this.RecentMenuItems.push(recentMenuItem);
 		}
 	},
@@ -310,8 +357,9 @@ AppMenuButtonRightClickMenu.prototype = {
 			this.addMenuItem(this.subMenuItem);
             this._connectSubMenuSignals(this.subMenuItem, this.subMenuItem.menu);
             this.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-			if(this.RecentMenuItems.length)
-				this.addMenuItem(this.specialSection);
+			if(this.RecentMenuItems.length){
+				this.box.add(this.specialCont.actor);
+			}
             this.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
             this.addMenuItem(this.launchItem);
             this.addMenuItem(this.itemtoggleFav);
@@ -321,8 +369,9 @@ AppMenuButtonRightClickMenu.prototype = {
             this.addMenuItem(this.itemMoveToLeftWorkspace);
             this.addMenuItem(this.itemMoveToRightWorkspace);
             this.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-			if(this.RecentMenuItems.length)
-				this.addMenuItem(this.specialSection);
+			if(this.RecentMenuItems.length) {
+				this.box.add(this.specialCont.actor);
+			}
             this.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
             this.addMenuItem(this.launchItem);
             if (showFavs) this.addMenuItem(this.itemtoggleFav);
@@ -343,8 +392,9 @@ AppMenuButtonRightClickMenu.prototype = {
             else this.addMenuItem(this.settingItem);
             this.addMenuItem(this.launchItem);
             this.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-			if(this.RecentMenuItems.length)
-				this.addMenuItem(this.specialSection);
+			if(this.RecentMenuItems.length) {
+				this.box.add(this.specialCont.actor);
+			}
             this.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
             this.addMenuItem(this.itemMoveToLeftWorkspace);
             this.addMenuItem(this.itemMoveToRightWorkspace);
@@ -448,10 +498,10 @@ AppMenuButtonRightClickMenu.prototype = {
 
     _toggleFav: function (actor, event) {
         if (this.isFav) {
-            this.close(false);
+            //this.close(false);
             this.favs.removeFavorite(this.favId);
         } else {
-            this.close(false);
+            //this.close(false);
             this.favs.addFavorite(this.favId);
         }
     },
@@ -554,13 +604,13 @@ AppThumbnailHoverMenu.prototype = {
         this.actor.connect('enter-event', Lang.bind(this, this._onMenuEnter));
         this.actor.connect('leave-event', Lang.bind(this, this._onMenuLeave));
 
-        this.actor.connect('button-release-event', Lang.bind(this, this._onButtonPress));
+        //this.actor.connect('button-release-event', Lang.bind(this, this._onButtonPress));
         this._applet.settings.connect('thumbnail-timeout', Lang.bind(this, function () { this.hoverTime =  this._applet.settings.getValue("thumbnail-timeout"); }));
         this.hoverTime =  this._applet.settings.getValue("thumbnail-timeout");
     },
 
     _onButtonPress: function (actor, event) {
-		if(this.parentActor == actor && this._applet.onclickThumbs) return;
+		if(this._applet.onclickThumbs) return;
         this.shouldOpen = false;
         this.shouldClose = true;
         Mainloop.timeout_add(this.hoverTime, Lang.bind(this, this.hoverClose));
@@ -652,7 +702,8 @@ PopupMenuAppSwitcherItem.prototype = {
 
     _init: function (parent, params) {
         params = Params.parse(params, {
-            hover: false
+            hover: false,
+			activate:false
         });
         PopupMenu.PopupBaseMenuItem.prototype._init.call(this, params);
         
@@ -662,7 +713,7 @@ PopupMenuAppSwitcherItem.prototype = {
         this.isFavapp = parent.isFavapp;
 		this._parentContainer = parent;
 
-        this.actor.style_class = null;
+        //this.actor.style_class = null;
 
         this.box = new St.BoxLayout({
 			vertical: true,
@@ -903,6 +954,9 @@ WindowThumbnail.prototype = {
         }));
         this.actor.connect('enter-event', Lang.bind(this, function () {
             if (!this.isFavapp) {
+				let parent = this._parent._parentContainer;
+				parent.shouldOpen = true;
+				parent.shouldClose = false;
                 this._hoverPeek(this._applet.peekOpacity, this.metaWindow);
                 this.actor.add_style_pseudo_class('outlined');
                 this.actor.add_style_pseudo_class('selected');
@@ -981,9 +1035,11 @@ WindowThumbnail.prototype = {
         if (event.get_state() & Clutter.ModifierType.BUTTON1_MASK && actor == this.button) {
             this._hoverPeek(OPACITY_OPAQUE, this.metaWindow);
             this.metaWindow.delete(global.get_current_time());
-            /*this._parentContainer.shouldOpen = true;
-            this._parentContainer.shouldClose = false;
-            this._parentContainer.hoverOpen();*/
+			let parent = this._parent._parentContainer;
+		    parent.shouldOpen = false;
+		    parent.shouldClose = true;
+		    Mainloop.timeout_add(2000, Lang.bind(parent, parent.hoverClose));
+			this.destroy();
         	this.stopClick = true;
         }
     },
@@ -992,6 +1048,10 @@ WindowThumbnail.prototype = {
         this.wasMinimized = false;
         if (event.get_state() & Clutter.ModifierType.BUTTON1_MASK && !this.stopClick && !this.isFavapp) {
             this.metaWindow.activate(global.get_current_time());
+			let parent = this._parent._parentContainer;
+		    parent.shouldOpen = false;
+		    parent.shouldClose = true;
+		    Mainloop.timeout_add(parent.hoverTime, Lang.bind(parent, parent.hoverClose));
         }else if (event.get_state() & Clutter.ModifierType.BUTTON2_MASK && !this.stopClick) {
             this.metaWindow.delete(global.get_current_time());
 		}

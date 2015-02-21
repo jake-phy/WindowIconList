@@ -2,7 +2,6 @@
 "max-instances": 2, 
 "uuid": "WindowListGroup@jake.phy@gmail.com",
 "name": "Window List With App Grouping",
-"role": "panellauncher",
 "version": "2.7.5", 
 "description": "Window List with App Grouping an Window Thumbnails"
 }
