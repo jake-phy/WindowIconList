@@ -259,7 +259,13 @@ AppMenuButtonRightClickMenu.prototype = {
 
     _loadActions: function(){
 		if(!this.appInfo) return;
-		let actions = this.appInfo.list_actions();
+		let actions;
+		try{
+			actions = this.appInfo.list_actions();
+		} catch(e) {
+			log("Error:  This version of cinnamon does not support actions.");
+			return;
+		}
 		if(actions.length && this.RecentMenuItems.length){
 			let seperator = new PopupMenu.PopupSeparatorMenuItem();
 			this.specialSection.add(seperator.actor);
@@ -611,7 +617,7 @@ AppThumbnailHoverMenu.prototype = {
     },
 
     _onButtonPress: function (actor, event) {
-		if(this._applet.onclickThumbs) return;
+		if(this._applet.onclickThumbs && this.appSwitcherItem.appContainer.get_children().length > 1) return;
         this.shouldOpen = false;
         this.shouldClose = true;
         Mainloop.timeout_add(this.hoverTime, Lang.bind(this, this.hoverClose));
