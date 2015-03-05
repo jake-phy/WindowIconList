@@ -296,7 +296,7 @@ function AppGroup() {
 
 AppGroup.prototype = {
     __proto__: __proto.prototype,
-    _init: function (applet, appList, app, isFavapp, orientation) {
+    _init: function (applet, appList, app, isFavapp) {
         if(DND.LauncherDraggable)
             DND.LauncherDraggable.prototype._init.call(this);
         this._applet = applet;
@@ -306,7 +306,7 @@ AppGroup.prototype = {
         this.app = app;
         this.isFavapp = isFavapp;
         this.isNotFavapp = !isFavapp;
-        this.orientation = orientation;
+        this.orientation = applet.orientation;
         this.metaWindows = {};
         this.metaWorkspaces = {};
         this.actor = new St.Bin({
@@ -559,7 +559,7 @@ AppGroup.prototype = {
         list.sort(function (a, b) {
             return a[0] - b[0];
         });
-        log(list[0]);
+        //log(list[0]);
         if (list[0]) return list[0][1];
         else return null;
     },
@@ -819,13 +819,12 @@ function AppList() {
 }
 
 AppList.prototype = {
-    _init: function (applet, metaWorkspace, orientation) {
-        this.orientation = orientation;
+    _init: function (applet, metaWorkspace) {
         this._applet = applet;
         this.myactorbox = new SpecialButtons.MyAppletBox(this._applet);
         this.actor = this.myactorbox.actor;
 
-        if (orientation == St.Side.TOP) {
+        if (this._applet.orientation == St.Side.TOP) {
             this.actor.add_style_class_name('window-list-box-top');
             this.actor.style = 'margin-top: 0px; padding-top: 0px;';
             //this.actor.set_style('padding-left: 3px');
@@ -908,7 +907,7 @@ AppList.prototype = {
         else app = tracker.get_window_app(metaWindow);
         if(!app) return;
         if (!this._appList[app]) {
-            let appGroup = new AppGroup(this._applet, this, app, isFavapp, this.orientation);
+            let appGroup = new AppGroup(this._applet, this, app, isFavapp);
             appGroup._updateMetaWindows(metaWorkspace);
             appGroup.watchWorkspace(metaWorkspace);
             if (this._applet.settings.getValue("group-apps")) {
@@ -1175,6 +1174,13 @@ MyApplet.prototype = {
         this.actor.reactive = global.settings.get_boolean("panel-edit-mode");
     },
 
+    on_orientation_changed: function(orientation) {
+        this.orientation = orientation;
+        for(let workSpace in this.metaWorkspaces){
+            this.metaWorkspaces[workSpace].appList._refreshList();
+        }
+    },
+
     on_panel_height_changed: function () {
         for(let workSpace in this.metaWorkspaces){
             this.metaWorkspaces[workSpace].appList._refreshList();
@@ -1231,7 +1237,7 @@ MyApplet.prototype = {
         // If the workspace we switched to isn't in our list,
         // we need to create an AppList for it
         if (!this.metaWorkspaces[metaWorkspace]) {
-            let appList = new AppList(this, metaWorkspace, this.orientation);
+            let appList = new AppList(this, metaWorkspace);
             this.metaWorkspaces[metaWorkspace] = {
                 ws: metaWorkspace,
                 appList: appList

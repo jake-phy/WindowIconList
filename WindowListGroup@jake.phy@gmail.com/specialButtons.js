@@ -58,6 +58,7 @@ IconLabelButton.prototype = {
             y_fill: false,
             track_hover: true
         });
+        this.actor.add_style_class_name('app-list-item-box');
         this.actor.height = parent._applet._panelHeight - 2;
         if (this._applet.orientation == St.Side.TOP)
             this.actor.add_style_class_name('window-list-item-box-top');
@@ -283,9 +284,15 @@ AppButton.prototype = {
     _isFavorite: function (isFav) {
         if (isFav) {
             this.setStyle("panel-launcher");
+            this.actor.add_style_class_name('app-is-favorite');
             this._label.text = '';
         } else {
             this.setStyle('window-list-item-box');
+            if (this._applet.orientation == St.Side.TOP)
+                this.actor.add_style_class_name('window-list-item-box-top');
+            else
+                this.actor.add_style_class_name('window-list-item-box-bottom');
+            this.actor.add_style_class_name('app-list-item-box');
         }
     },
 

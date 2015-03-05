@@ -20,7 +20,7 @@ const SpecialButtons = AppletDir.specialButtons;
 const SpecialMenuItems = AppletDir.specialMenuItems;
 const FireFox = AppletDir.firefox;
 
-const THUMBNAIL_ICON_SIZE = 20;
+const THUMBNAIL_ICON_SIZE = 16;
 const OPACITY_OPAQUE = 255;
 
 const FavType = {
@@ -167,6 +167,7 @@ AppMenuButtonRightClickMenu.prototype = {
 		let children = this.specialSection.get_children();
 		for(let i = 0;i < children.length;i++){
 			this.specialSection.remove_actor(children[i]);
+			children[i].destroy();
 		}
 		this.addSpecialItems();
 		this.specialCont.actor.track_hover = false;
@@ -712,8 +713,11 @@ PopupMenuAppSwitcherItem.prototype = {
         this.app = parent.app;
         this.isFavapp = parent.isFavapp;
 		this._parentContainer = parent;
-
-        //this.actor.style_class = null;
+		if (this.isFavapp) {
+        	this.actor.style_class = '';
+		} else {
+        	this.actor.style_class = 'thumbnail-cont';
+		}
 
         this.box = new St.BoxLayout({
 			vertical: true,
@@ -721,16 +725,19 @@ PopupMenuAppSwitcherItem.prototype = {
         this.appContainer = new St.BoxLayout({
             style_class: 'switcher-list',
         });
-		this.appContainer.style = "margin: 0px;padding: 8px;";
+		this.appContainer.style = "padding: 5px;";
+		this.appContainer.add_style_class_name('thumbnail-row');
         this.appContainer2 = new St.BoxLayout({
             style_class: 'switcher-list',
         });
-		this.appContainer2.style = "margin: 0px;padding: 8px;";
+		this.appContainer2.style = "padding: 5px;";
+		this.appContainer2.add_style_class_name('thumbnail-row');
 		this.appContainer2.hide();
         this.appContainer3 = new St.BoxLayout({
             style_class: 'switcher-list',
         });
-		this.appContainer3.style = "margin: 0px;padding: 8px;";
+		this.appContainer3.style = "padding: 5px;";
+		this.appContainer3.add_style_class_name('thumbnail-row');
 		this.appContainer3.hide();
         this.appThumbnails = {};
         this.appThumbnails2 = {};
@@ -783,8 +790,13 @@ PopupMenuAppSwitcherItem.prototype = {
     },
 
     _isFavorite: function (isFav) {
-        if (isFav) this.isFavapp = true;
-        else this.isFavapp = false;
+        if (isFav) {
+			this.isFavapp = true;
+        	this.actor.style_class = '';
+		} else {
+			this.isFavapp = false;
+        	this.actor.style_class = 'thumbnail-cont';
+		}
     },
 
     _refresh: function () {
@@ -817,6 +829,8 @@ PopupMenuAppSwitcherItem.prototype = {
 		this.addNewWindows(windows);
         // Update appThumbnails to remove old programs
 		this.removeOldWindows(windows);
+		// used to make sure everything is on the stage
+		Mainloop.timeout_add(0, Lang.bind(this, function(){this.setThumbnailIconSize(windows)}));
     },
 	addNewWindows: function (windows) {
         let ThumbnailWidth = Math.floor((Main.layoutManager.primaryMonitor.width / 70) * this._applet.thumbSize) + 16;
@@ -863,6 +877,19 @@ PopupMenuAppSwitcherItem.prototype = {
 	        }
 		}
 		actor.show();
+	},
+
+	setThumbnailIconSize: function(windows) {
+		    if (this.isFavapp) {
+				this.metaWindowThumbnail.thumbnailIconSize();
+				return;
+			}
+			let winLength = windows.length;
+			for(let i in this.appThumbnails) {
+				if (this.appThumbnails[i].thumbnail) {
+			        this.appThumbnails[i].thumbnail.thumbnailIconSize();
+				}
+			}
 	},
 
 	removeOldWindows: function(windows) {
@@ -918,31 +945,33 @@ WindowThumbnail.prototype = {
             track_hover: true,
             vertical: true
         });
+		// Override with own theme.
+		this.actor.add_style_class_name('thumbnail-box');
         this.thumbnailActor = new St.Bin();
 
         this._container = new St.BoxLayout({		
-			style_class: 'thumbnail-iconLabel',
+			style_class: 'thumbnail-iconlabel-cont',
         });
 
         let bin = new St.BoxLayout({
+			style_class: 'thumbnail-label-bin'
         });
 
-        this.icon = this.app.create_icon_texture(THUMBNAIL_ICON_SIZE);
-
-        this._container.add_actor(this.icon);
-        this._label = new St.Label();
-		this._label.style = "padding: 2px;";
+        this.icon = this.app.create_icon_texture(32);
+		this.themeIcon = new St.BoxLayout({style_class: 'thumbnail-icon'})
+		this.themeIcon.add_actor(this.icon);
+		this._container.add_actor(this.themeIcon);
+        this._label = new St.Label(
+		{style_class: 'thumbnail-label'});
         this._container.add_actor(this._label);
         this.button = new St.BoxLayout({
-            style_class: 'window-close',
+            style_class: 'thumbnail-close',
             reactive: true
         });
-		this.button.style = "width: 20px; height: 20px;";
         //this._container.add_actor(this.button);
         this.button.hide();
 		bin.add_actor(this._container);
 		bin.add_actor(this.button);
-		bin.style = "padding-bottom: 3px;";
         this.actor.add_actor(bin);
         this.actor.add_actor(this.thumbnailActor);
 
@@ -1010,6 +1039,14 @@ WindowThumbnail.prototype = {
 
     needs_refresh: function () {
         return Boolean(this.thumbnail);
+    },
+
+    thumbnailIconSize: function () {
+		try{
+			let width = this.themeIcon.width;
+			let height = this.themeIcon.heigth;
+			this.icon.set_size(width,height);
+		}catch(e){};
     },
 
     _getThumbnail: function () {
