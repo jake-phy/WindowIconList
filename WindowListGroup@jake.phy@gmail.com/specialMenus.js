@@ -713,6 +713,8 @@ PopupMenuAppSwitcherItem.prototype = {
         this.app = parent.app;
         this.isFavapp = parent.isFavapp;
 		this._parentContainer = parent;
+		this.metaWindows = {};
+
 		if (this.isFavapp) {
         	this.actor.style_class = '';
 		} else {
@@ -799,6 +801,17 @@ PopupMenuAppSwitcherItem.prototype = {
 		}
     },
 
+	getMetaWindows: function() {
+		let windows = this.app.get_windows().filter(Lang.bind(this, function (win) {
+            let metaWorkspace = null;
+            if (this.metaWindow) metaWorkspace = this.metaWindow.get_workspace();
+            //let isDifferent = (win != this.metaWindow);
+            let isSameWorkspace = (win.get_workspace() == metaWorkspace) && Main.isInteresting(win);
+            return isSameWorkspace;
+        })).reverse();
+		return windows;
+	},
+
     _refresh: function () {
         // Check to see if this.metaWindow has changed.  If so, we need to recreate
         // our thumbnail, etc.
@@ -818,13 +831,7 @@ PopupMenuAppSwitcherItem.prototype = {
         }
 
         // Get a list of all windows of our app that are running in the current workspace
-        let windows = this.app.get_windows().filter(Lang.bind(this, function (win) {
-            let metaWorkspace = null;
-            if (this.metaWindow) metaWorkspace = this.metaWindow.get_workspace();
-            //let isDifferent = (win != this.metaWindow);
-            let isSameWorkspace = (win.get_workspace() == metaWorkspace) && Main.isInteresting(win);
-            return isSameWorkspace;
-        })).reverse();
+        let windows = this.getMetaWindows();
         // Update appThumbnails to include new programs
 		this.addNewWindows(windows);
         // Update appThumbnails to remove old programs
@@ -906,18 +913,49 @@ PopupMenuAppSwitcherItem.prototype = {
 	            delete this.appThumbnails[win];
             }
         }
-		if(this.appContainer.get_children().length < this.thumbnailsSpace && this.appContainer2.get_children().length > 0){
-			let actor = this.appContainer2.get_children()[0];
-			this.appContainer2.remove_actor(actor);
-			this.appContainer.add_actor(actor);
+	},
+
+	refreshRows: function() {
+		let appContLength = this.appContainer.get_children().length;
+		let appContLength2 = this.appContainer2.get_children().length;
+		if(appContLength < 1){
+			this._parentContainer.shouldOpen = false;
+		    this._parentContainer.shouldClose = true;
+			this._parentContainer.hoverClose();
 		}
-		if(this.appContainer2.get_children().length <= 0)
+
+		if(appContLength < this.thumbnailsSpace && appContLength2 > 0){
+			let children = this.appContainer2.get_children();
+			let thumbsToMove = (this.thumbnailsSpace - appContLength)
+			for(let i = 0; i < thumbsToMove; i++) {
+				let actor = children[i]? children[i] : null;
+				if(actor == null)
+					break;
+				this.appContainer2.remove_actor(actor);
+				this.appContainer.add_actor(actor);
+				this.appThumbnails[actor._delegate.metaWindow].cont = 1;
+			}
+		}
+
+		appContLength2 = this.appContainer2.get_children().length;
+		let appContLength3 = this.appContainer3.get_children().length;
+
+		if(appContLength2 <= 0)
 			this.appContainer2.hide();
-		if(this.appContainer2.get_children().length < this.thumbnailsSpace && this.appContainer3.get_children().length > 0){
-			let actor = this.appContainer3.get_children()[0];
-			this.appContainer3.remove_actor(actor);
-			this.appContainer2.add_actor(actor);
+
+		if(appContLength2 < this.thumbnailsSpace && appContLength3 > 0){
+			let children = this.appContainer3.get_children();
+			let thumbsToMove = (this.thumbnailsSpace - appContLength2)
+			for(let i = 0; i < thumbsToMove; i++) {
+				let actor = children[i]? children[i] : null;
+				if(actor == null)
+					break;
+				this.appContainer3.remove_actor(actor);
+				this.appContainer2.add_actor(actor);
+				this.appThumbnails[actor._delegate.metaWindow].cont = 2;
+			}
 		}
+
 		if(this.appContainer3.get_children().length <= 0)
 			this.appContainer3.hide();
 	}
@@ -936,7 +974,7 @@ WindowThumbnail.prototype = {
         this.isFavapp = parent.isFavapp || false;
         this.wasMinimized = false;
 		this._parent = parent;
-		//this._parentContainer = parent._parentContainer
+		this._parentContainer = parent._parentContainer
 
         // Inherit the theme from the alt-tab menu
         this.actor = new St.BoxLayout({
@@ -945,6 +983,7 @@ WindowThumbnail.prototype = {
             track_hover: true,
             vertical: true
         });
+		this.actor._delegate = this;
 		// Override with own theme.
 		this.actor.add_style_class_name('thumbnail-box');
         this.thumbnailActor = new St.Bin();
@@ -1034,6 +1073,8 @@ WindowThumbnail.prototype = {
     },
 
     destroy: function () {
+		delete this._parent.appThumbnails[this.metaWindow];
+		this.actor.destroy_children();
         this.actor.destroy();
     },
 
@@ -1070,14 +1111,14 @@ WindowThumbnail.prototype = {
 
     _onButtonRelease: function (actor, event) {
         if (event.get_state() & Clutter.ModifierType.BUTTON1_MASK && actor == this.button) {
-            this._hoverPeek(OPACITY_OPAQUE, this.metaWindow);
-            this.metaWindow.delete(global.get_current_time());
-			let parent = this._parent._parentContainer;
-		    parent.shouldOpen = false;
-		    parent.shouldClose = true;
-		    Mainloop.timeout_add(2000, Lang.bind(parent, parent.hoverClose));
 			this.destroy();
         	this.stopClick = true;
+            this._hoverPeek(OPACITY_OPAQUE, this.metaWindow);
+		    this._parentContainer.shouldOpen = false;
+		    this._parentContainer.shouldClose = true;
+		    Mainloop.timeout_add(2000, Lang.bind(this._parentContainer, this._parentContainer.hoverClose));
+            this.metaWindow.delete(global.get_current_time());
+			this._parent.refreshRows();
         }
     },
 
@@ -1090,6 +1131,7 @@ WindowThumbnail.prototype = {
 		    parent.shouldClose = true;
 		    Mainloop.timeout_add(parent.hoverTime, Lang.bind(parent, parent.hoverClose));
         }else if (event.get_state() & Clutter.ModifierType.BUTTON2_MASK && !this.stopClick) {
+			this.destroy();
             this.metaWindow.delete(global.get_current_time());
 		}
         this.stopClick = false;
