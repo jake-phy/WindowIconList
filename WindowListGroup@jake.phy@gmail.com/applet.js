@@ -508,6 +508,7 @@ AppGroup.prototype = {
             Main.keybindingManager.removeHotKey(this.hotKeyId);
         if (number < 10){
             Main.keybindingManager.addHotKey('launch-app-key-' + number.toString(), "<Super>" + number.toString(), Lang.bind(this, this._onAppKeyPress));
+            Main.keybindingManager.addHotKey('launch-new-app-key-' + number.toString(), "<Super><Shift>" + number.toString(), Lang.bind(this, this._onNewAppKeyPress))
             this.hotKeyId = 'launch-app-key-' + number.toString();
         }
     },
@@ -519,6 +520,11 @@ AppGroup.prototype = {
         } else {
             this._windowHandle(false);
         }
+    },
+
+    _onNewAppKeyPress: function (number) {
+        this.app.open_new_window(-1);
+        this._animate();
     },
 
     _windowHandle: function(fromDrag){
@@ -1058,6 +1064,9 @@ MyApplet.prototype = {
 
             this.metaWorkspaces = {};
 
+            Main.keybindingManager.addHotKey('move-app-to-next-monitor', "<Shift><Super>Left", Lang.bind(this, this._onMoveToNextMonitor));
+	        Main.keybindingManager.addHotKey('move-app-to-prev-monitor', "<Shift><Super>Right", Lang.bind(this, this._onMoveToPrevMonitor));
+
             // Use a signal tracker so we don't have to keep track of all these id's manually!
             //  global.window_manager.connect('switch-workspace', Lang.bind(this, this._onSwitchWorkspace));
             //  global.screen.connect('notify::n-workspaces', Lang.bind(this, this._onWorkspaceCreatedOrDestroyed));
@@ -1259,6 +1268,39 @@ MyApplet.prototype = {
     _onOverviewHide: function () {
         this.actor.show();
     },
+
+    _onMoveToNextMonitor: function(){
+	    this._onMoveToMonitor(1);
+    },
+
+    _onMoveToPrevMonitor: function(){
+	    this._onMoveToMonitor(-1);
+    },
+
+    _onMoveToMonitor: function(modifier){
+	    //Skip when we don't have multiple monitor.
+	    let monitors = Main.layoutManager.monitors;
+	    if(monitors.length <= 1){
+	        return;
+	    }
+	    //Find the window to move.
+	    let metaWorkspace = global.screen.get_active_workspace();
+	    let metaWindow = null;
+	    metaWorkspace.list_windows().forEach(Lang.bind(this, function (win) {
+	        if(win.has_focus()){
+	            metaWindow = win;
+	        }
+	    }));
+	    //Find the new monitor index.
+	    let monitorIndex = metaWindow.get_monitor();
+	    monitorIndex += modifier;
+	    if(monitorIndex < 0){
+	        monitorIndex = monitors.length + modifier;
+	    }else{
+	        monitorIndex = monitorIndex % monitors.length;
+	    }
+	    metaWindow.move_to_monitor(monitorIndex);
+	},
 
     destroy: function () {
         this.signals.disconnectAll();

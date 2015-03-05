@@ -59,6 +59,18 @@ AppMenuButtonRightClickMenu.prototype = {
         
         let PinnedFavorites = this._applet.pinned_app_contr();
 
+		this.monitorItems = [];
+		let monitors = Main.layoutManager.monitors;
+		if (monitors.length > 1) {
+			for(let i = 0; i < monitors.length; i++){
+				let itemChangeMonitor = new SpecialMenuItems.IconNameMenuItem(this, _("Move to monitor {0}").format(i + 1));
+				itemChangeMonitor.connect('activate', Lang.bind(this, function() {
+					this.metaWindow.move_to_monitor(i);
+				}));
+				this.monitorItems.push(itemChangeMonitor);
+			}
+		}
+
 		this.appInfo = this.app.get_app_info();
 
 		// Pause for refresh of SpecialItems.
@@ -372,6 +384,12 @@ AppMenuButtonRightClickMenu.prototype = {
             this.addMenuItem(this.itemtoggleFav);
 			this.isFavapp = true;
         } else if (this.orientation == St.Side.BOTTOM) {
+			if(this.monitorItems.length){
+				this.monitorItems.forEach(function(item){
+					this.addMenuItem(item);
+				}, this);
+				this.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+			}
             this.addMenuItem(this.itemOnAllWorkspaces);
             this.addMenuItem(this.itemMoveToLeftWorkspace);
             this.addMenuItem(this.itemMoveToRightWorkspace);
@@ -406,6 +424,12 @@ AppMenuButtonRightClickMenu.prototype = {
             this.addMenuItem(this.itemMoveToLeftWorkspace);
             this.addMenuItem(this.itemMoveToRightWorkspace);
             this.addMenuItem(this.itemOnAllWorkspaces);
+		 	if(this.monitorItems.length){
+				this.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+				this.monitorItems.forEach(function(item){
+					this.addMenuItem(item);
+				}, this);
+			}
 			this.isFavapp = false;
         }
     },
