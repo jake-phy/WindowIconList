@@ -288,6 +288,7 @@ AppMenuButtonRightClickMenu.prototype = {
 			let actionItem = new SpecialMenuItems.IconNameMenuItem(this,this.appInfo.get_action_name(action), "window-new");
        		actionItem.connect('activate', Lang.bind(this, function(){
 			    this.appInfo.launch_action(action, global.create_app_launch_context());
+				this.toggle();
 			}));
             this.specialSection.add(actionItem.actor);
 			this.RecentMenuItems.push(actionItem);
@@ -620,6 +621,9 @@ AppThumbnailHoverMenu.prototype = {
         this.isFavapp = parent.isFavapp;
 		//need to impliment this class or cinnamon outputs a bunch of errors
         this.actor.style_class = "hide-arrow";
+
+		this.box.style_class = "thumbnail-popup-content";
+
         this.actor.hide();
         this.parentActor = parent.actor;
 
@@ -744,33 +748,33 @@ PopupMenuAppSwitcherItem.prototype = {
         this.isFavapp = parent.isFavapp;
 		this._parentContainer = parent;
 		this.metaWindows = {};
+        this.actor.style_class = '';
 
-		if (this.isFavapp) {
-        	this.actor.style_class = '';
-		} else {
-        	this.actor.style_class = 'thumbnail-cont';
-		}
+        this.box = new St.BoxLayout();
+        this.box1 = new St.BoxLayout();
+        this.box2 = new St.BoxLayout();
+        this.box3 = new St.BoxLayout();
 
-        this.box = new St.BoxLayout({
-			vertical: true,
-       });
         this.appContainer = new St.BoxLayout({
             style_class: 'switcher-list',
         });
 		this.appContainer.style = "padding: 5px;";
 		this.appContainer.add_style_class_name('thumbnail-row');
+
         this.appContainer2 = new St.BoxLayout({
             style_class: 'switcher-list',
         });
 		this.appContainer2.style = "padding: 5px;";
 		this.appContainer2.add_style_class_name('thumbnail-row');
 		this.appContainer2.hide();
+
         this.appContainer3 = new St.BoxLayout({
             style_class: 'switcher-list',
         });
 		this.appContainer3.style = "padding: 5px;";
 		this.appContainer3.add_style_class_name('thumbnail-row');
 		this.appContainer3.hide();
+
         this.appThumbnails = {};
         this.appThumbnails2 = {};
         this.appThumbnails3 = {};
@@ -824,10 +828,8 @@ PopupMenuAppSwitcherItem.prototype = {
     _isFavorite: function (isFav) {
         if (isFav) {
 			this.isFavapp = true;
-        	this.actor.style_class = '';
 		} else {
 			this.isFavapp = false;
-        	this.actor.style_class = 'thumbnail-cont';
 		}
     },
 

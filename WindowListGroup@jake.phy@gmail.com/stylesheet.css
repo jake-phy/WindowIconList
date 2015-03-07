@@ -1,41 +1,41 @@
 /*Thumbnails*/
-/* Use to add extra border around thumbnail.  can be used for aero effect
-.thumbnail-cont {
-	background: rgba(30,30,30,0.9);
-	padding: 2px;
-	border: 1px solid rgba(200,200,200,0.3);
-	border-radius: 4px;
+/* Use to add extra border around thumbnail.  can be used for aero effect */
+.thumbnail-popup-content {
+	padding: 4px;
 }
-*/
 /* Sorry but the padding for the rows is set in the applet */
 .thumbnail-row {
+	/* example styles 
 	background: rgba(80,80,80,0.8);
 	border-radius: 6px;
 	padding: 2px;
 	font-size: 9pt;
 	color: white;
 	text-shadow: black 0px 0px 2px;
-	/* border */
+	/*border 
 	box-shadow: inset 0px 0px 0px 1px rgba(200,200,200,0.3);
-	/*spacing*/
+	/*spacing
 	border: 2px solid rgba(200,200,200,0.0);
+	*/
 }
 /* Make sure that the pseudo class's padding + spacing + border + shadow =
   the main class's padding + spacing + border + shadow.  If it doesn't there
   will be wierd things that happen.  I'm sorry but I had to set the padding
   in applet so I don't think you can change that unless !important overides styles*/
 .thumbnail-row .thumbnail-box {
+	/* example styles
 	padding: 6px;
 	spacing: 1px;
 	border-radius: 4px;
-	border-width:0px;
+	border-width:0px; */
 }
 .thumbnail-row .thumbnail-box:outlined {
+	/*  example styles
 	padding: 4px;
-	border: 2px solid rgba(85,85,85,1.0);
+	border: 2px solid rgba(85,85,85,1.0); */
 }
 .thumbnail-row .thumbnail-box:selected {
-	background: rgba(255,255,255,0.33);
+	/* background: rgba(255,255,255,0.33); */
 }
 .hide-arrow {
 	-arrow-background-color: rgba(80,80,80,0.0);
@@ -47,16 +47,15 @@
 	height: 16px;
 }
 .thumbnail-label {
+	/* example styles
 	font-size: 12px;
-	padding-left: 4px;
+	padding-left: 4px;*/
 }
-/*Default calculation of background position is found by 
-  subtracting the width and height from the background-size.
-  Careful or you will have too much dead space.*/
+/*  Careful with the calculation of background position or you will have to much dead space.*/
 .thumbnail-close {
     background-image: url("close-window.svg");
 	background-size: 26px 26px;
-	background-position:-6px -6px;
+	background-position:-5px -7px;
 	width: 16px;
  	height: 16px;
 }

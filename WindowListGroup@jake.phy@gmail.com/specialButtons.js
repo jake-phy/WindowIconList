@@ -59,7 +59,7 @@ IconLabelButton.prototype = {
             track_hover: true
         });
         this.actor.add_style_class_name('app-list-item-box');
-        this.actor.height = parent._applet._panelHeight - 2;
+        this.actor.height = parent._applet._panelHeight;
         if (this._applet.orientation == St.Side.TOP)
             this.actor.add_style_class_name('window-list-item-box-top');
         else

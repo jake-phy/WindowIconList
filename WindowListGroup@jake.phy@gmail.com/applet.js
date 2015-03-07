@@ -524,6 +524,7 @@ AppGroup.prototype = {
 
     _onNewAppKeyPress: function (number) {
         this.app.open_new_window(-1);
+        log(this.getId());
         this._animate();
     },
 
@@ -634,6 +635,8 @@ AppGroup.prototype = {
                 this._isFavorite(false);
             }
             this._calcWindowNumber(metaWorkspace);
+            //log(metaWindow.get_wm_class());
+            //log(metaWindow.get_wm_class_instance());
         }
     },
 
@@ -711,9 +714,13 @@ AppGroup.prototype = {
 
     _updateFocusedStatus: function (force) {
         let changed = false;
-        let focusState = this.metaWindows.keys().some(function (win, data) {
-            return win.appears_focused;
-        });
+        let focusState;
+        for( let win in this.metaWindows){
+            if(this.metaWindows[win].appears_focused){
+                focusState = this.metaWindows[win];
+                break;
+            }
+        }
         if (this.focusState != focusState || force)
             this._focusedLabel(focusState);
         this.focusState = focusState;
