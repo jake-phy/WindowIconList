@@ -174,7 +174,18 @@ AppMenuButtonRightClickMenu.prototype = {
 		subMenu.addMenuItem(this.settingItem);
 	},
 
+	show_recent_changed: function () {
+		if(this._applet.settings.getValue('show-recent')) {
+			this.specialCont.actor.show();
+			this._recent_items_changed();
+		} else {
+			this._recent_items_changed();
+			this.specialCont.actor.hide();
+		}
+	},
+
 	_recent_items_changed: function() {
+		// Hack used the track_hover to force the popup to stay open while removing items
 		this.specialCont.actor.track_hover = true;
 		let children = this.specialSection.get_children();
 		for(let i = 0;i < children.length;i++){
@@ -223,7 +234,9 @@ AppMenuButtonRightClickMenu.prototype = {
 
 	addSpecialItems: function() {
 		this.RecentMenuItems = [];
-		if(!this._applet.showRecent) return;
+		if(!this._applet.showRecent)
+ 			return;
+
 		// Load Pinned
 		let pinnedLength = this._listPinned() || 0;
 		// Load Places

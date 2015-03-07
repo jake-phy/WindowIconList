@@ -175,16 +175,13 @@ IconLabelButton.prototype = {
         this._numLabel.allocate(childBox, flags);
     },
     showLabel: function (animate, targetWidth) {
-        //this._label.width = 150;
+        this._label.show();
         let [minWidth, naturalWidth] = this._label.get_preferred_width(-1);
-        let width = targetWidth || naturalWidth;
+        let width = Math.min(targetWidth || naturalWidth, 150)
         if (!animate) {
             this._label.width = width;
-            this._label.show();
             return;
         }
-
-        this._label.show();
         Tweener.addTween(this._label, {
             width: width,
             time: BUTTON_BOX_ANIMATION_TIME,

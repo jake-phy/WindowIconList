@@ -716,8 +716,8 @@ AppGroup.prototype = {
         let changed = false;
         let focusState;
         for( let win in this.metaWindows){
-            if(this.metaWindows[win].appears_focused){
-                focusState = this.metaWindows[win];
+            if(this.metaWindows[win].win.appears_focused){
+                focusState = this.metaWindows[win].win;
                 break;
             }
         }
@@ -728,7 +728,7 @@ AppGroup.prototype = {
 
     _focusedLabel: function (focusState) {
         if (focusState) {
-            this.showAppButtonLabel(true, 150);
+            this.showAppButtonLabel(true, this._appButton._label.text.length * 8);
         } else {
             this.hideAppButtonLabel(true);
         }
