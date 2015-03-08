@@ -366,6 +366,18 @@ AppGroup.prototype = {
         this.actor.reactive = !global.settings.get_boolean("panel-edit-mode");
     },
 
+    on_title_display_changed: function (metaWindow) {
+        this._windowTitleChanged(metaWindow);
+        let titleType = this._applet.settings.getValue("title-display");
+        if (titleType == TitleDisplay.title) {
+            this.showAppButtonLabel(true);
+        } else if (titleType == TitleDisplay.app) {
+            this.showAppButtonLabel(true);
+        } else if (titleType == TitleDisplay.none) {
+            this.hideAppButtonLabel(true);
+        }
+    },
+
     _onDragEnd: function () {
         this.rightClickMenu.close(false);
         this.hoverMenu.close(false);
@@ -622,7 +634,8 @@ AppGroup.prototype = {
             }
             let signals = [];
             this._applet.settings.connect("changed::title-display", Lang.bind(this, function(){
-                this._windowTitleChanged(this.lastFocused);
+                this.on_title_display_changed(metaWindow);
+                this._windowTitleChanged(metaWindow);
             }));
             signals.push(metaWindow.connect('notify::title', Lang.bind(this, this._windowTitleChanged)));
             signals.push(metaWindow.connect('notify::appears-focused', Lang.bind(this, this._focusWindowChange)));
@@ -686,6 +699,7 @@ AppGroup.prototype = {
         if (titleType == TitleDisplay.title) {
             if (title) {
                 this._appButton.setText(title);
+                this.showAppButtonLabel(true);
             }
         } else if (titleType == TitleDisplay.focused) {
             if (title) {
@@ -695,6 +709,7 @@ AppGroup.prototype = {
         } else if (titleType == TitleDisplay.app) {
             if (appName) {
                 this._appButton.setText(appName);
+                this.showAppButtonLabel(true);
             }
         } else if (titleType == TitleDisplay.none) {
             this._appButton.setText("");
@@ -728,7 +743,7 @@ AppGroup.prototype = {
 
     _focusedLabel: function (focusState) {
         if (focusState) {
-            this.showAppButtonLabel(true, this._appButton._label.text.length * 8);
+            this.showAppButtonLabel(true);
         } else {
             this.hideAppButtonLabel(true);
         }
@@ -956,6 +971,7 @@ AppList.prototype = {
         if (appGroup) {
             if (appGroup.appGroup.wasFavapp || appGroup.appGroup.isFavapp) {
                 appGroup.appGroup._isFavorite(true);
+                appGroup.appGroup.hideAppButtonLabel(true);
                 // have to delay to fix openoffice start-center bug 
                 Mainloop.timeout_add(0, Lang.bind(this, this._refreshApps));
                 return;

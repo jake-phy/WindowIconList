@@ -119,7 +119,7 @@ IconLabelButton.prototype = {
         let [iconMinSize, iconNaturalSize] = this._icon.get_preferred_height(forWidth);
         let [labelMinSize, labelNaturalSize] = this._label.get_preferred_height(forWidth);
         alloc.min_size = Math.min(iconMinSize, labelMinSize);
-        alloc.natural_size = Math.max(iconNaturalSize, labelMinSize);
+        alloc.natural_size = Math.max(iconNaturalSize, labelNaturalSize);
     },
 
     _allocate: function (actor, box, flags) {
@@ -175,13 +175,23 @@ IconLabelButton.prototype = {
         this._numLabel.allocate(childBox, flags);
     },
     showLabel: function (animate, targetWidth) {
-        this._label.show();
+        // need to turn width back to preferred.
+        let setToZero;
+        if(this._label.width < 2) {
+            this._label.set_width(-1);
+            setToZero = true;
+        } else if(this._label.width < (this._label.text.length * 7) - 5 || this._label.width > (this._label.text.length * 7) + 5) {
+            this._label.set_width(-1);
+        }
         let [minWidth, naturalWidth] = this._label.get_preferred_width(-1);
         let width = Math.min(targetWidth || naturalWidth, 150)
+        if(setToZero)
+            this._label.width = 1;
         if (!animate) {
             this._label.width = width;
             return;
         }
+        this._label.show();
         Tweener.addTween(this._label, {
             width: width,
             time: BUTTON_BOX_ANIMATION_TIME,
