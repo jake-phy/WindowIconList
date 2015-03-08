@@ -50,12 +50,6 @@
     "description": "Arrange pinned apps",
     "tooltip": "Arrange pinned apps into a different order"
  },
- "group-apps" : {
-    "type" : "checkbox",
-    "default" : true,
-    "description": "Group apps into single icon",
-    "tooltip": "Group the open app instances into single icon"
- },
  "icon-padding" : {
     "type": "spinbutton",
     "default" : 5,

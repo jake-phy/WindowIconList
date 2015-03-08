@@ -40,8 +40,7 @@ AppMenuButtonRightClickMenu.prototype = {
         //take care of menu initialization        
         PopupMenu.PopupMenu.prototype._init.call(this, parent.actor, 0.0, parent.orientation, 0);
         Main.uiGroup.add_actor(this.actor);
-        //Main.chrome.addActor(this.actor, { visibleInOverview: true,
-        //                                   affectsStruts: false });
+
         this.actor.hide();
         this.metaWindow = parent.metaWindow;
         this._parentActor = actor;
@@ -63,7 +62,7 @@ AppMenuButtonRightClickMenu.prototype = {
 		let monitors = Main.layoutManager.monitors;
 		if (monitors.length > 1) {
 			for(let i = 0; i < monitors.length; i++){
-				let itemChangeMonitor = new SpecialMenuItems.IconNameMenuItem(this, _("Move to monitor {0}").format(i + 1));
+				let itemChangeMonitor = new SpecialMenuItems.IconNameMenuItem(this, _("Move to monitor %d").format(i + 1));
 				itemChangeMonitor.connect('activate', Lang.bind(this, function() {
 					this.metaWindow.move_to_monitor(i);
 				}));
@@ -490,7 +489,13 @@ AppMenuButtonRightClickMenu.prototype = {
 
     _onCloseAllActivate: function (actor, event) {
         var workspace = this.metaWindow.get_workspace(); 
-        var windows = this.app.get_windows();
+		let windows;
+        if(this.app.wmClass)
+            windows = metaWorkspace.list_windows().filter(Lang.bind(this, function (win) {
+                return this.app.wmClass == win.get_wm_class_instance();
+	        }));
+        else
+            windows = this.app.get_windows();
         for(var i = 0; i < windows.length; i++) {
             windows[i].delete(global.get_current_time());
         }
@@ -847,13 +852,19 @@ PopupMenuAppSwitcherItem.prototype = {
     },
 
 	getMetaWindows: function() {
-		let windows = this.app.get_windows().filter(Lang.bind(this, function (win) {
-            let metaWorkspace = null;
-            if (this.metaWindow) metaWorkspace = this.metaWindow.get_workspace();
-            //let isDifferent = (win != this.metaWindow);
-            let isSameWorkspace = (win.get_workspace() == metaWorkspace) && Main.isInteresting(win);
-            return isSameWorkspace;
-        })).reverse();
+        let metaWorkspace = null;
+        if (this.metaWindow) metaWorkspace = this.metaWindow.get_workspace();
+		let windows;
+        if(this.app.wmClass && metaWorkspace)
+            windows = metaWorkspace.list_windows().filter(Lang.bind(this, function (win) {
+                return this.app.wmClass == win.get_wm_class_instance();
+	        })).reverse();
+        else
+			windows = this.app.get_windows().filter(Lang.bind(this, function (win) {
+		        //let isDifferent = (win != this.metaWindow);
+		        let isSameWorkspace = (win.get_workspace() == metaWorkspace) && Main.isInteresting(win);
+		        return isSameWorkspace;
+		    })).reverse();
 		return windows;
 	},
 
