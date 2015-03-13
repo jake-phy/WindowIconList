@@ -244,6 +244,8 @@ AppButton.prototype = {
         let tracker = Cinnamon.WindowTracker.get_default();
         this._trackerSignal = tracker.connect('notify::focus-app', Lang.bind(this, this._onFocusChange));
         this._attention = global.settings.connect('changed::window-list-applet-alert', Lang.bind(this, this._onAttentionRequest));
+        this._onAttentionRequest();
+        this._needsAttention = false;
     },
 
     _onFocusChange: function () {
@@ -255,6 +257,7 @@ AppButton.prototype = {
             this.actor.add_style_pseudo_class('focus');
             this.actor.remove_style_class_name("window-list-item-demands-attention");
             this.actor.remove_style_class_name("window-list-item-demands-attention-top");
+            this._needsAttention = false;
         } else {
             this.actor.remove_style_pseudo_class('focus');
         }
@@ -274,15 +277,14 @@ AppButton.prototype = {
     },
 
     _onWindowDemandsAttention : function(display, window) {
-        if (this._needsAttention) {
-            return false;
-        }
         let windows = this.parent.metaWindows;
         for (let w in windows) {
-            if ( windows[w].win == window ) {
-                this._needsAttention = true;
-                this.actor.add_style_class_name('window-list-item-demands-attention');
-                return true;
+            if (windows[w].win == window ) {
+                if(!window.appears_focused){
+                    this._needsAttention = true;
+                    this.actor.add_style_class_name('window-list-item-demands-attention');
+                    return true;
+                }
             }
         }
         return false;
@@ -350,7 +352,10 @@ MyAppletBox.prototype = {
     },
 
     handleDragOver: function (source, actor, x, y, time) {
-        if (!(source.isDraggableApp || (source instanceof DND.LauncherDraggable))) return DND.DragMotionResult.NO_DROP;
+        let IsLauncherDraggable = null;
+        if(DND.LauncherDraggable)
+           IsLauncherDraggable =  source instanceof DND.LauncherDraggable;
+        if (!(source.isDraggableApp || IsLauncherDraggable)) return DND.DragMotionResult.NO_DROP;
 
         let children = this.actor.get_children();
         let windowPos = children.indexOf(source.actor);
@@ -409,9 +414,12 @@ MyAppletBox.prototype = {
     },
 
     acceptDrop: function (source, actor, x, y, time) {
-        if (!(source.isDraggableApp || (source instanceof DND.LauncherDraggable))) return false;
+        let IsLauncherDraggable = null;
+        if(DND.LauncherDraggable)
+           IsLauncherDraggable =  source instanceof DND.LauncherDraggable;
+        if (!(source.isDraggableApp || IsLauncherDraggable)) return false;
 
-        if (!(source.isFavapp || source.wasFavapp || source.isDraggableApp || (source instanceof DND.LauncherDraggable)) || source.isNotFavapp) {
+        if (!(source.isFavapp || source.wasFavapp || source.isDraggableApp || IsLauncherDraggable) || source.isNotFavapp) {
             this.actor.move_child(source.actor, this._dragPlaceholderPos);
             this._clearDragPlaceholder();
             actor.destroy();
@@ -426,7 +434,7 @@ MyAppletBox.prototype = {
         }
 
         let id;
-        if (source instanceof DND.LauncherDraggable) id = source.getId();
+        if (IsLauncherDraggable) id = source.getId();
         else id = app.get_id();
         let favorites = this._applet.pinned_app_contr().getFavoriteMap();
         let srcIsFavorite = (id in favorites);

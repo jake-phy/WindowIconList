@@ -57,10 +57,6 @@ const NumberDisplay = {
     none: 3,
     all: 4
 };
-const SortThumbs = {
-    focused: 1,
-    opened: 2
-};
 
 // Some functional programming tools
 const dir = function (obj) {
@@ -260,7 +256,9 @@ PinnedFavs.prototype = {
         let old_index = ids.indexOf(appId);
         if (pos > old_index)
             pos = pos - 1;
+        log(ids);
         ids.splice(pos, 0, ids.splice(old_index, 1)[0]);
+        log(ids);
         this._applet.settings.setValue("pinned-apps", ids);
     },
 
@@ -407,7 +405,10 @@ AppGroup.prototype = {
     },
 
     handleDragOver: function (source, actor, x, y, time) {
-        if (source instanceof AppGroup || source.isDraggableApp || (source instanceof DND.LauncherDraggable)) return DND.DragMotionResult.CONTINUE;
+        let IsLauncherDraggable = null;
+        if(DND.LauncherDraggable)
+           IsLauncherDraggable =  source instanceof DND.LauncherDraggable;
+        if (source instanceof AppGroup || source.isDraggableApp || IsLauncherDraggable) return DND.DragMotionResult.CONTINUE;
 
         if (typeof (this.appList.dragEnterTime) == 'undefined') {
             this.appList.dragEnterTime = time;
@@ -629,7 +630,7 @@ AppGroup.prototype = {
         let app = AppFromWMClass(this.appList._appsys, this.appList.specialApps, metaWindow);;
         if(!app)
             app = tracker.get_window_app(metaWindow)
-        if ( app == this.app && !this.metaWindows[metaWindow] && tracker.is_window_interesting(metaWindow)) {
+        if (app == this.app && !this.metaWindows[metaWindow] && tracker.is_window_interesting(metaWindow)) {
             if (metaWindow) {
                 this.lastFocused = metaWindow;
                 this.rightClickMenu.setMetaWindow(this.lastFocused);
@@ -650,9 +651,9 @@ AppGroup.prototype = {
                 this._isFavorite(false);
             }
             this._calcWindowNumber(metaWorkspace);
-            //log(metaWindow.get_wm_class());
-            //log(metaWindow.get_wm_class_instance());
         }
+        if(app && app.wmClass)
+            this._calcWindowNumber(metaWorkspace);
     },
 
     _windowRemoved: function (metaWorkspace, metaWindow) {
@@ -682,6 +683,10 @@ AppGroup.prototype = {
             }
             this._calcWindowNumber(metaWorkspace);
         }
+        let tracker = Cinnamon.WindowTracker.get_default();
+        let app = AppFromWMClass(this.appList._appsys, this.appList.specialApps, metaWindow);;
+        if(app && app.wmClass)
+            this._calcWindowNumber(metaWorkspace);
     },
 
     _windowTitleChanged: function (metaWindow) {
@@ -717,7 +722,7 @@ AppGroup.prototype = {
         if (metaWindow.appears_focused) {
             this.lastFocused = metaWindow;
             this._windowTitleChanged(this.lastFocused);
-            //if (this._applet.sortThumbs == SortThumbs.focused) this.hoverMenu.setMetaWindow(this.lastFocused);
+            if (this._applet.sortThumbs == true) this.hoverMenu.setMetaWindow(this.lastFocused);
             this.rightClickMenu.setMetaWindow(this.lastFocused);
         }
         if (this._applet.settings.getValue("title-display") == TitleDisplay.focused)
@@ -891,7 +896,7 @@ AppList.prototype = {
             if(wmClass) {
                 let id = apps[i].get_id();
                 this.specialApps[id] = { id: id, wmClass: wmClass };
-            }
+            }    
         }
     },
 
@@ -1047,7 +1052,7 @@ MyApplet.prototype = {
         Applet.Applet.prototype._init.call(this, orientation, panel_height, instance_id);
         try {
             this._uuid = metadata.uuid;
-            //this.execInstallLanguage();
+            this.execInstallLanguage();
             Gettext.bindtextdomain(this._uuid, GLib.get_home_dir() + "/.local/share/locale");
             this.settings = new Settings.AppletSettings(this, "WindowListGroup@jake.phy@gmail.com", instance_id);
             this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "show-pinned", "showPinned", null, null);
@@ -1057,14 +1062,14 @@ MyApplet.prototype = {
             this.settings.bindProperty(Settings.BindingDirection.IN, "hover-peek-opacity", "peekOpacity", null, null);
             this.settings.bindProperty(Settings.BindingDirection.IN, "thumbnail-timeout", "thumbTimeout", null, null);
             this.settings.bindProperty(Settings.BindingDirection.IN, "thumbnail-size", "thumbSize", null, null);
-            //this.settings.bindProperty(Settings.BindingDirection.IN, "sort-thumbnails", "sortThumbs", null, null);
+            this.settings.bindProperty(Settings.BindingDirection.IN, "sort-thumbnails", "sortThumbs", null, null);
             this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "vertical-thumbnails", "verticalThumbs", null, null);
             this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "stack-thumbnails", "stackThumbs", null, null);
             this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "show-thumbnails", "showThumbs", null, null);
             this.settings.bindProperty(Settings.BindingDirection.IN, "number-display", "numDisplay", null, null);
             this.settings.bindProperty(Settings.BindingDirection.IN, "title-display", "titleDisplay", null, null);
             this.settings.bindProperty(Settings.BindingDirection.IN, "icon-padding", "iconPadding", null, null);
-            //this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "pinned-apps", "pinnedApps", null, null);
+            this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "pinned-apps", "pinnedApps", null, null);
             this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "pinned-recent", "pinnedRecent", null, null);
             this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "show-recent", "showRecent", null, null);
             this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "appmenu-width", "appMenuWidth", null, null);

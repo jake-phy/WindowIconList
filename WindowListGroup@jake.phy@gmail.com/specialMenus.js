@@ -144,10 +144,6 @@ AppMenuButtonRightClickMenu.prototype = {
 		this.showPinned.connect('toggled', Lang.bind(this, function(item) { this._applet.showPinned = item.state; }));
 		subMenu.addMenuItem(this.showPinned);
 
-		this.groupApps = new SpecialMenuItems.SwitchMenuItem(this, _("Group Apps"), this._applet.groupApps);
-		this.groupApps.connect('toggled', Lang.bind(this, function(item) { this._applet.groupApps = item.state; }));
-		subMenu.addMenuItem(this.groupApps);
-
 		this.showThumbs = new SpecialMenuItems.SwitchMenuItem(this, _("Show Thumbs"), this._applet.showThumbs);
 		this.showThumbs.connect('toggled', Lang.bind(this, function(item) { this._applet.showThumbs = item.state; }));
 		subMenu.addMenuItem(this.showThumbs);
@@ -586,7 +582,7 @@ AppMenuButtonRightClickMenu.prototype = {
         for (let i = 0; i < children.length; i++) {
             let item = children[i];
             //this.box.remove_actor(item.actor);
-			item.destroy();
+			//item.destroy();
         }
 		this.box.destroy();
 		this.actor.destroy();
@@ -776,20 +772,20 @@ PopupMenuAppSwitcherItem.prototype = {
         this.appContainer = new St.BoxLayout({
             style_class: 'switcher-list',
         });
-		this.appContainer.style = "padding: 5px;";
+		//this.appContainer.style = "padding: 5px;";
 		this.appContainer.add_style_class_name('thumbnail-row');
 
         this.appContainer2 = new St.BoxLayout({
             style_class: 'switcher-list',
         });
-		this.appContainer2.style = "padding: 5px;";
+		//this.appContainer2.style = "padding: 5px;";
 		this.appContainer2.add_style_class_name('thumbnail-row');
 		this.appContainer2.hide();
 
         this.appContainer3 = new St.BoxLayout({
             style_class: 'switcher-list',
         });
-		this.appContainer3.style = "padding: 5px;";
+		//this.appContainer3.style = "padding: 5px;";
 		this.appContainer3.add_style_class_name('thumbnail-row');
 		this.appContainer3.hide();
 
@@ -807,7 +803,7 @@ PopupMenuAppSwitcherItem.prototype = {
 	_setVerticalSetting: function() {
 		let vertical = this._applet.settings.getValue("vertical-thumbnails");
 		if(vertical){
-			if(this.box.get_children() > 0) {
+			if(this.box.get_children().length > 0) {
 				this.box.remove_actor(this.appContainer3);
         		this.box.remove_actor(this.appContainer2);
 				this.box.remove_actor(this.appContainer);
@@ -820,7 +816,7 @@ PopupMenuAppSwitcherItem.prototype = {
 				this.box.add_actor(this.appContainer3);
 			}	
 		}else{
-			if(this.box.get_children() > 0) {
+			if(this.box.get_children().length > 0) {
 				this.box.remove_actor(this.appContainer3);
         		this.box.remove_actor(this.appContainer2);
 				this.box.remove_actor(this.appContainer);
@@ -893,7 +889,7 @@ PopupMenuAppSwitcherItem.prototype = {
         // Update appThumbnails to remove old programs
 		this.removeOldWindows(windows);
 		// used to make sure everything is on the stage
-		Mainloop.timeout_add(0, Lang.bind(this, function(){this.setThumbnailIconSize(windows)}));
+		Mainloop.timeout_add(0, Lang.bind(this, function(){this.setStyleOptions(windows)}));
     },
 	addNewWindows: function (windows) {
         let ThumbnailWidth = Math.floor((Main.layoutManager.primaryMonitor.width / 70) * this._applet.thumbSize) + 16;
@@ -942,7 +938,7 @@ PopupMenuAppSwitcherItem.prototype = {
 		actor.show();
 	},
 
-	setThumbnailIconSize: function(windows) {
+	setStyleOptions: function(windows) {
 		    if (this.isFavapp) {
 				this.metaWindowThumbnail.thumbnailIconSize();
 				return;
@@ -953,6 +949,12 @@ PopupMenuAppSwitcherItem.prototype = {
 			        this.appThumbnails[i].thumbnail.thumbnailIconSize();
 				}
 			}
+			let thumbnailTheme = this.appContainer.get_theme_node();
+			let padding = thumbnailTheme.get_horizontal_padding();
+			let thumbnailPadding = ((padding > 1 && padding < 21)? padding : 10);
+			this.appContainer.style = "padding:" + (thumbnailPadding / 2) + "px";
+			this.appContainer2.style = "padding:" + (thumbnailPadding / 2) + "px";
+			this.appContainer3.style = "padding:" + (thumbnailPadding / 2) + "px";
 	},
 
 	removeOldWindows: function(windows) {
@@ -1030,7 +1032,8 @@ WindowThumbnail.prototype = {
         this.isFavapp = parent.isFavapp || false;
         this.wasMinimized = false;
 		this._parent = parent;
-		this._parentContainer = parent._parentContainer
+		this._parentContainer = parent._parentContainer;
+		this.thumbnailPadding = 16;
 
         // Inherit the theme from the alt-tab menu
         this.actor = new St.BoxLayout({
@@ -1123,8 +1126,10 @@ WindowThumbnail.prototype = {
 			this.actor.style = "border-width:2px;padding: 0px;";
 			this._container.style = "width: " + this.ThumbnailWidth + "px";
         } else {
+			// HACK used to make sure everything is on the stage
+			this.actor.style = null;
+			Mainloop.timeout_add(0, Lang.bind(this, function(){this.thumbnailPaddingSize()}));
 			this._refresh();
-			this.actor.style = "border-width:2px;padding: 6px;";
 		}
     },
 
@@ -1144,6 +1149,13 @@ WindowThumbnail.prototype = {
 			let height = this.themeIcon.heigth;
 			this.icon.set_size(width,height);
 		}catch(e){};
+    },
+
+    thumbnailPaddingSize: function () {
+		let thumbnailTheme = this.actor.get_theme_node();	
+		let padding = thumbnailTheme.get_horizontal_padding();
+		this.thumbnailPadding = ((padding > 3 && padding < 21)? padding : 12);
+		this.actor.style = "border-width:2px;padding:" + ((this.thumbnailPadding / 2)) + "px;";
     },
 
     _getThumbnail: function () {
@@ -1195,11 +1207,12 @@ WindowThumbnail.prototype = {
 
     _refresh: function () {
         // Turn favorite tooltip into a normal thumbnail
-        this.ThumbnailHeight = Math.floor(Main.layoutManager.primaryMonitor.height / 70) * this._applet.thumbSize;
-        this.ThumbnailWidth = Math.floor(Main.layoutManager.primaryMonitor.width / 70) * this._applet.thumbSize;
+		let moniter = Main.layoutManager.monitors[this.metaWindow.get_monitor()];
+        this.ThumbnailHeight = Math.floor(moniter.height / 70) * this._applet.thumbSize;
+        this.ThumbnailWidth = Math.floor(moniter.width / 70) * this._applet.thumbSize;
         //this.thumbnailActor.height = this.ThumbnailHeight;
-        //this.thumbnailActor.width = this.ThumbnailWidth;
-		this._container.style = "width: " + Math.floor(this.ThumbnailWidth - 20) + "px";
+        this.thumbnailActor.width = this.ThumbnailWidth;
+		this._container.style = "width: " + Math.floor(this.ThumbnailWidth - 16 ) + "px";
         this.isFavapp = false;
 
         // Replace the old thumbnail
@@ -1207,8 +1220,6 @@ WindowThumbnail.prototype = {
         this._label.text = title;
 		if (this._applet.showThumbs){
 		    this.thumbnail = this._getThumbnail();
-        	this.thumbnail.height = this.ThumbnailHeight;
-        	this.thumbnail.width = this.ThumbnailWidth;
 		    this.thumbnailActor.child = this.thumbnail;
 		} else {
 			this.thumbnailActor.child = null;
