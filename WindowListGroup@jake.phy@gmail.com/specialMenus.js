@@ -1199,8 +1199,14 @@ WindowThumbnail.prototype = {
 		    parent.shouldClose = true;
 		    Mainloop.timeout_add(parent.hoverTime, Lang.bind(parent, parent.hoverClose));
         }else if (event.get_state() & Clutter.ModifierType.BUTTON2_MASK && !this.stopClick) {
+        	this.stopClick = true;
 			this.destroy();
+            this._hoverPeek(OPACITY_OPAQUE, this.metaWindow);
+		    this._parentContainer.shouldOpen = false;
+		    this._parentContainer.shouldClose = true;
+		    Mainloop.timeout_add(3000, Lang.bind(this._parentContainer, this._parentContainer.hoverClose));
             this.metaWindow.delete(global.get_current_time());
+			this._parent.refreshRows();
 		}
         this.stopClick = false;
     },
