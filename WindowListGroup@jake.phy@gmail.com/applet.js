@@ -256,9 +256,7 @@ PinnedFavs.prototype = {
         let old_index = ids.indexOf(appId);
         if (pos > old_index)
             pos = pos - 1;
-        log(ids);
         ids.splice(pos, 0, ids.splice(old_index, 1)[0]);
-        log(ids);
         this._applet.settings.setValue("pinned-apps", ids);
     },
 
@@ -652,7 +650,7 @@ AppGroup.prototype = {
             }
             this._calcWindowNumber(metaWorkspace);
         }
-        if(app && app.wmClass)
+        if(app && app.wmClass && !this.isFavapp)
             this._calcWindowNumber(metaWorkspace);
     },
 
@@ -685,7 +683,7 @@ AppGroup.prototype = {
         }
         let tracker = Cinnamon.WindowTracker.get_default();
         let app = AppFromWMClass(this.appList._appsys, this.appList.specialApps, metaWindow);;
-        if(app && app.wmClass)
+        if(app && app.wmClass && !this.isFavapp)
             this._calcWindowNumber(metaWorkspace);
     },
 
@@ -1052,7 +1050,7 @@ MyApplet.prototype = {
         Applet.Applet.prototype._init.call(this, orientation, panel_height, instance_id);
         try {
             this._uuid = metadata.uuid;
-            this.execInstallLanguage();
+            //this.execInstallLanguage();
             Gettext.bindtextdomain(this._uuid, GLib.get_home_dir() + "/.local/share/locale");
             this.settings = new Settings.AppletSettings(this, "WindowListGroup@jake.phy@gmail.com", instance_id);
             this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "show-pinned", "showPinned", null, null);
@@ -1321,19 +1319,21 @@ MyApplet.prototype = {
 	    let metaWorkspace = global.screen.get_active_workspace();
 	    let metaWindow = null;
 	    metaWorkspace.list_windows().forEach(Lang.bind(this, function (win) {
-	        if(win.appears_focused()){
+	        if(win.appears_focused){
 	            metaWindow = win;
 	        }
 	    }));
 	    //Find the new monitor index.
 	    let monitorIndex = metaWindow.get_monitor();
 	    monitorIndex += modifier;
-	    if(monitorIndex < 0){
-	        monitorIndex = monitors.length;
-	    }else{
-	        monitorIndex = monitorIndex % monitors.length;
-	    }
-	    metaWindow.move_to_monitor(monitorIndex);
+	    if(monitorIndex < 0)
+	        monitorIndex = monitors.length - 1;
+	    else if (monitorIndex > monitors.length - 1)
+	        monitorIndex = 0;
+        log(monitorIndex + "  " + monitors.length);
+        try{
+	        metaWindow.move_to_monitor(monitorIndex);
+        }catch(e){};
 	},
 
     destroy: function () {

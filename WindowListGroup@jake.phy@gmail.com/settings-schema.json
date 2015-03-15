@@ -146,6 +146,12 @@
     "description": "Stack Thumbnails",
     "tooltip": "Stack the Thumbnail Windows if there are to many thumbnails for the screen"
  },
+ "sort-thumbnails" : {
+    "type" : "checkbox",
+    "default" : false,
+    "description": "Sort by last Focused",
+    "tooltip": "Show the last focused first"
+ },
  "onclick-thumbnails" : {
     "type" : "checkbox",
     "default" : false,

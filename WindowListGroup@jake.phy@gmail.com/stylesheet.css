@@ -1,7 +1,6 @@
 /*Thumbnails*/
-/* Use to add extra border around thumbnail.  can be used for aero effect */
+/* Use to add extra border around thumbnail or adjust the distance from the panel.  can be used for aero effect */
 .thumbnail-popup-content {
-	padding: 4px;
 }
 /* Padding can only be set between 1px and 10px other wise it will default to 5px */
 .thumbnail-row {
