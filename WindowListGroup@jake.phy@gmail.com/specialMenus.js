@@ -11,6 +11,7 @@ const St = imports.gi.St;
 const Gtk = imports.gi.Gtk;
 const Gio = imports.gi.Gio;
 const GLib = imports.gi.GLib;
+const Gettext = imports.gettext;
 const Tweener = imports.ui.tweener;
 const Tooltips = imports.ui.tooltips;
 
@@ -28,6 +29,14 @@ const FavType = {
     pinnedApps: 1,
     none: 2
 };
+
+function _(str) {
+   let resultConf = Gettext.dgettext('WindowListGroup@jake.phy@gmail.com', str);
+   if(resultConf != str) {
+      return resultConf;
+   }
+   return Gettext.gettext(str);
+}
 
 function AppMenuButtonRightClickMenu() {
     this._init.apply(this, arguments);

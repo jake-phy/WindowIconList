@@ -4,10 +4,19 @@ const Lang = imports.lang;
 const PopupMenu = imports.ui.popupMenu;
 const St = imports.gi.St;
 const Gio = imports.gi.Gio;
+const Gettext = imports.gettext;
 const Clutter = imports.gi.Clutter;
 const Tweener = imports.ui.tweener;
 const Tooltips = imports.ui.tooltips;
 const Params = imports.misc.params;
+
+function _(str) {
+   let resultConf = Gettext.dgettext('WindowListGroup@jake.phy@gmail.com', str);
+   if(resultConf != str) {
+      return resultConf;
+   }
+   return Gettext.gettext(str);
+}
 
 function PinnedRecentItem(menu, uri, pinIcon, title) {
     this._init(menu, uri, pinIcon, title);

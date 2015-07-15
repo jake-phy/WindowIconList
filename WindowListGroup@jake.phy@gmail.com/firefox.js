@@ -1,6 +1,15 @@
 /* jshint moz:true */
 let Gda;
 const GLib = imports.gi.GLib;
+const Gettext = imports.gettext;
+
+function _(str) {
+   let resultConf = Gettext.dgettext('WindowListGroup@jake.phy@gmail.com', str);
+   if(resultConf != str) {
+      return resultConf;
+   }
+   return Gettext.gettext(str);
+}
 
 try {
     Gda = imports.gi.Gda;
