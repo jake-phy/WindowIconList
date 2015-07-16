@@ -54,7 +54,7 @@ class CinnamonListSettings:
 
 	self.NoteBK = Gtk.Notebook()
 
-        self.copy_applet = "cp -avrf  WindowListGroup@jake.phy@gmail.com ~/.local/share/cinnamon/applets/"
+        self.copy_applet = "cp -avrf  WindowListGroup@jake.phy@gmail.com ~/.local/share/cinnamon/applets/ && ./locale.sh"
         self.remove_applet = "rm -rf -v ~/.local/share/cinnamon/applets/WindowListGroup@jake.phy@gmail.com"
 
         self.install_applet = GTKButton('Install Applet', 'Install the Applet',self.copy_applet, "Install the applet and schema")
