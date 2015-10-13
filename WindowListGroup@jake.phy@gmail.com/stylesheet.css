@@ -9,3 +9,12 @@
 .label-width{
 	width: 1px;
 }
+
+.window-list-item-label {
+  min-width: 0;
+  font-weight: normal ;
+}
+
+.panel-launcher .window-list-item-label {
+  display: none;
+}

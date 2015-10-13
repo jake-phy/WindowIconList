@@ -76,9 +76,9 @@ IconLabelButton.prototype = {
         this._container.connect('allocate', Lang.bind(this, this._allocate));
 
         //this._icon.set_child(parent.icon);
-        this._label = new St.Label();
+        this._label = new St.Label( { style_class: 'window-list-item-label' } );
         this._numLabel = new St.Label({
-            style_class: 'window-list-item-label'
+            style_class: 'window-list-item-counter'
         });
         this._numLabel.style = 'text-shadow: black 1px 0px 2px';
 
@@ -152,7 +152,7 @@ IconLabelButton.prototype = {
         [minWidth, minHeight, naturalWidth, naturalHeight] = this._label.get_preferred_size();
         [childBox.y1, childBox.y2] = center(allocHeight, naturalHeight);
         if (direction == Clutter.TextDirection.LTR) {
-            childBox.x1 = iconWidth;
+            childBox.x1 = iconWidth +4;
             childBox.x2 = Math.min(allocWidth, MAX_BUTTON_WIDTH);
         } else {
             childBox.x2 = Math.min(allocWidth - iconWidth, MAX_BUTTON_WIDTH);
@@ -224,7 +224,7 @@ AppButton.prototype = {
     __proto__: IconLabelButton.prototype,
 
     _init: function (parent) {
-        this.icon_size = Math.floor(parent._applet._panelHeight - 4);
+        this.icon_size = Math.floor(parent._applet._panelHeight - 12);
         this.app = parent.app;
         this.icon = this.app.create_icon_texture(this.icon_size);
         this._applet = parent._applet;
@@ -284,6 +284,7 @@ AppButton.prototype = {
         if (isFav) {
             this.setStyle("panel-launcher");
             this._label.text = '';
+            this._label.set_width(0);
         } else {
             this.setStyle('window-list-item-box');
         }
@@ -329,7 +330,7 @@ WindowButton.prototype = {
             let tracker = Cinnamom.WindowTracker.get_default();
             this.app = tracker.get_window_app(metaWindow);
         }
-        this.icon_size = Math.floor(this._applet._panelHeight - 4);
+        this.icon_size = Math.floor(this._applet._panelHeight - 12);
         this.icon = this.app.create_icon_texture(this.icon_size);
         IconLabelButton.prototype._init.call(this, this);
         this.signals = [];
