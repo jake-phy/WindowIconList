@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-01-14 14:51+0800\n"
+"POT-Creation-Date: 2015-07-16 23:04+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,80 +17,107 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Language: \n"
 
-#: specialMenus.js:67
+#: specialMenus.js:74
+#, c-format
+msgid "Move to monitor %d"
+msgstr ""
+
+#: specialMenus.js:91
 msgid "Close All"
 msgstr ""
 
-#: specialMenus.js:70
+#: specialMenus.js:94
 msgid "Close"
 msgstr ""
 
-#: specialMenus.js:73 specialMenus.js:391
+#: specialMenus.js:97 specialMenus.js:492
 msgid "Minimize"
 msgstr ""
 
-#: specialMenus.js:76 specialMenus.js:388
+#: specialMenus.js:100 specialMenus.js:489
 msgid "Maximize"
 msgstr ""
 
-#: specialMenus.js:79
+#: specialMenus.js:103
 msgid "Move to left workspace"
 msgstr ""
 
-#: specialMenus.js:82
+#: specialMenus.js:106
 msgid "Move to right workspace"
 msgstr ""
 
-#: specialMenus.js:85 specialMenus.js:378
+#: specialMenus.js:109 specialMenus.js:479
 msgid "Visible on all workspaces"
 msgstr ""
 
-#: specialMenus.js:116
+#: specialMenus.js:134
+msgid "Unpin from Panel"
+msgstr ""
+
+#: specialMenus.js:137
+msgid "Pin to Panel"
+msgstr ""
+
+#: specialMenus.js:146
 msgid "Settings"
 msgstr ""
 
-#: specialMenus.js:119
+#: specialMenus.js:149
 msgid "ReArrange"
 msgstr ""
 
-#: specialMenus.js:123
+#: specialMenus.js:153
 msgid "Show Pinned"
 msgstr ""
 
-#: specialMenus.js:127
-msgid "Group Apps"
-msgstr ""
-
-#: specialMenus.js:131
+#: specialMenus.js:157
 msgid "Show Thumbs"
 msgstr ""
 
-#: specialMenus.js:135
+#: specialMenus.js:161
 msgid "Stack Thumbs"
 msgstr ""
 
-#: specialMenus.js:139
+#: specialMenus.js:165
 msgid "Hover to Peek"
 msgstr ""
 
-#: specialMenus.js:143
+#. WindowListGroup@jake.phy@gmail.com->settings-schema.json->show-
+#. recent->description
+#: specialMenus.js:169
 msgid "Show Recent"
 msgstr ""
 
-#: specialMenus.js:147
+#: specialMenus.js:173
 msgid "Vertical Thumbs"
 msgstr ""
 
-#: specialMenus.js:374
+#: specialMenus.js:177
+msgid "   Go to Settings"
+msgstr ""
+
+#: specialMenus.js:263
+msgid "Install Gda"
+msgstr ""
+
+#: specialMenus.js:475
 msgid "Only on this workspace"
 msgstr ""
 
-#: specialMenus.js:386
+#: specialMenus.js:487
 msgid "Unmaximize"
 msgstr ""
 
-#: specialMenus.js:390
+#: specialMenus.js:491
 msgid "Restore"
+msgstr ""
+
+#. WindowListGroup@jake.phy@gmail.com->metadata.json->description
+msgid "Window List with App Grouping an Window Thumbnails"
+msgstr ""
+
+#. WindowListGroup@jake.phy@gmail.com->metadata.json->name
+msgid "Window List With App Grouping"
 msgstr ""
 
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->thumbnail-
@@ -98,10 +125,8 @@ msgstr ""
 msgid "Thumbnail Size:"
 msgstr ""
 
-#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->thumbnail-
 #. size->tooltip
-#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->hover-peek-
 #. opacity->tooltip
 msgid "Opacity of the windows on peek."
@@ -114,7 +139,7 @@ msgstr ""
 
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->closeall-menu-
 #. item->description
-msgid "Close All menu item"
+msgid "Close All Menu Items"
 msgstr ""
 
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->closeall-menu-
@@ -142,10 +167,8 @@ msgstr ""
 msgid "The animation time for the windows on hover peek"
 msgstr ""
 
-#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->hover-peek-
 #. time->units
-#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->thumbnail-
 #. timeout->units
 msgid "milliseconds"
@@ -153,7 +176,7 @@ msgstr ""
 
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->appmenu-
 #. number->description
-msgid "Number of menu Items:"
+msgid "Number of Menu Items:"
 msgstr ""
 
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->appmenu-
@@ -163,6 +186,8 @@ msgstr ""
 
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->appmenu-
 #. number->units
+#. WindowListGroup@jake.phy@gmail.com->settings-schema.json->appmenu-
+#. width->units
 msgid "number"
 msgstr ""
 
@@ -178,10 +203,8 @@ msgid ""
 "diplay app name, none: don't display anything"
 msgstr ""
 
-#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->title-
 #. display->options
-#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->number-
 #. display->options
 msgid "none"
@@ -205,6 +228,16 @@ msgstr ""
 #. WindowListGroup@jake.phy@gmail.com->settings-
 #. schema.json->AppMenu->description
 msgid "AppMenu Settings"
+msgstr ""
+
+#. WindowListGroup@jake.phy@gmail.com->settings-schema.json->sort-
+#. thumbnails->description
+msgid "Sort by last Focused"
+msgstr ""
+
+#. WindowListGroup@jake.phy@gmail.com->settings-schema.json->sort-
+#. thumbnails->tooltip
+msgid "Show the last focused first"
 msgstr ""
 
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->hover-peek-
@@ -252,21 +285,19 @@ msgstr ""
 msgid "Show the pinned apps or just show the open windows"
 msgstr ""
 
-#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
-#. WindowListGroup@jake.phy@gmail.com->settings-
-#. schema.json->Space2->description
-#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
-#. WindowListGroup@jake.phy@gmail.com->settings-
-#. schema.json->Space3->description
-#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
-#. WindowListGroup@jake.phy@gmail.com->settings-
-#. schema.json->Space1->description
-msgid " "
-msgstr ""
-
 #. WindowListGroup@jake.phy@gmail.com->settings-
 #. schema.json->WindowList->description
 msgid "Window List Settings"
+msgstr ""
+
+#. WindowListGroup@jake.phy@gmail.com->settings-schema.json->appmenu-
+#. width->description
+msgid "Appmenu Width"
+msgstr ""
+
+#. WindowListGroup@jake.phy@gmail.com->settings-schema.json->appmenu-
+#. width->tooltip
+msgid "Set the width of the AppMenu."
 msgstr ""
 
 #. WindowListGroup@jake.phy@gmail.com->settings-
@@ -274,22 +305,9 @@ msgstr ""
 msgid "Thumbnail Settings"
 msgstr ""
 
-#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
-#. WindowListGroup@jake.phy@gmail.com->settings-schema.json->show-
-#. recent->description
-#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
-#. WindowListGroup@jake.phy@gmail.com->settings-schema.json->onclick-
-#. thumbnails->description
-msgid "Open Thumbnails OnClick"
-msgstr ""
-
-#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->show-
 #. recent->tooltip
-#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
-#. WindowListGroup@jake.phy@gmail.com->settings-schema.json->onclick-
-#. thumbnails->tooltip
-msgid "Open the thumbnails on click, if there is more than 1 windows open."
+msgid "Show Recent Menu Items"
 msgstr ""
 
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->vertical-
@@ -351,6 +369,16 @@ msgstr ""
 msgid "normal"
 msgstr ""
 
+#. WindowListGroup@jake.phy@gmail.com->settings-schema.json->onclick-
+#. thumbnails->description
+msgid "Open Thumbnails OnClick"
+msgstr ""
+
+#. WindowListGroup@jake.phy@gmail.com->settings-schema.json->onclick-
+#. thumbnails->tooltip
+msgid "Open the thumbnails on click, if there is more than 1 windows open."
+msgstr ""
+
 #. WindowListGroup@jake.phy@gmail.com->settings-
 #. schema.json->HoverPeek->description
 msgid "Hover Peek Settings"
@@ -381,16 +409,6 @@ msgstr ""
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->firefox-
 #. menu->options
 msgid "Recent History"
-msgstr ""
-
-#. WindowListGroup@jake.phy@gmail.com->settings-schema.json->group-
-#. apps->description
-msgid "Group apps into single icon"
-msgstr ""
-
-#. WindowListGroup@jake.phy@gmail.com->settings-schema.json->group-
-#. apps->tooltip
-msgid "Group the open app instances into single icon"
 msgstr ""
 
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->arrange-

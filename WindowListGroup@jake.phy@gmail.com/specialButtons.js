@@ -236,6 +236,8 @@ AppButton.prototype = {
         let tracker = Cinnamon.WindowTracker.get_default();
         this._trackerSignal = tracker.connect('notify::focus-app', Lang.bind(this, this._onFocusChange));
         this._attention = global.settings.connect('changed::window-list-applet-alert', Lang.bind(this, this._onAttentionRequest));
+        this._onAttentionRequest();
+        this._needsAttention = false;
     },
 
     _onFocusChange: function () {
@@ -247,6 +249,7 @@ AppButton.prototype = {
             this.actor.add_style_pseudo_class('focus');
             this.actor.remove_style_class_name("window-list-item-demands-attention");
             this.actor.remove_style_class_name("window-list-item-demands-attention-top");
+            this._needsAttention = false;
         } else {
             this.actor.remove_style_pseudo_class('focus');
         }
@@ -283,10 +286,16 @@ AppButton.prototype = {
     _isFavorite: function (isFav) {
         if (isFav) {
             this.setStyle("panel-launcher");
+            this.actor.add_style_class_name('app-is-favorite');
             this._label.text = '';
             this._label.set_width(0);
         } else {
             this.setStyle('window-list-item-box');
+            if (this._applet.orientation == St.Side.TOP)
+                this.actor.add_style_class_name('window-list-item-box-top');
+            else
+                this.actor.add_style_class_name('window-list-item-box-bottom');
+            this.actor.add_style_class_name('app-list-item-box');
         }
     },
 

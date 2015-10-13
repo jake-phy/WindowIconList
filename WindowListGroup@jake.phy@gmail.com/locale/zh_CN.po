@@ -7,8 +7,13 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Window List Group 2.8\n"
 "Report-Msgid-Bugs-To: \n"
+<<<<<<< HEAD
 "POT-Creation-Date: 2015-03-03 14:10+0800\n"
 "PO-Revision-Date: 2015-03-03 14:08+0800\n"
+=======
+"POT-Creation-Date: 2015-07-16 23:04+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+>>>>>>> d356b1d072ac8bbc0510c54c664830f25da5b6ec
 "Last-Translator: wzhy90 <wzhy90@gmail.com>\n"
 "Language-Team: wzhy90 <wzhy90@gmail.com>\n"
 "Language: zh\n"
@@ -18,6 +23,7 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 "X-Generator: Poedit 1.5.4\n"
 
+<<<<<<< HEAD
 #: specialMenus.js:70
 msgid "Close All"
 msgstr "全部关闭"
@@ -110,18 +116,118 @@ msgid "Unmaximize"
 msgstr "取消最大化"
 
 #: specialMenus.js:440
+=======
+#: specialMenus.js:74
+#, c-format
+msgid "Move to monitor %d"
+msgstr "移动至%d监视器"
+
+#: specialMenus.js:91
+msgid "Close All"
+msgstr "全部关闭"
+
+#: specialMenus.js:94
+msgid "Close"
+msgstr "关闭"
+
+#: specialMenus.js:97 specialMenus.js:492
+msgid "Minimize"
+msgstr "最小化"
+
+#: specialMenus.js:100 specialMenus.js:489
+msgid "Maximize"
+msgstr "最大化"
+
+#: specialMenus.js:103
+msgid "Move to left workspace"
+msgstr "移动至左工作区"
+
+#: specialMenus.js:106
+msgid "Move to right workspace"
+msgstr "移动至右工作区"
+
+#: specialMenus.js:109 specialMenus.js:479
+msgid "Visible on all workspaces"
+msgstr "所有工作区可见"
+
+#: specialMenus.js:134
+msgid "Unpin from Panel"
+msgstr "从面板删除"
+
+#: specialMenus.js:137
+msgid "Pin to Panel"
+msgstr "固定到面板"
+
+#: specialMenus.js:146
+msgid "Settings"
+msgstr "设置"
+
+#: specialMenus.js:149
+msgid "ReArrange"
+msgstr "重新排列"
+
+#: specialMenus.js:153
+msgid "Show Pinned"
+msgstr "显示已固定"
+
+#: specialMenus.js:157
+msgid "Show Thumbs"
+msgstr "显示缩略图"
+
+#: specialMenus.js:161
+msgid "Stack Thumbs"
+msgstr "折叠缩略图"
+
+#: specialMenus.js:165
+msgid "Hover to Peek"
+msgstr "悬浮预览"
+
+#. WindowListGroup@jake.phy@gmail.com->settings-schema.json->show-
+#. recent->description
+#: specialMenus.js:169
+msgid "Show Recent"
+msgstr "显示最近"
+
+#: specialMenus.js:173
+msgid "Vertical Thumbs"
+msgstr "垂直排列"
+
+#: specialMenus.js:177
+msgid "   Go to Settings"
+msgstr "    跳转至设置"
+
+#: specialMenus.js:263
+msgid "Install Gda"
+msgstr "安装 Gda"
+
+#: specialMenus.js:475
+msgid "Only on this workspace"
+msgstr "只在此工作区"
+
+#: specialMenus.js:487
+msgid "Unmaximize"
+msgstr "取消最大化"
+
+#: specialMenus.js:491
+>>>>>>> d356b1d072ac8bbc0510c54c664830f25da5b6ec
 msgid "Restore"
 msgstr "恢复"
+
+#. WindowListGroup@jake.phy@gmail.com->metadata.json->description
+msgid "Window List with App Grouping an Window Thumbnails"
+msgstr "窗口列表，应用分组和窗口缩略图"
+
+#. WindowListGroup@jake.phy@gmail.com->metadata.json->name
+msgid "Window List With App Grouping"
+msgstr "Window List With App Grouping"
 
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->thumbnail-
 #. size->description
 msgid "Thumbnail Size:"
 msgstr "缩略图大小:"
 
-#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->thumbnail-
 #. size->tooltip
-#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->hover-peek-
 #. opacity->tooltip
 msgid "Opacity of the windows on peek."
@@ -135,12 +241,16 @@ msgstr "大小"
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->closeall-menu-
 #. item->description
 msgid "Close All Menu Items"
+<<<<<<< HEAD
 msgstr "关闭所有菜单项"
+=======
+msgstr "显示全部关闭"
+>>>>>>> d356b1d072ac8bbc0510c54c664830f25da5b6ec
 
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->closeall-menu-
 #. item->tooltip
 msgid "Show a 'Close All' menu item to close all windows for an app."
-msgstr "显示'全部关闭'菜单以关闭某程序的所有窗口"
+msgstr "显示'全部关闭'菜单以关闭某应用的所有窗口"
 
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->show-
 #. thumbnails->description
@@ -162,10 +272,8 @@ msgstr "窗口渐变:"
 msgid "The animation time for the windows on hover peek"
 msgstr "窗口悬浮预览渐变时长"
 
-#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->hover-peek-
 #. time->units
-#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->thumbnail-
 #. timeout->units
 msgid "milliseconds"
@@ -179,12 +287,15 @@ msgstr "菜单项数量:"
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->appmenu-
 #. number->tooltip
 msgid "The number of AppMenu Items"
-msgstr "程序菜单项目数量"
+msgstr "应用菜单项目数量"
 
 #. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->appmenu-
 #. number->units
+<<<<<<< HEAD
 #. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
+=======
+>>>>>>> d356b1d072ac8bbc0510c54c664830f25da5b6ec
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->appmenu-
 #. width->units
 msgid "number"
@@ -201,13 +312,11 @@ msgid ""
 "focused: show focused window title, title: display the window title, app: "
 "diplay app name, none: don't display anything"
 msgstr ""
-"聚焦：集中展示窗口标题，标题：显示的窗口标题，程序：显示应用程序名称，无：不"
+"聚焦：集中展示窗口标题，标题：显示的窗口标题，应用：显示应用应用名称，无：不"
 "显示任何内容"
 
-#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->title-
 #. display->options
-#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->number-
 #. display->options
 msgid "none"
@@ -221,7 +330,7 @@ msgstr "聚焦"
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->title-
 #. display->options
 msgid "app"
-msgstr "程序"
+msgstr "应用"
 
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->title-
 #. display->options
@@ -231,7 +340,17 @@ msgstr "标题"
 #. WindowListGroup@jake.phy@gmail.com->settings-
 #. schema.json->AppMenu->description
 msgid "AppMenu Settings"
-msgstr "程序菜单设置"
+msgstr "应用菜单设置"
+
+#. WindowListGroup@jake.phy@gmail.com->settings-schema.json->sort-
+#. thumbnails->description
+msgid "Sort by last Focused"
+msgstr "排序缩略图"
+
+#. WindowListGroup@jake.phy@gmail.com->settings-schema.json->sort-
+#. thumbnails->tooltip
+msgid "Show the last focused first"
+msgstr "优先显示最后激活的窗口"
 
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->hover-peek-
 #. opacity->description
@@ -271,24 +390,12 @@ msgstr "像素"
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->show-
 #. pinned->description
 msgid "Show pinned apps"
-msgstr "显示已固定程序"
+msgstr "显示已固定应用"
 
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->show-
 #. pinned->tooltip
 msgid "Show the pinned apps or just show the open windows"
-msgstr "显示已固定程序或只显示已打开程序"
-
-#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
-#. WindowListGroup@jake.phy@gmail.com->settings-
-#. schema.json->Space2->description
-#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
-#. WindowListGroup@jake.phy@gmail.com->settings-
-#. schema.json->Space3->description
-#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
-#. WindowListGroup@jake.phy@gmail.com->settings-
-#. schema.json->Space1->description
-msgid " "
-msgstr " "
+msgstr "显示已固定应用或只显示已打开应用"
 
 #. WindowListGroup@jake.phy@gmail.com->settings-
 #. schema.json->WindowList->description
@@ -298,12 +405,20 @@ msgstr "窗口列表设置"
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->appmenu-
 #. width->description
 msgid "Appmenu Width"
+<<<<<<< HEAD
 msgstr "Appmenu宽度"
+=======
+msgstr "应用菜单宽度"
+>>>>>>> d356b1d072ac8bbc0510c54c664830f25da5b6ec
 
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->appmenu-
 #. width->tooltip
 msgid "Set the width of the AppMenu."
+<<<<<<< HEAD
 msgstr "设置AppMenu宽度"
+=======
+msgstr "设置应用菜单宽度"
+>>>>>>> d356b1d072ac8bbc0510c54c664830f25da5b6ec
 
 #. WindowListGroup@jake.phy@gmail.com->settings-
 #. schema.json->Thumbnails->description
@@ -313,7 +428,11 @@ msgstr "缩略图设置"
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->show-
 #. recent->tooltip
 msgid "Show Recent Menu Items"
+<<<<<<< HEAD
 msgstr "显示最近文件项"
+=======
+msgstr "显示最近文档"
+>>>>>>> d356b1d072ac8bbc0510c54c664830f25da5b6ec
 
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->vertical-
 #. thumbnails->description
@@ -420,22 +539,12 @@ msgstr "访问最多"
 msgid "Recent History"
 msgstr "最近历史"
 
-#. WindowListGroup@jake.phy@gmail.com->settings-schema.json->group-
-#. apps->description
-msgid "Group apps into single icon"
-msgstr "集成程序到单个图标"
-
-#. WindowListGroup@jake.phy@gmail.com->settings-schema.json->group-
-#. apps->tooltip
-msgid "Group the open app instances into single icon"
-msgstr "集成相同已打开程序到单个图标"
-
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->arrange-
 #. pinnedApps->description
 msgid "Arrange pinned apps"
-msgstr "排列已固定程序"
+msgstr "排列已固定应用"
 
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->arrange-
 #. pinnedApps->tooltip
 msgid "Arrange pinned apps into a different order"
-msgstr "以不同顺序排列已固定程序"
+msgstr "以不同顺序排列已固定应用"
