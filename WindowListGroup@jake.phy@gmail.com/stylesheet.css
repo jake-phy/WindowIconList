@@ -77,12 +77,3 @@ use to override window-list-item-box */
 /* use to override panel-launcher */
 .app-is-favorite {
 }
-
-.window-list-item-label {
-  min-width: 0;
-  font-weight: normal ;
-}
-
-.panel-launcher .window-list-item-label {
-  display: none;
-}
