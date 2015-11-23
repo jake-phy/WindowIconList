@@ -341,7 +341,7 @@ AppGroup.prototype = {
 
         this.myactor.add(this._appButton.actor);
 
-        this._appButton.actor.connect('button-release-event', Lang.bind(this, this._onAppButtonRelease));
+        this._appButton.actor.connect('button-press-event', Lang.bind(this, this._onAppButtonRelease));
         //global.screen.connect('event', Lang.bind(this, this._onAppKeyPress));
         //        global.screen.connect('key-release-event', Lang.bind(this, this._onAppKeyReleased));
         // Set up the right click menu for this._appButton
@@ -490,36 +490,39 @@ AppGroup.prototype = {
     },
 
     _onAppButtonRelease: function (actor, event) {
-        if (event.get_state() & Clutter.ModifierType.BUTTON1_MASK && this.isFavapp || event.get_state() & Clutter.ModifierType.SHIFT_MASK && event.get_state() & Clutter.ModifierType.BUTTON1_MASK) {
+	
+// 	    global.log(event.get_button());
+	if ((event.get_button() == 0x01) && this.isFavapp) {
+// 		global.log('create window'); 
             this.app.open_new_window(-1);
             this._animate();
             return;
         }
-
+	
         let windowNum = this.app.get_windows().filter(function (win) {
             let workspaces = [global.screen.get_workspace_by_index(i) for each(i in range(global.screen.n_workspaces))];
             for (let i = 0; i < workspaces.length; i++) {
                 if (win.get_workspace() == workspaces[i])
                     return workspaces[i];
-            }
+		}
             return false;
         }).length;
 
         if (!this.lastFocused) return;
 
-        if (event.get_state() & Clutter.ModifierType.BUTTON2_MASK && !this.isFavapp) {
+        if ((event.get_button() == 0x02) && !this.isFavapp) {
             this.app.open_new_window(-1);
 
-        } else if (event.get_state() & Clutter.ModifierType.BUTTON1_MASK) {
+        } else if (event.get_button() == 0x01) {
             if (this._applet.onclickThumbs && windowNum > 1) {
                 this.hoverMenu.shouldOpen = true;
                 this.hoverMenu.shouldClose = false;
                 this.hoverMenu.hoverOpen();
             } else
-                this._windowHandle(false);
+		  this._windowHandle(false);
 
-        }
-
+	    }
+               
     },
 
     _newAppKeyNumber: function (number) {   
