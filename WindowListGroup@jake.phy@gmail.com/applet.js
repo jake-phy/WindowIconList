@@ -775,9 +775,7 @@ AppGroup.prototype = {
             throw 'Error: got a _calcWindowNumber callback but this._appButton is undefined';
         }
 
-        let windowNum = this.app.get_windows().filter(function (win) {
-            return win.get_workspace() == metaWorkspace && Main.isInteresting(win);
-        }).length;
+        let windowNum = this.appList._getNumberOfAppWindowsInWorkspace(this.app, metaWorkspace);
         let numDisplay = this._applet.settings.getValue("number-display");
         this._appButton._numLabel.text = windowNum.toString();
         if (numDisplay == NumberDisplay.smart) {
@@ -963,6 +961,14 @@ AppList.prototype = {
         let numberOfwindows = this._getNumberOfAppWindowsInWorkspace(app, this.metaWorkspace);
         if (numberOfwindows == 0) {
             this._removeApp(app);
+            this._calcAllWindowNumbers();
+        }
+    },
+    
+    _calcAllWindowNumbers: function(){
+        for(let l in this._appList) {
+            let list = this._appList[l];
+            list.appGroup._calcWindowNumber(this.metaWorkspace);
         }
     },
 
@@ -994,7 +1000,7 @@ AppList.prototype = {
             appGroup.appGroup.destroy();
             Mainloop.timeout_add(15, Lang.bind(this, function () {
                 this._refreshApps();
-                this._refreshAppGroupNumber();
+                this._refreshAppGroupNumber(); 
             }));
         }
 
