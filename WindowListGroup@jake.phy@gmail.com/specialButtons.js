@@ -241,7 +241,7 @@ AppButton.prototype = {
 
         let tracker = Cinnamon.WindowTracker.get_default();
         this._trackerSignal = tracker.connect('notify::focus-app', Lang.bind(this, this._onFocusChange));
-        this._attention = global.settings.connect('changed::window-list-applet-alert', Lang.bind(this, this._onAttentionRequest));
+        //this._attention = global.settings.connect('changed::window-list-applet-alert', Lang.bind(this, this._onAttentionRequest));
         this._onAttentionRequest();
         this._needsAttention = false;
     },
@@ -263,7 +263,7 @@ AppButton.prototype = {
 
     _onAttentionRequest: function () {
         if (this.isFavapp) return false;
-        let active = global.settings.get_boolean('window-list-applet-alert');
+        let active = false;//global.settings.get_boolean('window-list-applet-alert');
         if (active) {
             this._urgent_signal = global.display.connect('window-marked-urgent', Lang.bind(this, this._onWindowDemandsAttention));
         } else {
@@ -355,7 +355,7 @@ WindowButton.prototype = {
         if (this.metaWindow) {
             this.signals.push(this.metaWindow.connect('notify::appears-focused', Lang.bind(this, this._onFocusChange)));
             this.signals.push(this.metaWindow.connect('notify::title', Lang.bind(this, this._onTitleChange)));
-            this._attention = global.settings.connect('changed::window-list-applet-alert', Lang.bind(this, this._onAttentionRequest));
+            //this._attention = global.settings.connect('changed::window-list-applet-alert', Lang.bind(this, this._onAttentionRequest));
             this._applet.settings.connect("changed::title-display", Lang.bind(this, function () {
                 this._onTitleChange();
             }));
@@ -384,7 +384,7 @@ WindowButton.prototype = {
 
     _onAttentionRequest: function () {
         if (this.isFavapp) return true;
-        let active = global.settings.get_boolean('window-list-applet-alert');
+        let active = false;//global.settings.get_boolean('window-list-applet-alert');
         if (active) {
             this._urgent_signal = global.display.connect('window-marked-urgent', Lang.bind(this, this._onWindowDemandsAttention));
         } else {

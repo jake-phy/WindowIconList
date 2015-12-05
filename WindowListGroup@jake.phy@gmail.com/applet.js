@@ -853,6 +853,7 @@ AppList.prototype = {
         this.registeredApps = this._getSpecialApps();
         // Connect all the signals
         this._setSignals();
+        this._refreshList();
     },
 
     on_panel_edit_mode_changed: function () {
