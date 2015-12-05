@@ -1070,6 +1070,9 @@ MyApplet.prototype = {
 
     _init: function (metadata, orientation, panel_height, instance_id) {
         Applet.Applet.prototype._init.call(this, orientation, panel_height, instance_id);
+        this.actor.set_track_hover(false);
+        this.orientation = orientation;
+        this.dragInProgress = false;
         try {
             this._uuid = metadata.uuid;
             //this.execInstallLanguage();
@@ -1096,14 +1099,10 @@ MyApplet.prototype = {
             this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "appmenu-width", "appMenuWidth", null, null);
             this.settings.bindProperty(Settings.BindingDirection.IN, "firefox-menu", "firefoxMenu", null, null);
             this.settings.bindProperty(Settings.BindingDirection.IN, "appmenu-number", "appMenuNum", null, null);
-            this.orientation = orientation;
-            this.dragInProgress = false;
 
             this._box = new St.Bin();
 
             this.actor.add(this._box);
-            this.actor.reactive = global.settings.get_boolean("panel-edit-mode");
-
 
             if (orientation == St.Side.TOP) {
                 this.actor.style = 'margin-top: 0px; padding-top: 0px;';

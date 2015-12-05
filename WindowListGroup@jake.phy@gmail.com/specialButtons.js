@@ -50,6 +50,7 @@ function IconLabelButton() {
 IconLabelButton.prototype = {
     _init: function (parent) {
         if (parent.icon === null) throw 'IconLabelButton icon argument must be non-null';
+        this._parent = parent;
         this._applet = parent._applet;
         this._icon = parent.icon;
         this.actor = new St.Bin({
@@ -139,7 +140,10 @@ IconLabelButton.prototype = {
         // The label text is starts in the center of the icon, so we should allocate the space
         // needed for the icon plus the space needed for(label - icon/2)
         alloc.min_size = iconMinSize;
-        alloc.natural_size = Math.min(iconNaturalSize + Math.max(0, labelNaturalSize), MAX_BUTTON_WIDTH);
+        if(this._applet.titleDisplay == 3 && !this._parent.isFavapp)
+            alloc.natural_size = MAX_BUTTON_WIDTH;
+        else
+            alloc.natural_size = Math.min(iconNaturalSize + Math.max(0, labelNaturalSize), MAX_BUTTON_WIDTH);
     },
 
     _getPreferredHeight: function (actor, forWidth, alloc) {
@@ -295,7 +299,7 @@ AppButton.prototype = {
             let window = windows[w].win;
             if (window.minimized)
                 continue;
-                
+
             if (window.has_focus())
                 return true;
 
@@ -336,6 +340,7 @@ AppButton.prototype = {
     },
 
     _isFavorite: function (isFav) {
+        this.isFavapp = isFav;
         if (isFav) {
             this.setStyle("panel-launcher app-is-favorite");
             this._label.text = '';
