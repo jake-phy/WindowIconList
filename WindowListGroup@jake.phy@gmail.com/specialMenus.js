@@ -876,17 +876,17 @@ PopupMenuAppSwitcherItem.prototype = {
     },
 
 	getMetaWindows: function() {
-        let metaWorkspace = null;
-        if (this.metaWindow) metaWorkspace = this.metaWindow.get_workspace();
+        if (this.metaWindow) this.metaWorkspace = this.metaWindow.get_workspace();
+        else if (!this.metaWorkspace) return {};
 		let windows;
         if(this.app.wmClass && metaWorkspace)
-            windows = metaWorkspace.list_windows().filter(Lang.bind(this, function (win) {
+            windows = this.metaWorkspace.list_windows().filter(Lang.bind(this, function (win) {
                 return this.app.wmClass == win.get_wm_class_instance();
 	        })).reverse();
         else
 			windows = this.app.get_windows().filter(Lang.bind(this, function (win) {
 		        //let isDifferent = (win != this.metaWindow);
-		        let isSameWorkspace = (win.get_workspace() == metaWorkspace) && Main.isInteresting(win);
+		        let isSameWorkspace = (win.get_workspace() == this.metaWorkspace) && Main.isInteresting(win);
 		        return isSameWorkspace;
 		    })).reverse();
 		return windows;
@@ -895,6 +895,9 @@ PopupMenuAppSwitcherItem.prototype = {
     _refresh: function () {
         // Check to see if this.metaWindow has changed.  If so, we need to recreate
         // our thumbnail, etc.
+        // Get a list of all windows of our app that are running in the current workspace
+        let windows = this.getMetaWindows();
+        
 		if(this.metaWindowThumbnail && this.metaWindowThumbnail.needs_refresh())
 			this.metaWindowThumbnail = null;
         if (this.metaWindowThumbnail && this.metaWindowThumbnail.metaWindow == this.metaWindow) {
@@ -908,12 +911,11 @@ PopupMenuAppSwitcherItem.prototype = {
                 this.metaWindowThumbnail = new WindowThumbnail(this, this.metaWindow);
                 this.appContainer.insert_actor(this.metaWindowThumbnail.actor, 0);
         		Mainloop.timeout_add(0, Lang.bind(this, function(){this.setStyleOptions(null)}));
+		        // Update appThumbnails to remove old programs
+				this.removeOldWindows(windows);
 				return;
             }
         }
-
-        // Get a list of all windows of our app that are running in the current workspace
-        let windows = this.getMetaWindows();
         // Update appThumbnails to include new programs
 		this.addNewWindows(windows);
         // Update appThumbnails to remove old programs
