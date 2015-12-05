@@ -27,6 +27,7 @@ do
  filebase=$(basename "$f")
  filename="${filebase%.*}"
  msgfmt -cv -o "./mo/$filename.mo" "./$filebase"
+ cp "./mo/$filename.mo" "$HOME/.local/share/locale/$filename/LC_MESSAGES/WindowListGroup@jake.phy@gmail.com.mo"
  echo "Generate new languages file: $filename.mo."
 done
 echo "All new .mo languages was generate successfully."

@@ -50,12 +50,6 @@
     "description": "Arrange pinned apps",
     "tooltip": "Arrange pinned apps into a different order"
  },
- "group-apps" : {
-    "type" : "checkbox",
-    "default" : true,
-    "description": "Group apps into single icon",
-    "tooltip": "Group the open app instances into single icon"
- },
  "icon-padding" : {
     "type": "spinbutton",
     "default" : 5,
@@ -154,9 +148,9 @@
  },
  "sort-thumbnails" : {
     "type" : "checkbox",
-    "default" : true,
-    "description": "Sort by Focused",
-    "tooltip": "Show the Thumbnail by Last Focused"
+    "default" : false,
+    "description": "Sort by last Focused",
+    "tooltip": "Show the last focused first"
  },
  "onclick-thumbnails" : {
     "type" : "checkbox",

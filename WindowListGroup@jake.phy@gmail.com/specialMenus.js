@@ -11,6 +11,7 @@ const St = imports.gi.St;
 const Gtk = imports.gi.Gtk;
 const Gio = imports.gi.Gio;
 const GLib = imports.gi.GLib;
+const Gettext = imports.gettext;
 const Tweener = imports.ui.tweener;
 const Tooltips = imports.ui.tooltips;
 
@@ -29,6 +30,14 @@ const FavType = {
     none: 2
 };
 
+function _(str) {
+   let resultConf = Gettext.dgettext('WindowListGroup@jake.phy@gmail.com', str);
+   if(resultConf != str) {
+      return resultConf;
+   }
+   return Gettext.gettext(str);
+}
+
 function AppMenuButtonRightClickMenu() {
     this._init.apply(this, arguments);
 }
@@ -40,8 +49,7 @@ AppMenuButtonRightClickMenu.prototype = {
         //take care of menu initialization        
         PopupMenu.PopupMenu.prototype._init.call(this, parent.actor, 0.0, parent.orientation, 0);
         Main.uiGroup.add_actor(this.actor);
-        //Main.chrome.addActor(this.actor, { visibleInOverview: true,
-        //                                   affectsStruts: false });
+
         this.actor.hide();
         this.metaWindow = parent.metaWindow;
         this._parentActor = actor;
@@ -63,9 +71,10 @@ AppMenuButtonRightClickMenu.prototype = {
 		let monitors = Main.layoutManager.monitors;
 		if (monitors.length > 1) {
 			for(let i = 0; i < monitors.length; i++){
-				let itemChangeMonitor = new SpecialMenuItems.IconNameMenuItem(this, _("Move to monitor {0}").format(i + 1));
+				let itemChangeMonitor = new SpecialMenuItems.IconNameMenuItem(this, _("Move to monitor %d").format(i + 1), "view-fullscreen");
+				itemChangeMonitor.index = i;
 				itemChangeMonitor.connect('activate', Lang.bind(this, function() {
-					this.metaWindow.move_to_monitor(i);
+					this.metaWindow.move_to_monitor(itemChangeMonitor.index);
 				}));
 				this.monitorItems.push(itemChangeMonitor);
 			}
@@ -144,10 +153,6 @@ AppMenuButtonRightClickMenu.prototype = {
 		this.showPinned = new SpecialMenuItems.SwitchMenuItem(this, _("Show Pinned"), this._applet.showPinned);
 		this.showPinned.connect('toggled', Lang.bind(this, function(item) { this._applet.showPinned = item.state; }));
 		subMenu.addMenuItem(this.showPinned);
-
-		this.groupApps = new SpecialMenuItems.SwitchMenuItem(this, _("Group Apps"), this._applet.groupApps);
-		this.groupApps.connect('toggled', Lang.bind(this, function(item) { this._applet.groupApps = item.state; }));
-		subMenu.addMenuItem(this.groupApps);
 
 		this.showThumbs = new SpecialMenuItems.SwitchMenuItem(this, _("Show Thumbs"), this._applet.showThumbs);
 		this.showThumbs.connect('toggled', Lang.bind(this, function(item) { this._applet.showThumbs = item.state; }));
@@ -490,7 +495,13 @@ AppMenuButtonRightClickMenu.prototype = {
 
     _onCloseAllActivate: function (actor, event) {
         var workspace = this.metaWindow.get_workspace(); 
-        var windows = this.app.get_windows();
+		let windows;
+        if(this.app.wmClass)
+            windows = metaWorkspace.list_windows().filter(Lang.bind(this, function (win) {
+                return this.app.wmClass == win.get_wm_class_instance();
+	        }));
+        else
+            windows = this.app.get_windows();
         for(var i = 0; i < windows.length; i++) {
             windows[i].delete(global.get_current_time());
         }
@@ -504,7 +515,7 @@ AppMenuButtonRightClickMenu.prototype = {
     _onMinimizeWindowActivate: function (actor, event) {
         if (this.metaWindow.minimized) {
             this.metaWindow.unminimize(global.get_current_time());
-            this.metaWindow.activate(global.get_current_time());
+            Main.activateWindow(this.metaWindow, global.get_current_time());
         } else {
             this.metaWindow.minimize(global.get_current_time());
         }
@@ -580,8 +591,8 @@ AppMenuButtonRightClickMenu.prototype = {
         children = this._getMenuItems();
         for (let i = 0; i < children.length; i++) {
             let item = children[i];
-            this.box.remove_actor(item.actor);
-			item.destroy();
+            //this.box.remove_actor(item.actor);
+			//item.destroy();
         }
 		this.box.destroy();
 		this.actor.destroy();
@@ -713,9 +724,6 @@ AppThumbnailHoverMenu.prototype = {
     },
 
     close: function (animate) {
-        // Refresh all the thumbnails, etc when the menu opens.  These cannot
-        // be created when the menu is initalized because a lot of the clutter window surfaces
-        // have not been created yet...
         PopupMenu.PopupMenu.prototype.close.call(this, animate);
         this.appSwitcherItem.actor.hide();
     },
@@ -771,20 +779,22 @@ PopupMenuAppSwitcherItem.prototype = {
         this.appContainer = new St.BoxLayout({
             style_class: 'switcher-list',
         });
-		this.appContainer.style = "padding: 5px;";
+		//this.appContainer.style = "padding: 5px;";
 		this.appContainer.add_style_class_name('thumbnail-row');
 
         this.appContainer2 = new St.BoxLayout({
             style_class: 'switcher-list',
         });
-		this.appContainer2.style = "padding: 5px;";
+
+		//this.appContainer2.style = "padding: 5px;";
 		this.appContainer2.add_style_class_name('thumbnail-row');
 		this.appContainer2.hide();
 
         this.appContainer3 = new St.BoxLayout({
             style_class: 'switcher-list',
         });
-		this.appContainer3.style = "padding: 5px;";
+
+		//this.appContainer3.style = "padding: 5px;";
 		this.appContainer3.add_style_class_name('thumbnail-row');
 		this.appContainer3.hide();
 
@@ -793,6 +803,7 @@ PopupMenuAppSwitcherItem.prototype = {
         this.appThumbnails3 = {};
 
         this._applet.settings.connect("changed::vertical-thumbnails", Lang.bind(this, this._setVerticalSetting));
+        this._applet.settings.connect("changed::stack-thumbnails", Lang.bind(this, this._setStackThumbnailsSetting));
 		this._setVerticalSetting();
 		this.addActor(this.box);
 
@@ -802,7 +813,7 @@ PopupMenuAppSwitcherItem.prototype = {
 	_setVerticalSetting: function() {
 		let vertical = this._applet.settings.getValue("vertical-thumbnails");
 		if(vertical){
-			if(this.box.get_children() > 0) {
+			if(this.box.get_children().length > 0) {
 				this.box.remove_actor(this.appContainer3);
         		this.box.remove_actor(this.appContainer2);
 				this.box.remove_actor(this.appContainer);
@@ -815,7 +826,7 @@ PopupMenuAppSwitcherItem.prototype = {
 				this.box.add_actor(this.appContainer3);
 			}	
 		}else{
-			if(this.box.get_children() > 0) {
+			if(this.box.get_children().length > 0) {
 				this.box.remove_actor(this.appContainer3);
         		this.box.remove_actor(this.appContainer2);
 				this.box.remove_actor(this.appContainer);
@@ -834,6 +845,23 @@ PopupMenuAppSwitcherItem.prototype = {
 		this.box.vertical = !vertical;
 	},
 
+	_setStackThumbnailsSetting: function () {
+		function removeChildren(parent, children){
+			for(let i = 0; i < children.length; i++){
+				let child = children[i];
+				parent.remove_actor(child);
+			}
+			parent.hide();
+		}
+		let children = this.appContainer.get_children();
+		let children2 = this.appContainer2.get_children();
+		let children3 = this.appContainer3.get_children();
+		removeChildren(this.appContainer, children);
+		removeChildren(this.appContainer2, children2);
+		removeChildren(this.appContainer3, children3);
+		this.reAdd = true;
+	},
+
     setMetaWindow: function (metaWindow) {
         this.metaWindow = metaWindow;
     },
@@ -847,13 +875,19 @@ PopupMenuAppSwitcherItem.prototype = {
     },
 
 	getMetaWindows: function() {
-		let windows = this.app.get_windows().filter(Lang.bind(this, function (win) {
-            let metaWorkspace = null;
-            if (this.metaWindow) metaWorkspace = this.metaWindow.get_workspace();
-            //let isDifferent = (win != this.metaWindow);
-            let isSameWorkspace = (win.get_workspace() == metaWorkspace) && Main.isInteresting(win);
-            return isSameWorkspace;
-        })).reverse();
+        let metaWorkspace = null;
+        if (this.metaWindow) metaWorkspace = this.metaWindow.get_workspace();
+		let windows;
+        if(this.app.wmClass && metaWorkspace)
+            windows = metaWorkspace.list_windows().filter(Lang.bind(this, function (win) {
+                return this.app.wmClass == win.get_wm_class_instance();
+	        })).reverse();
+        else
+			windows = this.app.get_windows().filter(Lang.bind(this, function (win) {
+		        //let isDifferent = (win != this.metaWindow);
+		        let isSameWorkspace = (win.get_workspace() == metaWorkspace) && Main.isInteresting(win);
+		        return isSameWorkspace;
+		    })).reverse();
 		return windows;
 	},
 
@@ -872,6 +906,8 @@ PopupMenuAppSwitcherItem.prototype = {
             if (this.isFavapp) {
                 this.metaWindowThumbnail = new WindowThumbnail(this, this.metaWindow);
                 this.appContainer.insert_actor(this.metaWindowThumbnail.actor, 0);
+        		Mainloop.timeout_add(0, Lang.bind(this, function(){this.setStyleOptions(null)}));
+				return;
             }
         }
 
@@ -881,12 +917,17 @@ PopupMenuAppSwitcherItem.prototype = {
 		this.addNewWindows(windows);
         // Update appThumbnails to remove old programs
 		this.removeOldWindows(windows);
+		// Set to true to readd the thumbnails; used for the sorting by last focused 
+		this.reAdd = false;
 		// used to make sure everything is on the stage
-		Mainloop.timeout_add(0, Lang.bind(this, function(){this.setThumbnailIconSize(windows)}));
+		Mainloop.timeout_add(0, Lang.bind(this, function(){this.setStyleOptions(windows)}));
     },
 	addNewWindows: function (windows) {
         let ThumbnailWidth = Math.floor((Main.layoutManager.primaryMonitor.width / 70) * this._applet.thumbSize) + 16;
-        let ThumbnailHeight = Math.floor((Main.layoutManager.primaryMonitor.height / 70) * this._applet.thumbSize) + 16;
+		let ThumbnailHeight = Math.floor((Main.layoutManager.primaryMonitor.height / 70) * this._applet.thumbSize) + 16;;
+		if (!this._applet.showThumbs)
+			ThumbnailHeight /= 3;
+        
 		let moniterSize, thumbnailSize;
 			if(this._applet.settings.getValue("vertical-thumbnails")){
 				moniterSize = Main.layoutManager.primaryMonitor.height;
@@ -914,10 +955,23 @@ PopupMenuAppSwitcherItem.prototype = {
 	},
 	
 	addWindowsLoop: function(i, winLength, actor, windows,containerNum) {
-		for(let i = 0; i < winLength; i++) {
+		if(this._applet.sortThumbs){
+			let children = actor.get_children();
+			for(let w = 0;w < children.length;w++){
+				actor.remove_actor(children[w]);
+			}
+			this.reAdd = true;
+		}
+		for(i;i < winLength; i++) {
 			let metaWindow = windows[i];
 			if (this.appThumbnails[metaWindow]) {
 	            this.appThumbnails[metaWindow].thumbnail._isFavorite(this.isFavapp);
+				if(this.reAdd){
+					if (this._applet.sortThumbs)
+						actor.insert_actor(this.appThumbnails[metaWindow].thumbnail.actor, 0);
+					else
+						actor.add_actor(this.appThumbnails[metaWindow].thumbnail.actor);
+				}
 	        } else {
 	            let thumbnail = new WindowThumbnail(this, metaWindow);
 	            this.appThumbnails[metaWindow] = {
@@ -925,17 +979,33 @@ PopupMenuAppSwitcherItem.prototype = {
 	                thumbnail: thumbnail,
 					cont: containerNum
 	            };
-	        	actor.add_actor(this.appThumbnails[metaWindow].thumbnail.actor);
+				if (this._applet.sortThumbs)
+					actor.insert_actor(this.appThumbnails[metaWindow].thumbnail.actor, 0);
+				else
+					actor.add_actor(this.appThumbnails[metaWindow].thumbnail.actor);
 	        }
 		}
 		actor.show();
 	},
-
-	setThumbnailIconSize: function(windows) {
+	setStyleOptions: function(windows) {
+			this.appContainer.style = null;
+			this.box.style = null;
+			let thumbnailTheme = this.appContainer.peek_theme_node();
+			let padding = thumbnailTheme? thumbnailTheme.get_horizontal_padding() : null;
+			let thumbnailPadding = (padding && (padding > 1 && padding < 21)? padding : 10);
+			this.appContainer.style = "padding:" + (thumbnailPadding / 2) + "px";
+			this.appContainer2.style = "padding:" + (thumbnailPadding / 2) + "px";
+			this.appContainer3.style = "padding:" + (thumbnailPadding / 2) + "px";
+			let boxTheme = this.box.peek_theme_node();
+			padding = boxTheme? boxTheme.get_vertical_padding() : null;
+			let boxPadding = (padding && (padding > 0)? padding : 3);
+			this.box.style = "padding:" + boxPadding + "px;";
 		    if (this.isFavapp) {
 				this.metaWindowThumbnail.thumbnailIconSize();
 				return;
 			}
+			if(windows == null)
+				return;
 			let winLength = windows.length;
 			for(let i in this.appThumbnails) {
 				if (this.appThumbnails[i].thumbnail) {
@@ -1019,7 +1089,8 @@ WindowThumbnail.prototype = {
         this.isFavapp = parent.isFavapp || false;
         this.wasMinimized = false;
 		this._parent = parent;
-		this._parentContainer = parent._parentContainer
+		this._parentContainer = parent._parentContainer;
+		this.thumbnailPadding = 16;
 
         // Inherit the theme from the alt-tab menu
         this.actor = new St.BoxLayout({
@@ -1045,8 +1116,7 @@ WindowThumbnail.prototype = {
 		this.themeIcon = new St.BoxLayout({style_class: 'thumbnail-icon'})
 		this.themeIcon.add_actor(this.icon);
 		this._container.add_actor(this.themeIcon);
-        this._label = new St.Label(
-		{style_class: 'thumbnail-label'});
+        this._label = new St.Label({style_class: 'thumbnail-label'});
         this._container.add_actor(this._label);
         this.button = new St.BoxLayout({
             style_class: 'thumbnail-close',
@@ -1073,10 +1143,11 @@ WindowThumbnail.prototype = {
                 this._hoverPeek(this._applet.peekOpacity, this.metaWindow);
                 this.actor.add_style_pseudo_class('outlined');
                 this.actor.add_style_pseudo_class('selected');
-				if(this._applet.showThumbs)
-                	this.button.show();
+            	this.button.show();
 		        if (this.metaWindow.minimized && this._applet.enablePeek) {
 		            this.metaWindow.unminimize();
+					if(this.metaWindow.is_fullscreen())
+						this.metaWindow.unmaximize(global.get_current_time());
 		            this.wasMinimized = true;
 		        } else this.wasMinimized = false;
             }
@@ -1109,11 +1180,13 @@ WindowThumbnail.prototype = {
             this.ThumbnailWidth = THUMBNAIL_ICON_SIZE + Math.floor(apptext.length * 7.0);
             this._label.text = apptext;
             this.isFavapp = true;
-			this.actor.style = "border-width:2px;padding: 0px;";
+			this.actor.style = "border-width:2px;padding: 2px";
 			this._container.style = "width: " + this.ThumbnailWidth + "px";
         } else {
+			this.actor.style = null;
+			// HACK used to make sure everything is on the stage
+			Mainloop.timeout_add(0, Lang.bind(this, function(){this.thumbnailPaddingSize()}));
 			this._refresh();
-			this.actor.style = "border-width:2px;padding: 6px;";
 		}
     },
 
@@ -1128,11 +1201,19 @@ WindowThumbnail.prototype = {
     },
 
     thumbnailIconSize: function () {
-		try{
-			let width = this.themeIcon.width;
-			let height = this.themeIcon.heigth;
+		let thumbnailTheme = this.themeIcon.peek_theme_node();
+		if(thumbnailTheme){
+			let width = thumbnailTheme.get_width();
+			let height = thumbnailTheme.get_height();
 			this.icon.set_size(width,height);
-		}catch(e){};
+		}
+    },
+
+    thumbnailPaddingSize: function () {
+		let thumbnailTheme = this.actor.peek_theme_node();	
+		let padding = thumbnailTheme? thumbnailTheme.get_horizontal_padding() : null;
+		this.thumbnailPadding = (padding && (padding > 3 && padding < 21)? padding : 12);
+		this.actor.style = "border-width:2px;padding:" + ((this.thumbnailPadding / 2)) + "px;";
     },
 
     _getThumbnail: function () {
@@ -1170,25 +1251,32 @@ WindowThumbnail.prototype = {
     _connectToWindow: function (actor, event) {
         this.wasMinimized = false;
         if (event.get_state() & Clutter.ModifierType.BUTTON1_MASK && !this.stopClick && !this.isFavapp) {
-            this.metaWindow.activate(global.get_current_time());
+            Main.activateWindow(this.metaWindow, global.get_current_time());
 			let parent = this._parent._parentContainer;
 		    parent.shouldOpen = false;
 		    parent.shouldClose = true;
 		    Mainloop.timeout_add(parent.hoverTime, Lang.bind(parent, parent.hoverClose));
         }else if (event.get_state() & Clutter.ModifierType.BUTTON2_MASK && !this.stopClick) {
+        	this.stopClick = true;
 			this.destroy();
+            this._hoverPeek(OPACITY_OPAQUE, this.metaWindow);
+		    this._parentContainer.shouldOpen = false;
+		    this._parentContainer.shouldClose = true;
+		    Mainloop.timeout_add(3000, Lang.bind(this._parentContainer, this._parentContainer.hoverClose));
             this.metaWindow.delete(global.get_current_time());
+			this._parent.refreshRows();
 		}
         this.stopClick = false;
     },
 
     _refresh: function () {
         // Turn favorite tooltip into a normal thumbnail
-        this.ThumbnailHeight = Math.floor(Main.layoutManager.primaryMonitor.height / 70) * this._applet.thumbSize;
-        this.ThumbnailWidth = Math.floor(Main.layoutManager.primaryMonitor.width / 70) * this._applet.thumbSize;
+		let moniter = Main.layoutManager.monitors[this.metaWindow.get_monitor()];
+        this.ThumbnailHeight = Math.floor(moniter.height / 70) * this._applet.thumbSize;
+        this.ThumbnailWidth = Math.floor(moniter.width / 70) * this._applet.thumbSize;
         //this.thumbnailActor.height = this.ThumbnailHeight;
-        //this.thumbnailActor.width = this.ThumbnailWidth;
-		this._container.style = "width: " + Math.floor(this.ThumbnailWidth - 20) + "px";
+        this.thumbnailActor.width = this.ThumbnailWidth;
+		this._container.style = "width: " + Math.floor(this.ThumbnailWidth - 16 ) + "px";
         this.isFavapp = false;
 
         // Replace the old thumbnail
@@ -1196,8 +1284,6 @@ WindowThumbnail.prototype = {
         this._label.text = title;
 		if (this._applet.showThumbs){
 		    this.thumbnail = this._getThumbnail();
-        	this.thumbnail.height = this.ThumbnailHeight;
-        	this.thumbnail.width = this.ThumbnailWidth;
 		    this.thumbnailActor.child = this.thumbnail;
 		} else {
 			this.thumbnailActor.child = null;

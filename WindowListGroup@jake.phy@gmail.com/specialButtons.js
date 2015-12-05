@@ -51,7 +51,7 @@ IconLabelButton.prototype = {
         this._applet = parent._applet;
         this._icon = parent.icon;
         this.actor = new St.Bin({
-            style_class: 'window-list-item-box window-icon-list-item-box',
+            style_class: 'window-list-item-box app-list-item-box',
             reactive: true,
             can_focus: true,
             x_fill: true,
@@ -242,6 +242,8 @@ AppButton.prototype = {
         let tracker = Cinnamon.WindowTracker.get_default();
         this._trackerSignal = tracker.connect('notify::focus-app', Lang.bind(this, this._onFocusChange));
         this._attention = global.settings.connect('changed::window-list-applet-alert', Lang.bind(this, this._onAttentionRequest));
+        this._onAttentionRequest();
+        this._needsAttention = false;
     },
 
     _onFocusChange: function () {
@@ -253,6 +255,7 @@ AppButton.prototype = {
             this.actor.add_style_pseudo_class('focus');
             this.actor.remove_style_class_name("window-list-item-demands-attention");
             this.actor.remove_style_class_name("window-list-item-demands-attention-top");
+            this._needsAttention = false;
         } else {
             this.actor.remove_style_pseudo_class('focus');
         }
@@ -291,7 +294,7 @@ AppButton.prototype = {
             this.setStyle("panel-launcher app-is-favorite");
             this._label.text = '';
         } else {
-            this.setStyle('window-list-item-box window-icon-list-item-box');
+            this.setStyle('window-list-item-box app-list-item-box');
             if (this._applet.orientation == St.Side.TOP)
                 this.actor.add_style_class_name('window-list-item-box-top');
             else

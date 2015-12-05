@@ -1,9 +1,8 @@
 /*Thumbnails*/
-/* Use to add extra border around thumbnail.  can be used for aero effect */
+/* Use to add extra border around thumbnail or adjust the distance from the panel.  can be used for aero effect */
 .thumbnail-popup-content {
-	padding: 4px;
 }
-/* Sorry but the padding for the rows is set in the applet */
+/* Padding can only be set between 1px and 10px other wise it will default to 5px */
 .thumbnail-row {
 	/* example styles 
 	background: rgba(80,80,80,0.8);
@@ -18,10 +17,7 @@
 	border: 2px solid rgba(200,200,200,0.0);
 	*/
 }
-/* Make sure that the pseudo class's padding + spacing + border + shadow =
-  the main class's padding + spacing + border + shadow.  If it doesn't there
-  will be wierd things that happen.  I'm sorry but I had to set the padding
-  in applet so I don't think you can change that unless !important overides styles*/
+/* the padding can only be set between 2px and 10px other wise it will default to 6; border-width is fixed :( */
 .thumbnail-row .thumbnail-box {
 	/* example styles
 	padding: 6px;
@@ -74,8 +70,9 @@
 }
 /*App List
   Padding is set in the the applet settings
+<<<<<<< HEAD
 use to override window-list-item-box */
-.window-icon-list-item-box {
+.app-list-item-box{
 }
 /* use to override panel-launcher */
 .app-is-favorite {
