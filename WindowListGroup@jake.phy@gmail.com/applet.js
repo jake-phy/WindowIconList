@@ -946,14 +946,7 @@ AppList.prototype = {
             }
             this.actor.add_actor(appGroup.actor);
 
-            // We also need to monitor the state 'cause some pesky apps (namely: plugin_container left over after fullscreening a flash video)
-            // don't report having zero windows after they close
-            app.connect('notify::state', Lang.bind(this, function (app) {
-                if (app.state == Cinnamon.AppState.STOPPED && this._appList[app]) {
-                    this._removeApp(app);
-                    appGroup._calcWindowNumber(metaWorkspace);
-                }
-            }));
+            app.connect('windows-changed', Lang.bind(this, this._onAppWindowsChanged, app));
 
             this._appList[app] = {
                 appGroup: appGroup,
@@ -964,6 +957,26 @@ AppList.prototype = {
             if (this._applet.settings.getValue("title-display") == TitleDisplay.focused)
                 appGroup.hideAppButtonLabel(false);
         }
+    },
+
+    _onAppWindowsChanged: function (app) {
+        let numberOfwindows = this._getNumberOfAppWindowsInWorkspace(app, this.metaWorkspace);
+        if (numberOfwindows == 0) {
+            this._removeApp(app);
+        }
+    },
+
+    _getNumberOfAppWindowsInWorkspace: function (app, workspace) {
+        var windows = app.get_windows();
+        let result = 0;
+
+        for(var i = 0; i < windows.length; i++) {
+            let windowWorkspace = windows[i].get_workspace();
+            if(windowWorkspace.index() == workspace.index()) {
+                ++result;
+            }
+        }
+        return result;
     },
 
     _removeApp: function (app) {
