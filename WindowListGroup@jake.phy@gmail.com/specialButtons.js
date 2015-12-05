@@ -13,9 +13,11 @@ const Tweener = imports.ui.tweener;
 const Meta = imports.gi.Meta;
 const DND = imports.ui.dnd;
 const Gettext = imports.gettext;
+const Mainloop = imports.mainloop;
 
 const BUTTON_BOX_ANIMATION_TIME = 0.5;
 const MAX_BUTTON_WIDTH = 150; // Pixels
+const FLASH_INTERVAL = 500;
 
 const AppletDir = imports.ui.appletManager.applets['WindowListGroup@jake.phy@gmail.com'];
 const Applet = AppletDir.applet;
@@ -102,6 +104,33 @@ IconLabelButton.prototype = {
     setStyle: function (name) {
         if (name)
             this.actor.set_style_class_name(name);
+    },
+    
+    getAttention: function() {
+        if (this._needsAttention)
+            return false;
+
+        this._needsAttention = true;
+        let counter = 0;
+        this._flashButton(counter);
+        return true;
+    },
+
+    _flashButton: function(counter) {
+        if (!this._needsAttention)
+            return;
+
+        this.actor.add_style_class_name("window-list-item-demands-attention");
+        if (counter < 4) {
+            Mainloop.timeout_add(FLASH_INTERVAL, Lang.bind(this, function () {
+                if (this.actor.has_style_class_name("window-list-item-demands-attention")) {
+                    this.actor.remove_style_class_name("window-list-item-demands-attention");
+                }
+                Mainloop.timeout_add(FLASH_INTERVAL, Lang.bind(this, function () {
+                    this._flashButton(++counter);
+                }));
+            }));
+        }
     },
 
     _getPreferredWidth: function (actor, forHeight, alloc) {
@@ -241,45 +270,64 @@ AppButton.prototype = {
 
         let tracker = Cinnamon.WindowTracker.get_default();
         this._trackerSignal = tracker.connect('notify::focus-app', Lang.bind(this, this._onFocusChange));
-        this._attention = global.settings.connect('changed::window-list-applet-alert', Lang.bind(this, this._onAttentionRequest));
+        this._updateAttentionGrabber(null,null,this._applet.showAlerts);
+        this._applet.settings.connect("changed::show-alerts", Lang.bind(this, this._updateAttentionGrabber));
     },
 
     _onFocusChange: function () {
         // If any of the windows associated with our app have focus,
         // we should set ourselves to active
-        if (this.app.get_windows().some(function (w) {
-            return w.appears_focused;
-        })) {
+
+        if (this._hasFocus()) {
             this.actor.add_style_pseudo_class('focus');
             this.actor.remove_style_class_name("window-list-item-demands-attention");
             this.actor.remove_style_class_name("window-list-item-demands-attention-top");
         } else {
             this.actor.remove_style_pseudo_class('focus');
         }
-    },
+    },   
+    
+    _hasFocus: function() {
+        let windows = this._parent.metaWindows;
+        let transientHasFocus = false;
+        for (let w in windows) {
+            let window = windows[w].win;
+            if (window.minimized)
+                continue;
+                
+            if (window.has_focus())
+                return true;
 
-    _onAttentionRequest: function () {
-        if (this.isFavapp) return false;
-        let active = global.settings.get_boolean('window-list-applet-alert');
-        if (active) {
-            this._urgent_signal = global.display.connect('window-marked-urgent', Lang.bind(this, this._onWindowDemandsAttention));
+            window.foreach_transient(function(transient) {
+                if (transient.has_focus()) {
+                    transientHasFocus = true;
+                    return false;
+                }
+                return true;
+            });
+        }
+        return transientHasFocus;
+    },
+    
+    _updateAttentionGrabber: function(obj, oldVal, newVal) {
+        if (newVal) {
+            this._urgent_signal = global.display.connect("window-marked-urgent", Lang.bind(this, this._onWindowDemandsAttention));
+            this._attention_signal = global.display.connect('window-demands-attention', Lang.bind(this, this._onWindowDemandsAttention));
         } else {
             if (this._urgent_signal) {
                 global.display.disconnect(this._urgent_signal);
             }
+            if (this._attention_signal) {
+                global.display.disconnect(this._attention_signal);
+            }
         }
-        return true;
     },
 
     _onWindowDemandsAttention : function(display, window) {
-        if (this._needsAttention) {
-            return false;
-        }
-        let windows = this.parent.metaWindows;
+        let windows = this._parent.metaWindows;
         for (let w in windows) {
             if ( windows[w].win == window ) {
-                this._needsAttention = true;
-                this.actor.add_style_class_name('window-list-item-demands-attention');
+                this.getAttention();
                 return true;
             }
         }
@@ -303,10 +351,15 @@ AppButton.prototype = {
     destroy: function () {
         let tracker = Cinnamon.WindowTracker.get_default();
         tracker.disconnect(this._trackerSignal);
-        global.settings.disconnect(this._attention);
         this._container.destroy_children();
         this._container.destroy();
         this.actor.destroy();
+        if (this._urgent_signal) {
+            global.display.disconnect(this._urgent_signal);
+        }
+        if (this._attention_signal) {
+            global.display.disconnect(this._attention_signal);
+        }
     }
 };
 
@@ -352,7 +405,8 @@ WindowButton.prototype = {
         if (this.metaWindow) {
             this.signals.push(this.metaWindow.connect('notify::appears-focused', Lang.bind(this, this._onFocusChange)));
             this.signals.push(this.metaWindow.connect('notify::title', Lang.bind(this, this._onTitleChange)));
-            this._attention = global.settings.connect('changed::window-list-applet-alert', Lang.bind(this, this._onAttentionRequest));
+            this._updateAttentionGrabber(null,null,this._applet.showAlerts);
+            this._applet.settings.connect("changed::show-alerts", Lang.bind(this, this._updateAttentionGrabber));
             this._applet.settings.connect("changed::title-display", Lang.bind(this, function () {
                 this._onTitleChange();
             }));
@@ -371,34 +425,36 @@ WindowButton.prototype = {
             this.signals.forEach(Lang.bind(this, function (s) {
                 this.metaWindow.disconnect(s);
             }));
-            global.settings.disconnect(this._attention);
+            if (this._urgent_signal) {
+                global.display.disconnect(this._urgent_signal);
+            }
+            if (this._attention_signal) {
+                global.display.disconnect(this._attention_signal);
+            }
         }
         this.rightClickMenu.destroy();
         this._container.destroy_children();
         this._container.destroy();
         this.actor.destroy();
     },
-
-    _onAttentionRequest: function () {
-        if (this.isFavapp) return true;
-        let active = global.settings.get_boolean('window-list-applet-alert');
-        if (active) {
-            this._urgent_signal = global.display.connect('window-marked-urgent', Lang.bind(this, this._onWindowDemandsAttention));
+    
+    _updateAttentionGrabber: function(obj, oldVal, newVal) {
+        if (newVal) {
+            this._urgent_signal = global.display.connect("window-marked-urgent", Lang.bind(this, this._onWindowDemandsAttention));
+            this._attention_signal = global.display.connect('window-demands-attention', Lang.bind(this, this._onWindowDemandsAttention));
         } else {
             if (this._urgent_signal) {
                 global.display.disconnect(this._urgent_signal);
             }
+            if (this._attention_signal) {
+                global.display.disconnect(this._attention_signal);
+            }
         }
-        return true;
     },
 
     _onWindowDemandsAttention : function(display, window) {
-        if (this._needsAttention) {
-            return false;
-        }
         if ( this.metaWindow == window ) {
-            this._needsAttention = true;
-            this.actor.add_style_class_name('window-list-item-demands-attention');
+            this.getAttention();
             return true;
         }
         return false;
@@ -460,14 +516,31 @@ WindowButton.prototype = {
     },
 
     _onFocusChange: function () {
-        let focused = this.metaWindow.appears_focused;
-        if (focused) {
+        if (this._hasFocus()) {
             this.actor.add_style_pseudo_class('focus');
             this.actor.remove_style_class_name("window-list-item-demands-attention");
             this.actor.remove_style_class_name("window-list-item-demands-attention-top");
         } else {
             this.actor.remove_style_pseudo_class('focus');
         }
+    },
+    
+    _hasFocus: function() {
+        if (this.metaWindow.minimized)
+            return false;
+
+        if (this.metaWindow.has_focus())
+            return true;
+
+        let transientHasFocus = false;
+        this.metaWindow.foreach_transient(function(transient) {
+            if (transient.has_focus()) {
+                transientHasFocus = true;
+                return false;
+            }
+            return true;
+        });
+        return transientHasFocus;
     },
 
     _animate: function () {

@@ -1,5 +1,6 @@
 /* jshint moz:true */
 const Clutter = imports.gi.Clutter;
+const Cinnamon = imports.gi.Cinnamon;
 const Lang = imports.lang;
 const Main = imports.ui.main;
 const Mainloop = imports.mainloop;
@@ -1062,9 +1063,15 @@ WindowThumbnail.prototype = {
         if (this.isFavapp) this._isFavorite(true);
         else this._isFavorite(false);
 
-        if (this.metaWindow) this.metaWindow.connect('notify::title', Lang.bind(this, function () {
-            this._label.text = this.metaWindow.get_title();
-        }));
+        if (this.metaWindow){
+		    this.metaWindow.connect('notify::title', Lang.bind(this, function () {
+		        this._label.text = this.metaWindow.get_title();
+		    }));				
+		    this._updateAttentionGrabber(null,null,this._applet.showAlerts);
+		    this._applet.settings.connect("changed::show-alerts", Lang.bind(this, this._updateAttentionGrabber));
+		    let tracker = Cinnamon.WindowTracker.get_default();
+        	this._trackerSignal = tracker.connect('notify::focus-app', Lang.bind(this, this._onFocusChange));
+        }
         this.actor.connect('enter-event', Lang.bind(this, function () {
             if (!this.isFavapp) {
 				let parent = this._parent._parentContainer;
@@ -1097,6 +1104,55 @@ WindowThumbnail.prototype = {
 
         this.actor.connect('button-release-event', Lang.bind(this, this._connectToWindow));
     },
+    
+    _updateAttentionGrabber: function(obj, oldVal, newVal) {
+        if (newVal) {
+            this._urgent_signal = global.display.connect("window-marked-urgent", Lang.bind(this, this._onWindowDemandsAttention));
+            this._attention_signal = global.display.connect('window-demands-attention', Lang.bind(this, this._onWindowDemandsAttention));
+        } else {
+            if (this._urgent_signal) {
+                global.display.disconnect(this._urgent_signal);
+            }
+            if (this._attention_signal) {
+                global.display.disconnect(this._attention_signal);
+            }
+        }
+    },
+    
+    _onWindowDemandsAttention : function(display, window) {
+    	if (this._needsAttention)
+            return false;
+        this._needsAttention = true;
+        if ( this.metaWindow == window ) {
+            this.actor.add_style_class_name("thumbnail-alerts");
+            return true;
+        }
+        return false;
+    },
+    
+    _onFocusChange: function () {
+        if (this._hasFocus()) {
+            this.actor.remove_style_class_name("thumbnail-alerts");
+        }
+    },
+    
+    _hasFocus: function() {
+        if (this.metaWindow.minimized)
+            return false;
+
+        if (this.metaWindow.has_focus())
+            return true;
+
+        let transientHasFocus = false;
+        this.metaWindow.foreach_transient(function(transient) {
+            if (transient.has_focus()) {
+                transientHasFocus = true;
+                return false;
+            }
+            return true;
+        });
+        return transientHasFocus;
+    },
 
     _isFavorite: function (isFav) {
         // Whether we create a favorite tooltip or a window thumbnail
@@ -1118,6 +1174,16 @@ WindowThumbnail.prototype = {
     },
 
     destroy: function () {
+        if(this._trackerSignal){
+		    let tracker = Cinnamon.WindowTracker.get_default();
+		    tracker.disconnect(this._trackerSignal);
+        }
+        if (this._urgent_signal) {
+            global.display.disconnect(this._urgent_signal);
+        }
+        if (this._attention_signal) {
+            global.display.disconnect(this._attention_signal);
+        }
 		delete this._parent.appThumbnails[this.metaWindow];
 		this.actor.destroy_children();
         this.actor.destroy();
