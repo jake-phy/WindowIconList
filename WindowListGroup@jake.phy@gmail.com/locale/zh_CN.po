@@ -3,113 +3,93 @@
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
+#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Window List Group 2.8\n"
+"Project-Id-Version: Window List Group 2.7.5\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-03-03 14:10+0800\n"
-"PO-Revision-Date: 2015-03-03 14:08+0800\n"
+"POT-Creation-Date: 2015-01-14 14:51+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: wzhy90 <wzhy90@gmail.com>\n"
-"Language-Team: wzhy90 <wzhy90@gmail.com>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Poedit 1.5.4\n"
 
-#: specialMenus.js:70
+#: specialMenus.js:67
 msgid "Close All"
 msgstr "全部关闭"
 
-#: specialMenus.js:73
+#: specialMenus.js:70
 msgid "Close"
 msgstr "关闭"
 
-#: specialMenus.js:76 specialMenus.js:441
+#: specialMenus.js:73 specialMenus.js:391
 msgid "Minimize"
 msgstr "最小化"
 
-#: specialMenus.js:79 specialMenus.js:438
+#: specialMenus.js:76 specialMenus.js:388
 msgid "Maximize"
 msgstr "最大化"
 
-#: specialMenus.js:82
+#: specialMenus.js:79
 msgid "Move to left workspace"
 msgstr "移动至左工作区"
 
-#: specialMenus.js:85
+#: specialMenus.js:82
 msgid "Move to right workspace"
 msgstr "移动至右工作区"
 
-#: specialMenus.js:88 specialMenus.js:428
+#: specialMenus.js:85 specialMenus.js:378
 msgid "Visible on all workspaces"
 msgstr "所有工作区可见"
 
-#: specialMenus.js:113
-msgid "Unpin from Panel"
-msgstr "从面板取消固定"
-
 #: specialMenus.js:116
-msgid "Pin to Panel"
-msgstr "固定到面板"
-
-#: specialMenus.js:125
 msgid "Settings"
 msgstr "设置"
 
-#: specialMenus.js:128
+#: specialMenus.js:119
 msgid "ReArrange"
 msgstr "重新排列"
 
-#: specialMenus.js:132
+#: specialMenus.js:123
 msgid "Show Pinned"
 msgstr "显示已固定"
 
-#: specialMenus.js:136
+#: specialMenus.js:127
 msgid "Group Apps"
 msgstr "程序分组"
 
-#: specialMenus.js:140
+#: specialMenus.js:131
 msgid "Show Thumbs"
 msgstr "显示缩略图"
 
-#: specialMenus.js:144
+#: specialMenus.js:135
 msgid "Stack Thumbs"
 msgstr "折叠缩略图"
 
-#: specialMenus.js:148
+#: specialMenus.js:139
 msgid "Hover to Peek"
 msgstr "悬浮预览"
 
-#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
-#. WindowListGroup@jake.phy@gmail.com->settings-schema.json->show-
-#. recent->description
-#: specialMenus.js:152
+#: specialMenus.js:143
 msgid "Show Recent"
 msgstr "显示最近"
 
-#: specialMenus.js:156
+#: specialMenus.js:147
 msgid "Vertical Thumbs"
 msgstr "垂直排列"
 
-#: specialMenus.js:160
-msgid "   Go to Settings"
-msgstr "   打开设置"
-
-#: specialMenus.js:232
-msgid "Install Gda"
-msgstr "安装 Gda"
-
-#: specialMenus.js:424
+#: specialMenus.js:374
 msgid "Only on this workspace"
 msgstr "只在此工作区"
 
-#: specialMenus.js:436
+#: specialMenus.js:386
 msgid "Unmaximize"
 msgstr "取消最大化"
 
-#: specialMenus.js:440
+#: specialMenus.js:390
 msgid "Restore"
 msgstr "恢复"
 
@@ -134,8 +114,8 @@ msgstr "大小"
 
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->closeall-menu-
 #. item->description
-msgid "Close All Menu Items"
-msgstr "关闭所有菜单项"
+msgid "Close All menu item"
+msgstr "全部关闭菜单"
 
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->closeall-menu-
 #. item->tooltip
@@ -173,20 +153,16 @@ msgstr "毫秒"
 
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->appmenu-
 #. number->description
-msgid "Number of Menu Items:"
-msgstr "菜单项数量:"
+msgid "Number of menu Items:"
+msgstr "最近文档数量:"
 
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->appmenu-
 #. number->tooltip
 msgid "The number of AppMenu Items"
 msgstr "程序菜单项目数量"
 
-#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->appmenu-
 #. number->units
-#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
-#. WindowListGroup@jake.phy@gmail.com->settings-schema.json->appmenu-
-#. width->units
 msgid "number"
 msgstr "个"
 
@@ -295,25 +271,28 @@ msgstr " "
 msgid "Window List Settings"
 msgstr "窗口列表设置"
 
-#. WindowListGroup@jake.phy@gmail.com->settings-schema.json->appmenu-
-#. width->description
-msgid "Appmenu Width"
-msgstr "Appmenu宽度"
-
-#. WindowListGroup@jake.phy@gmail.com->settings-schema.json->appmenu-
-#. width->tooltip
-msgid "Set the width of the AppMenu."
-msgstr "设置AppMenu宽度"
-
 #. WindowListGroup@jake.phy@gmail.com->settings-
 #. schema.json->Thumbnails->description
 msgid "Thumbnail Settings"
 msgstr "缩略图设置"
 
+#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
+#. WindowListGroup@jake.phy@gmail.com->settings-schema.json->show-
+#. recent->description
+#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
+#. WindowListGroup@jake.phy@gmail.com->settings-schema.json->onclick-
+#. thumbnails->description
+msgid "Open Thumbnails OnClick"
+msgstr "点击显示缩略图"
+
+#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->show-
 #. recent->tooltip
-msgid "Show Recent Menu Items"
-msgstr "显示最近文件项"
+#. #-#-#-#-#  new.pot (PACKAGE VERSION)  #-#-#-#-#
+#. WindowListGroup@jake.phy@gmail.com->settings-schema.json->onclick-
+#. thumbnails->tooltip
+msgid "Open the thumbnails on click, if there is more than 1 windows open."
+msgstr "如果超过一个窗口被打开，点击显示缩略图。"
 
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->vertical-
 #. thumbnails->description
@@ -375,16 +354,6 @@ msgstr "智能"
 #. display->options
 msgid "normal"
 msgstr "正常"
-
-#. WindowListGroup@jake.phy@gmail.com->settings-schema.json->onclick-
-#. thumbnails->description
-msgid "Open Thumbnails OnClick"
-msgstr "点击显示缩略图"
-
-#. WindowListGroup@jake.phy@gmail.com->settings-schema.json->onclick-
-#. thumbnails->tooltip
-msgid "Open the thumbnails on click, if there is more than 1 windows open."
-msgstr "如果超过一个窗口被打开，点击显示缩略图。"
 
 #. WindowListGroup@jake.phy@gmail.com->settings-
 #. schema.json->HoverPeek->description

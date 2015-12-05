@@ -296,7 +296,7 @@ function AppGroup() {
 
 AppGroup.prototype = {
     __proto__: __proto.prototype,
-    _init: function (applet, appList, app, isFavapp, orientation) {
+    _init: function (applet, appList, app, isFavapp) {
         if(DND.LauncherDraggable)
             DND.LauncherDraggable.prototype._init.call(this);
         this._applet = applet;
@@ -306,7 +306,7 @@ AppGroup.prototype = {
         this.app = app;
         this.isFavapp = isFavapp;
         this.isNotFavapp = !isFavapp;
-        this.orientation = orientation;
+        this.orientation = applet.orientation;
         this.metaWindows = {};
         this.metaWorkspaces = {};
         this.actor = new St.Bin({
@@ -350,7 +350,7 @@ AppGroup.prototype = {
         this.on_panel_edit_mode_changed();
         this.on_arrange_pinned();
         global.settings.connect('changed::panel-edit-mode', Lang.bind(this, this.on_panel_edit_mode_changed));
-        this._applet.settings.connect("arrange-pinnedApps", Lang.bind(this, this.on_arrange_pinned));
+        this._applet.settings.connect("changed::arrange-pinnedApps", Lang.bind(this, this.on_arrange_pinned));
     },
 
     getId: function() {
@@ -364,6 +364,18 @@ AppGroup.prototype = {
     on_panel_edit_mode_changed: function () {
         this._draggable.inhibit = global.settings.get_boolean("panel-edit-mode");
         this.actor.reactive = !global.settings.get_boolean("panel-edit-mode");
+    },
+
+    on_title_display_changed: function (metaWindow) {
+        this._windowTitleChanged(metaWindow);
+        let titleType = this._applet.settings.getValue("title-display");
+        if (titleType == TitleDisplay.title) {
+            this.showAppButtonLabel(true);
+        } else if (titleType == TitleDisplay.app) {
+            this.showAppButtonLabel(true);
+        } else if (titleType == TitleDisplay.none) {
+            this.hideAppButtonLabel(true);
+        }
     },
 
     _onDragEnd: function () {
@@ -508,6 +520,7 @@ AppGroup.prototype = {
             Main.keybindingManager.removeHotKey(this.hotKeyId);
         if (number < 10){
             Main.keybindingManager.addHotKey('launch-app-key-' + number.toString(), "<Super>" + number.toString(), Lang.bind(this, this._onAppKeyPress));
+            Main.keybindingManager.addHotKey('launch-new-app-key-' + number.toString(), "<Super><Shift>" + number.toString(), Lang.bind(this, this._onNewAppKeyPress))
             this.hotKeyId = 'launch-app-key-' + number.toString();
         }
     },
@@ -519,6 +532,12 @@ AppGroup.prototype = {
         } else {
             this._windowHandle(false);
         }
+    },
+
+    _onNewAppKeyPress: function (number) {
+        this.app.open_new_window(-1);
+        log(this.getId());
+        this._animate();
     },
 
     _windowHandle: function(fromDrag){
@@ -559,7 +578,7 @@ AppGroup.prototype = {
         list.sort(function (a, b) {
             return a[0] - b[0];
         });
-        log(list[0]);
+        //log(list[0]);
         if (list[0]) return list[0][1];
         else return null;
     },
@@ -615,7 +634,8 @@ AppGroup.prototype = {
             }
             let signals = [];
             this._applet.settings.connect("changed::title-display", Lang.bind(this, function(){
-                this._windowTitleChanged(this.lastFocused);
+                this.on_title_display_changed(metaWindow);
+                this._windowTitleChanged(metaWindow);
             }));
             signals.push(metaWindow.connect('notify::title', Lang.bind(this, this._windowTitleChanged)));
             signals.push(metaWindow.connect('notify::appears-focused', Lang.bind(this, this._focusWindowChange)));
@@ -628,6 +648,8 @@ AppGroup.prototype = {
                 this._isFavorite(false);
             }
             this._calcWindowNumber(metaWorkspace);
+            //log(metaWindow.get_wm_class());
+            //log(metaWindow.get_wm_class_instance());
         }
     },
 
@@ -677,6 +699,7 @@ AppGroup.prototype = {
         if (titleType == TitleDisplay.title) {
             if (title) {
                 this._appButton.setText(title);
+                this.showAppButtonLabel(true);
             }
         } else if (titleType == TitleDisplay.focused) {
             if (title) {
@@ -686,6 +709,7 @@ AppGroup.prototype = {
         } else if (titleType == TitleDisplay.app) {
             if (appName) {
                 this._appButton.setText(appName);
+                this.showAppButtonLabel(true);
             }
         } else if (titleType == TitleDisplay.none) {
             this._appButton.setText("");
@@ -705,9 +729,13 @@ AppGroup.prototype = {
 
     _updateFocusedStatus: function (force) {
         let changed = false;
-        let focusState = this.metaWindows.keys().some(function (win, data) {
-            return win.appears_focused;
-        });
+        let focusState;
+        for( let win in this.metaWindows){
+            if(this.metaWindows[win].win.appears_focused){
+                focusState = this.metaWindows[win].win;
+                break;
+            }
+        }
         if (this.focusState != focusState || force)
             this._focusedLabel(focusState);
         this.focusState = focusState;
@@ -715,7 +743,7 @@ AppGroup.prototype = {
 
     _focusedLabel: function (focusState) {
         if (focusState) {
-            this.showAppButtonLabel(true, 150);
+            this.showAppButtonLabel(true);
         } else {
             this.hideAppButtonLabel(true);
         }
@@ -819,21 +847,10 @@ function AppList() {
 }
 
 AppList.prototype = {
-    _init: function (applet, metaWorkspace, orientation) {
-        this.orientation = orientation;
+    _init: function (applet, metaWorkspace) {
         this._applet = applet;
         this.myactorbox = new SpecialButtons.MyAppletBox(this._applet);
         this.actor = this.myactorbox.actor;
-
-        if (orientation == St.Side.TOP) {
-            this.actor.add_style_class_name('window-list-box-top');
-            this.actor.style = 'margin-top: 0px; padding-top: 0px;';
-            //this.actor.set_style('padding-left: 3px');
-        } else {
-            this.actor.add_style_class_name('window-list-box-bottom');
-            this.actor.style = 'margin-bottom: 0px; padding-bottom: 0px;';
-            //this.actor.set_style('padding-left: 3px');
-        }
 
         this.metaWorkspace = metaWorkspace;
         this._appList = {};
@@ -846,6 +863,17 @@ AppList.prototype = {
 
     on_panel_edit_mode_changed: function () {
         this.actor.reactive = global.settings.get_boolean("panel-edit-mode");
+    },
+    
+    on_orientation_changed: function(orientation) {
+       this._refreshList();
+       if (this._applet.orientation == St.Side.TOP) {
+            this.actor.set_style_class_name('window-list-item-box window-list-box-top');
+            this.actor.set_style('margin-top: 0px; padding-top: 0px;');
+        } else {
+            this.actor.set_style_class_name('window-list-item-box window-list-box-bottom');
+            this.actor.set_style('margin-bottom: 0px; padding-bottom: 0px;');
+        }
     },
 
     _setSignals: function () {
@@ -908,7 +936,7 @@ AppList.prototype = {
         else app = tracker.get_window_app(metaWindow);
         if(!app) return;
         if (!this._appList[app]) {
-            let appGroup = new AppGroup(this._applet, this, app, isFavapp, this.orientation);
+            let appGroup = new AppGroup(this._applet, this, app, isFavapp);
             appGroup._updateMetaWindows(metaWorkspace);
             appGroup.watchWorkspace(metaWorkspace);
             if (this._applet.settings.getValue("group-apps")) {
@@ -944,6 +972,7 @@ AppList.prototype = {
         if (appGroup) {
             if (appGroup.appGroup.wasFavapp || appGroup.appGroup.isFavapp) {
                 appGroup.appGroup._isFavorite(true);
+                appGroup.appGroup.hideAppButtonLabel(true);
                 // have to delay to fix openoffice start-center bug 
                 Mainloop.timeout_add(0, Lang.bind(this, this._refreshApps));
                 return;
@@ -1055,9 +1084,12 @@ MyApplet.prototype = {
 
             this.recentManager = Gtk.RecentManager.get_default();
             this.recentItems = this.recentManager.get_items().sort(function(a,b) { return  a.get_modified() -  b.get_modified(); } ).reverse();
-	        this.recentManager.connect('changed', Lang.bind(this, this.on_recent_items_changed));
+	    this.recentManager.connect('changed', Lang.bind(this, this.on_recent_items_changed));
 
             this.metaWorkspaces = {};
+
+            Main.keybindingManager.addHotKey('move-app-to-next-monitor', "<Shift><Super>Left", Lang.bind(this, this._onMoveToNextMonitor));
+	        Main.keybindingManager.addHotKey('move-app-to-prev-monitor', "<Shift><Super>Right", Lang.bind(this, this._onMoveToPrevMonitor));
 
             // Use a signal tracker so we don't have to keep track of all these id's manually!
             //  global.window_manager.connect('switch-workspace', Lang.bind(this, this._onSwitchWorkspace));
@@ -1175,6 +1207,19 @@ MyApplet.prototype = {
         this.actor.reactive = global.settings.get_boolean("panel-edit-mode");
     },
 
+    on_orientation_changed: function(orientation) {
+        this.orientation = orientation;
+        for(let workSpace in this.metaWorkspaces){
+            this.metaWorkspaces[workSpace].appList._refreshList();
+        }
+       if (orientation == St.Side.TOP) {
+            this.actor.set_style('margin-top: 0px; padding-top: 0px;');
+        } else {
+            for (let child of this.actor.get_children()) {}
+            this.actor.set_style('margin-bottom: 0px; padding-bottom: 0px;');
+        }
+    },
+
     on_panel_height_changed: function () {
         for(let workSpace in this.metaWorkspaces){
             this.metaWorkspaces[workSpace].appList._refreshList();
@@ -1231,7 +1276,7 @@ MyApplet.prototype = {
         // If the workspace we switched to isn't in our list,
         // we need to create an AppList for it
         if (!this.metaWorkspaces[metaWorkspace]) {
-            let appList = new AppList(this, metaWorkspace, this.orientation);
+            let appList = new AppList(this, metaWorkspace);
             this.metaWorkspaces[metaWorkspace] = {
                 ws: metaWorkspace,
                 appList: appList
@@ -1253,6 +1298,39 @@ MyApplet.prototype = {
     _onOverviewHide: function () {
         this.actor.show();
     },
+
+    _onMoveToNextMonitor: function(){
+	    this._onMoveToMonitor(1);
+    },
+
+    _onMoveToPrevMonitor: function(){
+	    this._onMoveToMonitor(-1);
+    },
+
+    _onMoveToMonitor: function(modifier){
+	    //Skip when we don't have multiple monitor.
+	    let monitors = Main.layoutManager.monitors;
+	    if(monitors.length <= 1){
+	        return;
+	    }
+	    //Find the window to move.
+	    let metaWorkspace = global.screen.get_active_workspace();
+	    let metaWindow = null;
+	    metaWorkspace.list_windows().forEach(Lang.bind(this, function (win) {
+	        if(win.has_focus()){
+	            metaWindow = win;
+	        }
+	    }));
+	    //Find the new monitor index.
+	    let monitorIndex = metaWindow.get_monitor();
+	    monitorIndex += modifier;
+	    if(monitorIndex < 0){
+	        monitorIndex = monitors.length + modifier;
+	    }else{
+	        monitorIndex = monitorIndex % monitors.length;
+	    }
+	    metaWindow.move_to_monitor(monitorIndex);
+	},
 
     destroy: function () {
         this.signals.disconnectAll();

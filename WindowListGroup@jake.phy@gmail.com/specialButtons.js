@@ -51,14 +51,14 @@ IconLabelButton.prototype = {
         this._applet = parent._applet;
         this._icon = parent.icon;
         this.actor = new St.Bin({
-            style_class: 'window-list-item-box',
+            style_class: 'window-list-item-box window-icon-list-item-box',
             reactive: true,
             can_focus: true,
             x_fill: true,
             y_fill: false,
             track_hover: true
         });
-        this.actor.height = parent._applet._panelHeight - 2;
+        this.actor.height = parent._applet._panelHeight;
         if (this._applet.orientation == St.Side.TOP)
             this.actor.add_style_class_name('window-list-item-box-top');
         else
@@ -78,9 +78,8 @@ IconLabelButton.prototype = {
         //this._icon.set_child(parent.icon);
         this._label = new St.Label();
         this._numLabel = new St.Label({
-            style_class: 'window-list-item-label'
+            style_class: "window-list-item-label window-icon-list-numlabel"
         });
-        this._numLabel.style = 'text-shadow: black 1px 0px 2px';
 
         this._container.add_actor(this._icon);
         this._container.add_actor(this._label);
@@ -92,7 +91,7 @@ IconLabelButton.prototype = {
     },
 
     setIconPadding: function () {
-        this.actor.style = "padding-bottom: 0px;padding-top:1px; padding-left: " + this._applet.iconPadding + "px;padding-right:" + this._applet.iconPadding + "px;";
+        this.actor.style = "padding-bottom: 0px;padding-top:0px; padding-left: " + this._applet.iconPadding + "px;padding-right:" + this._applet.iconPadding + "px;";
     },
 
     setText: function (text) {
@@ -118,7 +117,7 @@ IconLabelButton.prototype = {
         let [iconMinSize, iconNaturalSize] = this._icon.get_preferred_height(forWidth);
         let [labelMinSize, labelNaturalSize] = this._label.get_preferred_height(forWidth);
         alloc.min_size = Math.min(iconMinSize, labelMinSize);
-        alloc.natural_size = Math.max(iconNaturalSize, labelMinSize);
+        alloc.natural_size = Math.max(iconNaturalSize, labelNaturalSize);
     },
 
     _allocate: function (actor, box, flags) {
@@ -174,15 +173,22 @@ IconLabelButton.prototype = {
         this._numLabel.allocate(childBox, flags);
     },
     showLabel: function (animate, targetWidth) {
-        //this._label.width = 150;
+        // need to turn width back to preferred.
+        let setToZero;
+        if(this._label.width < 2) {
+            this._label.set_width(-1);
+            setToZero = true;
+        } else if(this._label.width < (this._label.text.length * 7) - 5 || this._label.width > (this._label.text.length * 7) + 5) {
+            this._label.set_width(-1);
+        }
         let [minWidth, naturalWidth] = this._label.get_preferred_width(-1);
-        let width = targetWidth || naturalWidth;
+        let width = Math.min(targetWidth || naturalWidth, 150)
+        if(setToZero)
+            this._label.width = 1;
         if (!animate) {
             this._label.width = width;
-            this._label.show();
             return;
         }
-
         this._label.show();
         Tweener.addTween(this._label, {
             width: width,
@@ -282,10 +288,14 @@ AppButton.prototype = {
 
     _isFavorite: function (isFav) {
         if (isFav) {
-            this.setStyle("panel-launcher");
+            this.setStyle("panel-launcher app-is-favorite");
             this._label.text = '';
         } else {
-            this.setStyle('window-list-item-box');
+            this.setStyle('window-list-item-box window-icon-list-item-box');
+            if (this._applet.orientation == St.Side.TOP)
+                this.actor.add_style_class_name('window-list-item-box-top');
+            else
+                this.actor.add_style_class_name('window-list-item-box-bottom');
         }
     },
 
@@ -512,9 +522,10 @@ function ButtonBox() {
 ButtonBox.prototype = {
     _init: function (params) {
         params = Params.parse(params, {});
-        this.actor = new St.BoxLayout();
+        this.actor = new St.BoxLayout({
+           style_class: "window-icon-list-buttonbox"
+        });
         this.actor._delegate = this;
-        this.actor.style = "spacing: 2px;";
     },
 
     add: function (button) {
@@ -573,7 +584,7 @@ function MyAppletBox(applet) {
 MyAppletBox.prototype = {
     _init: function (applet) {
         this.actor = new St.BoxLayout({
-            style_class: 'window-list-box'
+            style_class: "window-list-box"
         });
         this.actor._delegate = this;
 

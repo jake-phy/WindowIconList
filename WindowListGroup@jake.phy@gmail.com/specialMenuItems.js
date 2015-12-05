@@ -45,7 +45,10 @@ PinnedRecentItem.prototype = {
             y_fill: false,
             track_hover: true
         });
-        this.pinIcon = new St.Icon({icon_name: pinIcon, style_class: 'popup-menu-icon', icon_size: 16, icon_type: St.IconType.FULLCOLOR});
+        this.pinIcon =  new St.BoxLayout({
+            style_class: 'unpin-item',
+            reactive: true
+        });
         bin.set_child(this.pinIcon);
         
         bin.connect('enter-event', Lang.bind(this, function(){ this.unPinRecent = true; }));
@@ -109,7 +112,10 @@ RecentMenuItem.prototype = {
             y_fill: false,
             track_hover: true
         });
-        this.pinIcon = new St.Icon({icon_name: pinIcon, style_class: 'popup-menu-icon', icon_size: 16, icon_type: St.IconType.FULLCOLOR});
+        this.pinIcon =  new St.BoxLayout({
+            style_class: 'pin-item',
+            reactive: true
+        });
         bin.set_child(this.pinIcon);
         
         bin.connect('enter-event', Lang.bind(this, function(){ this.pinRecent = true; }));
@@ -258,7 +264,10 @@ FirefoxMenuItem.prototype = {
             y_fill: false,
             track_hover: true
         });
-        this.pinIcon = new St.Icon({icon_name: "list-add", style_class: 'popup-menu-icon', icon_size: 16, icon_type:St.IconType.FULLCOLOR});
+        this.pinIcon =  new St.BoxLayout({
+            style_class: 'pin-item',
+            reactive: true
+        });
         bin.set_child(this.pinIcon);
         
         bin.connect('enter-event', Lang.bind(this, function(){ this.pinRecent = true; }));
@@ -424,21 +433,7 @@ function SubMenu() {
 }
 
 SubMenu.prototype = {
-    __proto__: PopupMenu.PopupMenuBase.prototype,
-
-    _init: function (sourceActor, sourceArrow) {
-        PopupMenu.PopupMenuBase.prototype._init.call(this, sourceActor);
-        this._arrow = sourceArrow;
-        if (this._arrow) this._arrow.rotation_center_z_gravity = Clutter.Gravity.CENTER;
-
-        this.actor = new St.BoxLayout({ style_class: 'popup-sub-menu'});
-
-        this.actor.add_actor(this.box);
-        this.actor._delegate = this;
-        this.actor.clip_to_allocation = true;
-        //this.actor.connect('key-press-event', Lang.bind(this, this._onKeyPressEvent));
-        this.actor.hide();
-    },
+    __proto__: PopupMenu.PopupSubMenu.prototype,
 
     open: function(animate) {
         if (this.isOpen)
