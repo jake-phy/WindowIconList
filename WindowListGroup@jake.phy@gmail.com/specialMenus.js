@@ -958,11 +958,14 @@ PopupMenuAppSwitcherItem.prototype = {
 	},
 	
 	addWindowsLoop: function(i, winLength, actor, windows,containerNum) {
-		if(this._applet.sortThumbs){
+		if(this._applet.sortThumbs && windows.length > 0){
 			let children = actor.get_children();
 			for(let w = 0;w < children.length;w++){
 				actor.remove_actor(children[w]);
 			}
+			windows.sort(function (a, b) {
+            	return a.user_time - b.user_time;
+        	});
 			this.reAdd = true;
 		}
 		for(i;i < winLength; i++) {
