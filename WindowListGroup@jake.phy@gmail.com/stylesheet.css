@@ -33,6 +33,10 @@
 .thumbnail-row .thumbnail-box:selected {
 	/* background: rgba(255,255,255,0.33); */
 }
+/* the pseudo are not being overidden so I can't do a hover. that will need to be added to themes */
+.thumbnail-row .thumbnail-alerts {
+	background: rgba(255,52,52,0.3);
+}
 .hide-arrow {
 	-arrow-background-color: rgba(80,80,80,0.0);
 	-arrow-border-color: rgba(150,150,150,0.0);

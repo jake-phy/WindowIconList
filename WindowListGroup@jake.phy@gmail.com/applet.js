@@ -29,8 +29,6 @@ const Gio = imports.gi.Gio;
 const Gtk = imports.gi.Gtk;
 const GLib = imports.gi.GLib;
 
-const SPINNER_ANIMATION_TIME = 1;
-
 function _(str) {
    let resultConf = Gettext.dgettext('WindowListGroup@jake.phy@gmail.com', str);
    if(resultConf != str) {
@@ -1078,6 +1076,7 @@ MyApplet.prototype = {
             Gettext.bindtextdomain(this._uuid, GLib.get_home_dir() + "/.local/share/locale");
             this.settings = new Settings.AppletSettings(this, "WindowListGroup@jake.phy@gmail.com", instance_id);
             this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "show-pinned", "showPinned", null, null);
+            this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "show-alerts", "showAlerts", null, null);
             this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "arrange-pinnedApps", "arrangePinned", null, null);
             this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "enable-hover-peek", "enablePeek", null, null);
             this.settings.bindProperty(Settings.BindingDirection.IN, "onclick-thumbnails", "onclickThumbs", null, null);
