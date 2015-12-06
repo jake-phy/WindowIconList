@@ -1,9 +1,17 @@
 Changelog
 2.8.0
-Added windows 7 styled right click menu. 
-	Added firefox appmenu.
+Added windows styled right click app-menu: 
+	Added firefox favorites,history and recent.
+	Added nemo favorites.
 Can pin and unpin items without the appmenu closing.
 Can now close thumbnails without the thumbnail controller closing.  :)
+Added notifications back in
+	Added notifications to the thumbnail menu.
+Added stylesheet for themeing and converted as many styles as possible over.
+Numerous stability and bug fixes.
+Language transilations:
+	Chinese
+	Spanish
 _____
 2.7.5
 Themeing
