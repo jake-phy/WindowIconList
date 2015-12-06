@@ -88,13 +88,13 @@ IconLabelButton.prototype = {
         this._container.add_actor(this._label);
         this._container.add_actor(this._numLabel);
 
-        this.setIconPadding();
+        this.setIconPadding(null,null,this._applet.iconPadding);
 
         this._applet.settings.connect("changed::icon-padding", Lang.bind(this, this.setIconPadding));
     },
 
-    setIconPadding: function () {
-        this.actor.style = "padding-bottom: 0px;padding-top:0px; padding-left: " + this._applet.iconPadding + "px;padding-right:" + this._applet.iconPadding + "px;";
+    setIconPadding: function (obj,old,val) {
+        this.actor.style = "padding-bottom: 0px;padding-top:0px; padding-left: " + val + "px;padding-right:" + val + "px;";
     },
 
     setText: function (text) {

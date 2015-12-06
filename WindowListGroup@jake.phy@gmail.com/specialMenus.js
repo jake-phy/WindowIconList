@@ -63,8 +63,8 @@ AppMenuButtonRightClickMenu.prototype = {
         this.app = parent.app;
         this.isFavapp = parent.isFavapp;
         this._applet = parent._applet;
-		this.showCloseAll = this._applet.settings.getValue("closeall-menu-item");
-		this.AppMenuWidth = this._applet.settings.getValue("appmenu-width");
+		this.showCloseAll = this._applet.closeAllMenuItems;
+		this.AppMenuWidth = this._applet.appMenuWidth;
         
         let PinnedFavorites = this._applet.pinned_app_contr();
 
@@ -86,7 +86,7 @@ AppMenuButtonRightClickMenu.prototype = {
 		// Pause for refresh of SpecialItems.
 	    this._applet.recentManager.connect('changed', Lang.bind(this, function(){Mainloop.timeout_add(15, Lang.bind(this, this._recent_items_changed))}));
         this._applet.settings.connect('changed::pinned-recent', Lang.bind(this, this._recent_items_changed));
-        this._applet.settings.connect('changed::show-recent', Lang.bind(this, this._recent_items_changed));
+        this._applet.settings.connect('changed::show-recent', Lang.bind(this, this.show_recent_changed));
         this._applet.settings.connect('changed::appmenu-width', Lang.bind(this, this._appMenu_width_changed));
 
         this.itemCloseAllWindow = new SpecialMenuItems.IconNameMenuItem(this,_("Close All"), "window-close");
@@ -148,31 +148,31 @@ AppMenuButtonRightClickMenu.prototype = {
 		let subMenu = this.subMenuItem.menu;
 
 		this.reArrange = new SpecialMenuItems.SwitchMenuItem(this, _("ReArrange"), this._applet.arrangePinned);
-		this.reArrange.connect('toggled', Lang.bind(this, function(item) { this._applet.arrangePinned = item.state; }));
+		this.reArrange.connect('toggled', Lang.bind(this, function(item) { let old =  this._applet.arrangePinned = item.state; this._applet.settings.emit("changed::arrange-pinnedApps",old,old,item.state); }));
 		subMenu.addMenuItem(this.reArrange);
 
 		this.showPinned = new SpecialMenuItems.SwitchMenuItem(this, _("Show Pinned"), this._applet.showPinned);
-		this.showPinned.connect('toggled', Lang.bind(this, function(item) { this._applet.showPinned = item.state; }));
+		this.showPinned.connect('toggled', Lang.bind(this, function(item) { let old =  this._applet.showPinned = item.state; this._applet.settings.emit("changed::show-pinned",old,old,item.state);}));
 		subMenu.addMenuItem(this.showPinned);
 
 		this.showThumbs = new SpecialMenuItems.SwitchMenuItem(this, _("Show Thumbs"), this._applet.showThumbs);
-		this.showThumbs.connect('toggled', Lang.bind(this, function(item) { this._applet.showThumbs = item.state; }));
+		this.showThumbs.connect('toggled', Lang.bind(this, function(item) { let old =  this._applet.showThumbs = item.state; this._applet.settings.emit("changed::show-thumbnails",old,old,item.state);}));
 		subMenu.addMenuItem(this.showThumbs);
 
 		this.stackThumbs =  new SpecialMenuItems.SwitchMenuItem(this, _("Stack Thumbs"), this._applet.stackThumbs);
-		this.stackThumbs.connect('toggled', Lang.bind(this, function(item) { this._applet.stackThumbs = item.state; }));
+		this.stackThumbs.connect('toggled', Lang.bind(this, function(item) { let old =  this._applet.stackThumbs = item.state; this._applet.settings.emit("changed::stack-thumbnails",old,old,item.state);}));
 		this.subMenuItem.menu.addMenuItem(this.stackThumbs);
 
 		this.enablePeek = new SpecialMenuItems.SwitchMenuItem(this, _("Hover to Peek"), this._applet.enablePeek);
-		this.enablePeek.connect('toggled', Lang.bind(this, function(item) { this._applet.enablePeek = item.state; }));
+		this.enablePeek.connect('toggled', Lang.bind(this, function(item) { let old =  this._applet.enablePeek = item.state; this._applet.settings.emit("changed::enable-hover-peek",old,old,item.state);}));
 		this.subMenuItem.menu.addMenuItem(this.enablePeek);
 
 		this.showRecent = new SpecialMenuItems.SwitchMenuItem(this, _("Show Recent"), this._applet.showRecent);
-		this.showRecent.connect('toggled', Lang.bind(this, function(item) { this._applet.showRecent = item.state; }));
+		this.showRecent.connect('toggled', Lang.bind(this, function(item) { let old =  this._applet.showRecent = item.state; this._applet.settings.emit("changed::show-recent",old,old,item.state);}));
 		this.subMenuItem.menu.addMenuItem(this.showRecent);
 
 		this.verticalThumbs = new SpecialMenuItems.SwitchMenuItem(this, _("Vertical Thumbs"), this._applet.verticalThumbs);
-		this.verticalThumbs.connect('toggled', Lang.bind(this, function(item) { this._applet.verticalThumbs = item.state; }));
+		this.verticalThumbs.connect('toggled', Lang.bind(this, function(item) { let old = this._applet.verticalThumbs = !item.state; this._applet.settings.emit("changed::vertical-thumbnails",old,old,!item.state); }));
 		this.subMenuItem.menu.addMenuItem(this.verticalThumbs);
 
         this.settingItem = new SpecialMenuItems.IconNameMenuItem(this,_("   Go to Settings"));
@@ -180,17 +180,17 @@ AppMenuButtonRightClickMenu.prototype = {
 		subMenu.addMenuItem(this.settingItem);
 	},
 
-	show_recent_changed: function () {
-		if(this._applet.settings.getValue('show-recent')) {
+	show_recent_changed: function (obj,old,val) {
+		if(val) {
 			this.specialCont.actor.show();
-			this._recent_items_changed();
+			this._recent_items_changed(null.null,null);
 		} else {
-			this._recent_items_changed();
+			this._recent_items_changed(null.null,null);
 			this.specialCont.actor.hide();
 		}
 	},
 
-	_recent_items_changed: function() {
+	_recent_items_changed: function(obj,oldVal,newVal) {
 		// Hack used the track_hover to force the popup to stay open while removing items
 		this.specialCont.actor.track_hover = true;
 		let children = this.specialSection.get_children();
@@ -202,8 +202,8 @@ AppMenuButtonRightClickMenu.prototype = {
 		this.specialCont.actor.track_hover = false;
 	},
 
-	_appMenu_width_changed: function() {
-		this.AppMenuWidth = this._applet.settings.getValue("appmenu-width") || 295;
+	_appMenu_width_changed: function(obj,oldVal,newVal) {
+		this.AppMenuWidth = newVal || 295;
 		let children = this.RecentMenuItems.filter(Lang.bind(this, function (child) {
 			if(child instanceof PopupMenu.PopupSeparatorMenuItem)
 				return false;
@@ -665,8 +665,8 @@ AppThumbnailHoverMenu.prototype = {
         this.actor.connect('leave-event', Lang.bind(this, this._onMenuLeave));
 
         //this.actor.connect('button-release-event', Lang.bind(this, this._onButtonPress));
-        this._applet.settings.connect('thumbnail-timeout', Lang.bind(this, function () { this.hoverTime =  this._applet.settings.getValue("thumbnail-timeout"); }));
-        this.hoverTime =  this._applet.settings.getValue("thumbnail-timeout");
+        this._applet.settings.connect('thumbnail-timeout', Lang.bind(this, function () { this.hoverTime =  this._applet.thumbTimeout; }));
+        this.hoverTime =  this._applet.thumbTimeout;
     },
 
     _onButtonPress: function (actor, event) {
@@ -771,6 +771,7 @@ PopupMenuAppSwitcherItem.prototype = {
 		this._parentContainer = parent;
 		this.metaWindows = {};
         this.actor.style_class = '';
+        this.stackThumbs = this._applet.stackThumbs;
 
         this.box = new St.BoxLayout();
         this.box1 = new St.BoxLayout();
@@ -805,14 +806,14 @@ PopupMenuAppSwitcherItem.prototype = {
 
         this._applet.settings.connect("changed::vertical-thumbnails", Lang.bind(this, this._setVerticalSetting));
         this._applet.settings.connect("changed::stack-thumbnails", Lang.bind(this, this._setStackThumbnailsSetting));
-		this._setVerticalSetting();
+		this._setVerticalSetting(null,null,!this._applet.verticalThumbs);
 		this.addActor(this.box);
 
         this._refresh();
     },
 
-	_setVerticalSetting: function() {
-		let vertical = this._applet.settings.getValue("vertical-thumbnails");
+	_setVerticalSetting: function(obj,old,val) {
+		let vertical = !val;
 		if(vertical){
 			if(this.box.get_children().length > 0) {
 				this.box.remove_actor(this.appContainer3);
@@ -846,7 +847,8 @@ PopupMenuAppSwitcherItem.prototype = {
 		this.box.vertical = !vertical;
 	},
 
-	_setStackThumbnailsSetting: function () {
+	_setStackThumbnailsSetting: function (obj,old,val) {
+		this.stackThumbs = val;
 		function removeChildren(parent, children){
 			for(let i = 0; i < children.length; i++){
 				let child = children[i];
@@ -932,14 +934,14 @@ PopupMenuAppSwitcherItem.prototype = {
 			ThumbnailHeight /= 3;
         
 		let moniterSize, thumbnailSize;
-			if(this._applet.settings.getValue("vertical-thumbnails")){
+			if(this._applet.verticalThumbs){
 				moniterSize = Main.layoutManager.primaryMonitor.height;
 				thumbnailSize = ThumbnailHeight;
 			}else{
 				moniterSize = Main.layoutManager.primaryMonitor.width;
 				thumbnailSize = ThumbnailWidth;
 			}
-		if ((thumbnailSize * windows.length) + thumbnailSize >= moniterSize && this._applet.settings.getValue("stack-thumbnails")) {
+		if ((thumbnailSize * windows.length) + thumbnailSize >= moniterSize && this.stackThumbs) {
 			this.thumbnailsSpace = Math.floor((moniterSize - 100) / thumbnailSize);
 			let firstLoop = this.thumbnailsSpace;
 			let nextLoop = firstLoop + this.thumbnailsSpace;

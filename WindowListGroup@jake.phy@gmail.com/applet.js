@@ -155,17 +155,17 @@ PinnedFavs.prototype = {
     _init: function (applet) {
         this._applet = applet;
         this._favorites = {};
-        this._applet.settings.connect('changed::pinned-apps', Lang.bind(this, function() { this._onFavsChanged(); } ));
-        this._reload();
+        this._applet.settings.connect('changed::pinned-apps', Lang.bind(this, this._onFavsChanged ));
+        this._reload(applet.pinnedApps);
     },
 
-    _onFavsChanged: function () {
-        if(this._reload())
+    _onFavsChanged: function (obj,old,val) {
+        if(this._reload(val))
             this.emit('changed');
     },
 
-    _reload: function () {
-        let ids = this._applet.settings.getValue("pinned-apps");
+    _reload: function (val) {
+        let ids = val;//this._applet.settings.getValue("pinned-apps");
         let appSys = Cinnamon.AppSystem.get_default();
         let apps = ids.map(function (id) {
             let app = appSys.lookup_app(id);
@@ -360,7 +360,7 @@ AppGroup.prototype = {
         this.isDraggableApp = true;
 
         this.on_panel_edit_mode_changed();
-        this.on_arrange_pinned();
+        this.on_arrange_pinned(null,null,this._applet.arrangePinned);
         global.settings.connect('changed::panel-edit-mode', Lang.bind(this, this.on_panel_edit_mode_changed));
         this._applet.settings.connect("changed::arrange-pinnedApps", Lang.bind(this, this.on_arrange_pinned));
     },
@@ -369,8 +369,8 @@ AppGroup.prototype = {
         return this.app.get_id();
     },
 
-    on_arrange_pinned: function () {
-        this._draggable.inhibit = !this._applet.settings.getValue("arrange-pinnedApps");
+    on_arrange_pinned: function (obj,old,val) {
+        this._draggable.inhibit = !val;//this._applet.settings.getValue("arrange-pinnedApps");
     },
 
     on_panel_edit_mode_changed: function () {
@@ -1087,7 +1087,7 @@ MyApplet.prototype = {
             Gettext.bindtextdomain(this._uuid, GLib.get_home_dir() + "/.local/share/locale");
             this.settings = new Settings.AppletSettings(this, "WindowListGroup@jake.phy@gmail.com", instance_id);
             this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "show-pinned", "showPinned", null, null);
-            this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "show-alerts", "showAlerts", null, null);
+            this.settings.bindProperty(Settings.BindingDirection.IN, "show-alerts", "showAlerts", null, null);
             this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "arrange-pinnedApps", "arrangePinned", null, null);
             this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "enable-hover-peek", "enablePeek", null, null);
             this.settings.bindProperty(Settings.BindingDirection.IN, "onclick-thumbnails", "onclickThumbs", null, null);
@@ -1106,6 +1106,7 @@ MyApplet.prototype = {
             this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "show-recent", "showRecent", null, null);
             this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "appmenu-width", "appMenuWidth", null, null);
             this.settings.bindProperty(Settings.BindingDirection.IN, "firefox-menu", "firefoxMenu", null, null);
+            this.settings.bindProperty(Settings.BindingDirection.IN, "closeall-menu-item", "closeAllMenuItems", null, null);
             this.settings.bindProperty(Settings.BindingDirection.IN, "appmenu-number", "appMenuNum", null, null);
 
             this._box = new St.Bin();

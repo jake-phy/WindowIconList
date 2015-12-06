@@ -358,7 +358,6 @@ SwitchMenuItem.prototype = {
 
     _init: function (menu, text, active) {
         PopupMenu.PopupBaseMenuItem.prototype._init.call(this, {});
-
         this.label = new St.Label({ text: text });
         this._switch = new PopupMenu.Switch(active);
 
