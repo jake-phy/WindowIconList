@@ -266,11 +266,13 @@ AppButton.prototype = {
         this.icon_size = Math.floor(parent._applet._panelHeight - 4);
         this.app = parent.app;
         this.icon = this.app.create_icon_texture(this.icon_size);
-        this._applet = parent._applet;
+        this._applet = parent._applet;       
         this._parent = parent;
         this.isFavapp = parent.isFavapp;
         IconLabelButton.prototype._init.call(this, this);
         if (this.isFavapp) this._isFavorite(true);
+        
+        this.metaWorkspaces = {};
 
         let tracker = Cinnamon.WindowTracker.get_default();
         this._trackerSignal = tracker.connect('notify::focus-app', Lang.bind(this, this._onFocusChange));
@@ -292,26 +294,35 @@ AppButton.prototype = {
         }
     },   
     
+    _setWatchedWorkspaces:function(workspaces){
+        this.metaWorkspaces = workspaces;
+    },
+    
     _hasFocus: function() {
-        let windows = this._parent.metaWindows;
-        let transientHasFocus = false;
+        var workspaceIds = [];
+        for(let w in this.metaWorkspaces) {
+            workspaceIds.push(this.metaWorkspaces[w].workspace.index());
+        }     
+        let windows = this.app.get_windows().filter(function (win) {
+                return workspaceIds.indexOf(win.get_workspace().index()) >= 0;
+            });
+        let hasTransient = false
         for (let w in windows) {
-            let window = windows[w].win;
+            let window = windows[w];
             if (window.minimized)
                 continue;
-
             if (window.has_focus())
                 return true;
 
             window.foreach_transient(function(transient) {
                 if (transient.has_focus()) {
-                    transientHasFocus = true;
+                    hasTransient = true
                     return false;
                 }
                 return true;
             });
         }
-        return transientHasFocus;
+        return hasTransient;
     },
     
     _updateAttentionGrabber: function(obj, oldVal, newVal) {

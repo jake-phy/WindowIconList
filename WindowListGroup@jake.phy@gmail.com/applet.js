@@ -313,6 +313,8 @@ AppGroup.prototype = {
             DND.LauncherDraggable.prototype._init.call(this);
         this._applet = applet;
         this.appList = appList;
+        
+        this._deligate = this
         this.launchersBox = applet; //This convert the applet class in a launcherBox(is requiere to be a launcher dragable object)
                                     //but you have duplicate object this._applet then...
         this.app = app;
@@ -429,6 +431,10 @@ AppGroup.prototype = {
     getDragActorSource: function () {
         return this.actor;
     },
+    
+    _setWatchedWorkspaces: function(){
+        this._appButton._setWatchedWorkspaces(this.metaWorkspaces);
+    },
 
     // Add a workspace to the list of workspaces that are watched for
     // windows being added and removed
@@ -446,6 +452,7 @@ AppGroup.prototype = {
         this._applet.settings.connect("changed::number-display", Lang.bind(this, function () {
             this._calcWindowNumber(metaWorkspace);
         }));
+        this._setWatchedWorkspaces();
     },
 
     // Stop monitoring a workspace for added and removed windows.
@@ -469,6 +476,7 @@ AppGroup.prototype = {
         } else {
             global.log('Warning: tried to remove watch on an unwatched workspace');
         }
+        this._setWatchedWorkspaces();
     },
 
     hideAppButton: function () {
@@ -842,9 +850,9 @@ function AppList() {
 AppList.prototype = {
     _init: function (applet, metaWorkspace) {
         this._applet = applet;
+        this.metaWorkspace = metaWorkspace;
         this.myactorbox = new SpecialButtons.MyAppletBox(this._applet);
         this.actor = this.myactorbox.actor;
-        this.metaWorkspace = metaWorkspace;
         this._appList = {};
         this._tracker = Cinnamon.WindowTracker.get_default();
         this._appsys = Cinnamon.AppSystem.get_default();
