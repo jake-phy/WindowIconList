@@ -88,12 +88,12 @@ IconLabelButton.prototype = {
         this._container.add_actor(this._label);
         this._container.add_actor(this._numLabel);
 
-        this.setIconPadding(null,null,this._applet.iconPadding);
+        this.setIconPadding(null,null,null,this._applet.iconPadding);
 
         this._applet.settings.connect("changed::icon-padding", Lang.bind(this, this.setIconPadding));
     },
 
-    setIconPadding: function (obj,old,val) {
+    setIconPadding: function (obj,signal,old,val) {
         this.actor.style = "padding-bottom: 0px;padding-top:0px; padding-left: " + val + "px;padding-right:" + val + "px;";
     },
 

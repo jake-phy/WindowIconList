@@ -159,7 +159,7 @@ PinnedFavs.prototype = {
         this._reload(applet.pinnedApps);
     },
 
-    _onFavsChanged: function (obj,old,val) {
+    _onFavsChanged: function (obj,signal,old,val) {
         if(this._reload(val))
             this.emit('changed');
     },
@@ -341,7 +341,7 @@ AppGroup.prototype = {
 
         this.myactor.add(this._appButton.actor);
 
-        this._appButton.actor.connect('button-press-event', Lang.bind(this, this._onAppButtonRelease));
+        this._appButton.actor.connect('button-release-event', Lang.bind(this, this._onAppButtonRelease));
         //global.screen.connect('event', Lang.bind(this, this._onAppKeyPress));
         //        global.screen.connect('key-release-event', Lang.bind(this, this._onAppKeyReleased));
         // Set up the right click menu for this._appButton
@@ -355,12 +355,11 @@ AppGroup.prototype = {
         this._hoverMenuManager.addMenu(this.hoverMenu);
 
         this._draggable = SpecialButtons.makeDraggable(this.actor);
-        this._draggable.connect('drag-cancelled', Lang.bind(this, this._onDragCancelled));
-        this._draggable.connect('drag-end', Lang.bind(this, this._onDragEnd));
+        this._draggable.connect('drag-begin', Lang.bind(this, this._onDragBegin));
         this.isDraggableApp = true;
 
         this.on_panel_edit_mode_changed();
-        this.on_arrange_pinned(null,null,this._applet.arrangePinned);
+        this.on_arrange_pinned(null,null,null,this._applet.arrangePinned);
         global.settings.connect('changed::panel-edit-mode', Lang.bind(this, this.on_panel_edit_mode_changed));
         this._applet.settings.connect("changed::arrange-pinnedApps", Lang.bind(this, this.on_arrange_pinned));
     },
@@ -369,8 +368,8 @@ AppGroup.prototype = {
         return this.app.get_id();
     },
 
-    on_arrange_pinned: function (obj,old,val) {
-        this._draggable.inhibit = !val;//this._applet.settings.getValue("arrange-pinnedApps");
+    on_arrange_pinned: function (obj,signal,old,val) {
+        this._draggable.inhibit = !val;
     },
 
     on_panel_edit_mode_changed: function () {
@@ -389,17 +388,10 @@ AppGroup.prototype = {
             this.hideAppButtonLabel(true);
         }
     },
-
-    _onDragEnd: function () {
+    
+    _onDragBegin: function () {
         this.rightClickMenu.close(false);
         this.hoverMenu.close(false);
-        this.appList.myactorbox._clearDragPlaceholder();
-    },
-
-    _onDragCancelled: function () {
-        this.rightClickMenu.close(false);
-        this.hoverMenu.close(false);
-        this.appList.myactorbox._clearDragPlaceholder();
     },
 
     handleDragOver: function (source, actor, x, y, time) {
