@@ -183,10 +183,13 @@ AppMenuButtonRightClickMenu.prototype = {
 	show_recent_changed: function (obj,old,val) {
 		if(val) {
 			this.specialCont.actor.show();
+			if(this.specialSep)
+				this.specialSep.show();
 			this._recent_items_changed(null.null,null);
 		} else {
-			this._recent_items_changed(null.null,null);
 			this.specialCont.actor.hide();
+			if(this.specialSep)
+				this.specialSep.hide();
 		}
 	},
 
@@ -391,12 +394,13 @@ AppMenuButtonRightClickMenu.prototype = {
 
     _isFavorite: function (isFav) {
         let showFavs = this._applet.showPinned;
+        this.specialSep = new PopupMenu.PopupSeparatorMenuItem();
         if (isFav) {
 			this.box.add(this.subMenuItem.menu.actor);
 			this.addMenuItem(this.subMenuItem);
             this._connectSubMenuSignals(this.subMenuItem, this.subMenuItem.menu);
-            this.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 			if(this.RecentMenuItems.length){
+	            this.addMenuItem(this.specialSep);
 				this.box.add(this.specialCont.actor);
 			}
             this.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
@@ -413,8 +417,8 @@ AppMenuButtonRightClickMenu.prototype = {
             this.addMenuItem(this.itemOnAllWorkspaces);
             this.addMenuItem(this.itemMoveToLeftWorkspace);
             this.addMenuItem(this.itemMoveToRightWorkspace);
-            this.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 			if(this.RecentMenuItems.length) {
+	            this.addMenuItem(this.specialSep);
 				this.box.add(this.specialCont.actor);
 			}
             this.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
@@ -436,8 +440,8 @@ AppMenuButtonRightClickMenu.prototype = {
             if (showFavs) this.addMenuItem(this.itemtoggleFav);
             else this.addMenuItem(this.settingItem);
             this.addMenuItem(this.launchItem);
-            this.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 			if(this.RecentMenuItems.length) {
+	            this.addMenuItem(this.specialSep);
 				this.box.add(this.specialCont.actor);
 			}
             this.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
