@@ -355,7 +355,6 @@ AppGroup.prototype = {
         this._hoverMenuManager.addMenu(this.hoverMenu);
 
         this._draggable = SpecialButtons.makeDraggable(this.actor);
-        this._draggable.connect('drag-begin', Lang.bind(this, this._onDragBegin));
         this.isDraggableApp = true;
 
         this.on_panel_edit_mode_changed();
@@ -387,11 +386,6 @@ AppGroup.prototype = {
         } else if (titleType == TitleDisplay.none) {
             this.hideAppButtonLabel(true);
         }
-    },
-    
-    _onDragBegin: function () {
-        this.rightClickMenu.close(false);
-        this.hoverMenu.close(false);
     },
 
     handleDragOver: function (source, actor, x, y, time) {
@@ -488,9 +482,9 @@ AppGroup.prototype = {
     },
 
     _onAppButtonRelease: function (actor, event) {
-	
+
 // 	    global.log(event.get_button());
-	if ((event.get_button() == 0x01) && this.isFavapp) {
+	    if ((event.get_button() == 0x01) && this.isFavapp) {
 // 		global.log('create window'); 
             this.app.open_new_window(-1);
             this._animate();
@@ -593,7 +587,7 @@ AppGroup.prototype = {
 
     // updates the internal list of metaWindows
     // to include all windows corresponding to this.app on the workspace
-    // metaWorkspace
+    // metaWorkspacewindowHandle
     _updateMetaWindows: function (metaWorkspace) {
         let tracker = Cinnamon.WindowTracker.get_default();
         // Get a list of all interesting windows that are part of this app on the current workspace
@@ -1115,7 +1109,7 @@ MyApplet.prototype = {
 
             this.recentManager = Gtk.RecentManager.get_default();
             this.recentItems = this.recentManager.get_items().sort(function(a,b) { return  a.get_modified() -  b.get_modified(); } ).reverse();
-	    this.recentManager.connect('changed', Lang.bind(this, this.on_recent_items_changed));
+	        this.recentManager.connect('changed', Lang.bind(this, this.on_recent_items_changed));
 
             this.metaWorkspaces = {};
 
@@ -1236,6 +1230,11 @@ MyApplet.prototype = {
 
     on_panel_edit_mode_changed: function () {
         this.actor.reactive = global.settings.get_boolean("panel-edit-mode");
+        if(this.actor.reactive) {
+            this._menuManager.removeMenu(this._applet_context_menu);     
+        }else{
+            this._menuManager.addMenu(this._applet_context_menu);     
+        }
     },
 
     on_orientation_changed: function(orientation) {

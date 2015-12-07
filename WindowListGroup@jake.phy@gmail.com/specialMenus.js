@@ -112,7 +112,7 @@ AppMenuButtonRightClickMenu.prototype = {
 
         this.launchItem = new SpecialMenuItems.IconMenuItem(this, this.app.get_name(), this.app.create_icon_texture(16));
         this.launchItem.connect('activate', Lang.bind(this, function(){
-			this.appInfo.launch([], null);
+			this.app.open_new_window(0);
 		}));
 		// Settings in pinned apps menu;
 		this._settingsMenu();
@@ -597,11 +597,15 @@ AppMenuButtonRightClickMenu.prototype = {
 
     removeItems: function () {
 		this.blockSourceEvents = true;
-        let children = this._getMenuItems();
-        for (let i = 0; i < children.length; i++) {
-            let item = children[i];
-            this.box.remove_actor(item.actor);
-        }
+        try{
+		    let children = this.box.get_children().map(function (actor) {
+		        return actor._delegate;
+		    });
+		    for (let i = 0; i < children.length; i++) {
+		        let item = children[i];
+		        this.box.remove_actor(item.actor);
+		    }
+        }catch(e){log(e)}
 		this.blockSourceEvents = false;
     },
 
@@ -688,7 +692,7 @@ AppThumbnailHoverMenu.prototype = {
 
         this.parentActor.connect('enter-event', Lang.bind(this, this._onEnter));
         this.parentActor.connect('leave-event', Lang.bind(this, this._onLeave));
-        this.parentActor.connect('button-release-event', Lang.bind(this, this._onButtonPress));
+        this.parentActor.connect('button-press-event', Lang.bind(this, this._onButtonPress));
 
         this.actor.connect('enter-event', Lang.bind(this, this._onMenuEnter));
         this.actor.connect('leave-event', Lang.bind(this, this._onMenuLeave));
@@ -1283,19 +1287,21 @@ WindowThumbnail.prototype = {
     },
 
     destroy: function () {
-        if(this._trackerSignal){
-		    let tracker = Cinnamon.WindowTracker.get_default();
-		    tracker.disconnect(this._trackerSignal);
-        }
-        if (this._urgent_signal) {
-            global.display.disconnect(this._urgent_signal);
-        }
-        if (this._attention_signal) {
-            global.display.disconnect(this._attention_signal);
-        }
-		delete this._parent.appThumbnails[this.metaWindow];
-		this.actor.destroy_children();
-        this.actor.destroy();
+        try{
+		    if(this._trackerSignal){
+				let tracker = Cinnamon.WindowTracker.get_default();
+				tracker.disconnect(this._trackerSignal);
+		    }
+		    if (this._urgent_signal) {
+		        global.display.disconnect(this._urgent_signal);
+		    }
+		    if (this._attention_signal) {
+		        global.display.disconnect(this._attention_signal);
+		    }
+			delete this._parent.appThumbnails[this.metaWindow];
+			this.actor.destroy_children();
+		    this.actor.destroy();
+        }catch(e){}
     },
 
     needs_refresh: function () {
