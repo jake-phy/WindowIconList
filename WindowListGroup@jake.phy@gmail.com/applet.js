@@ -314,7 +314,7 @@ AppGroup.prototype = {
         this._applet = applet;
         this.appList = appList;
         
-        this._deligate = this
+        this._deligate = this;
         this.launchersBox = applet; //This convert the applet class in a launcherBox(is requiere to be a launcher dragable object)
                                     //but you have duplicate object this._applet then...
         this.app = app;
@@ -358,6 +358,7 @@ AppGroup.prototype = {
 
         this._draggable = SpecialButtons.makeDraggable(this.actor);
         this._draggable.connect("drag-cancelled", Lang.bind(this, this._onDragCancelled));
+        this._draggable.connect("drag-end", Lang.bind(this, this._onDragEnd));
         this.isDraggableApp = true;
 
         this.on_panel_edit_mode_changed();
@@ -368,6 +369,10 @@ AppGroup.prototype = {
     
     _onDragCancelled: function () {
         this.appList.myactorbox._clearDragPlaceholder();
+    },
+    
+    _onDragEnd: function () {
+        this.actor.get_parent()._delegate._clearDragPlaceholder()
     },
 
     getId: function() {
@@ -1185,6 +1190,7 @@ MyApplet.prototype = {
             this._onSwitchWorkspace(null, null, global.screen.get_active_workspace_index());
 
             global.settings.connect('changed::panel-edit-mode', Lang.bind(this, this.on_panel_edit_mode_changed));
+            this.panelEditModeEnabled = global.settings.get_boolean("panel-edit-mode");
         } catch (e) {
             Main.notify("Error", e.message);
             global.logError(e);
@@ -1254,11 +1260,13 @@ MyApplet.prototype = {
 
     on_panel_edit_mode_changed: function () {
         this.actor.reactive = global.settings.get_boolean("panel-edit-mode");
-        if(this.actor.reactive) {
-            this._menuManager.removeMenu(this._applet_context_menu);     
-        }else{
-            this._menuManager.addMenu(this._applet_context_menu);     
-        }
+        this.panelEditModeEnabled = global.settings.get_boolean("panel-edit-mode");
+    },
+    
+    _onButtonPressEvent: function (actor, event) {
+        if(!this.panelEditModeEnabled)
+            this._applet_context_menu.isOpen = true;
+	    Applet.Applet.prototype._onButtonPressEvent.call(this, actor, event);
     },
 
     on_orientation_changed: function(orientation) {

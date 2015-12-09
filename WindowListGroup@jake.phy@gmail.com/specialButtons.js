@@ -18,6 +18,7 @@ const Mainloop = imports.mainloop;
 const BUTTON_BOX_ANIMATION_TIME = 0.5;
 const MAX_BUTTON_WIDTH = 150; // Pixels
 const FLASH_INTERVAL = 500;
+const DND_ANIMATION_TIME = 0.2;
 
 const AppletDir = imports.ui.appletManager.applets['WindowListGroup@jake.phy@gmail.com'];
 const Applet = AppletDir.applet;
@@ -687,21 +688,33 @@ MyAppletBox.prototype = {
 
     handleDragOver: function (source, actor, x, y, time) {
         if (!(source.isDraggableApp || (source instanceof DND.LauncherDraggable))) return DND.DragMotionResult.NO_DROP;
-
+        if(this._dragPlaceholder && this._dragPlaceholder.animationInProgress) return DND.DragMotionResult.NO_DROP;;
         let children = this.actor.get_children();
+        let numChildren = children.length;
+        let boxWidth = this.actor.width;
+        
+        let favorites = this._applet.pinned_app_contr().getFavorites();
+        let numFavorites = favorites.length;
+        
+        if (this._dragPlaceholder) {
+            boxWidth -= this._dragPlaceholder.actor.width;
+            numChildren--;
+        }
         let windowPos = children.indexOf(source.actor);
 
-        let pos = 0;
+        let pos = Math.round(x * numChildren / boxWidth);
 
-        for (var i in children) {
-            if (x > children[i].get_allocation_box().x1 + children[i].width / 2) pos = i;
-        }
-
-        if (pos != this._dragPlaceholderPos) {
-            this._dragPlaceholderPos = pos;
-
+        if (pos != this._dragPlaceholderPos && pos <= numFavorites) {
+            if (this._animatingPlaceholdersCount > 0) {
+                let appChildren = children.filter(function(actor) {
+                    return (actor._delegate instanceof Applet.AppGroup);
+                });
+                this._dragPlaceholderPos = children.indexOf(appChildren[pos]);
+            } else {
+                this._dragPlaceholderPos = pos;
+            }
             // Don't allow positioning before or after self
-            if (windowPos != -1 && pos == windowPos) {
+            if (windowPos != -1 && (pos == windowPos || pos == windowPos + 1)) {
                 if (this._dragPlaceholder) {
                     this._dragPlaceholder.animateOutAndDestroy();
                     this._animatingPlaceholdersCount++;
@@ -713,16 +726,9 @@ MyAppletBox.prototype = {
 
                 return DND.DragMotionResult.CONTINUE;
             }
-
-            // If the placeholder already exists, we just move
-            // it, but if we are adding it, expand its size in
-            // an animation
-            let fadeIn;
+            
             if (this._dragPlaceholder) {
                 this._dragPlaceholder.actor.destroy();
-                fadeIn = false;
-            } else {
-                fadeIn = true;
             }
 
             let childWidth;
@@ -738,7 +744,7 @@ MyAppletBox.prototype = {
             this._dragPlaceholder.child.width = childWidth;
             this._dragPlaceholder.child.height = childHeight;
             this.actor.insert_actor(this._dragPlaceholder.actor, this._dragPlaceholderPos);
-            if (fadeIn) this._dragPlaceholder.animateIn();
+            this._dragPlaceholder.animateIn();
         }
 
         return DND.DragMotionResult.MOVE_DROP;
@@ -785,6 +791,37 @@ MyAppletBox.prototype = {
             this._dragPlaceholder.animateOutAndDestroy();
             this._dragPlaceholder = null;
             this._dragPlaceholderPos = -1;
+            this._animatingPlaceholdersCount = 0;
         }
+    }
+};
+function GenericDragPlaceholderItem() {
+    this._init();
+}
+
+GenericDragPlaceholderItem.prototype = {
+    __proto__: DND.GenericDragItemContainer.prototype,
+
+    _init: function() {
+        DND.GenericDragItemContainer.prototype._init.call(this);
+        this.setChild(new St.Bin({ style_class: 'drag-placeholder' }));
+    },
+    
+    animateIn: function() {
+        if (this.child == null)
+            return;
+
+        this.childScale = 0;
+        this.childOpacity = 0;
+        this.animationInProgress = true;
+        Tweener.addTween(this,
+                         { childScale: 1.0,
+                           childOpacity: 255,
+                           time: DND_ANIMATION_TIME,
+                           transition: 'easeOutQuad',
+                           onComplete: Lang.bind(this, function() {
+                               this.animationInProgress = false;
+                           })
+                         });
     }
 };
