@@ -708,7 +708,6 @@ MyAppletBox.prototype = {
                 origPos--;
         }
 
-
         if (pos != this._dragPlaceholderPos && pos <= numFavorites) {
             this._dragPlaceholderPos = pos;
             // Don't allow positioning before or after self
