@@ -688,39 +688,37 @@ MyAppletBox.prototype = {
 
     handleDragOver: function (source, actor, x, y, time) {
         if (!(source.isDraggableApp || (source instanceof DND.LauncherDraggable))) return DND.DragMotionResult.NO_DROP;
-        if(this._dragPlaceholder && this._dragPlaceholder.animationInProgress) return DND.DragMotionResult.NO_DROP;;
+        if(this._dragPlaceholder && this._dragPlaceholder.animationInProgress) return DND.DragMotionResult.CONTINUE;
         let children = this.actor.get_children();
         let numChildren = children.length;
-        let boxWidth = this.actor.width;
         
         let favorites = this._applet.pinned_app_contr().getFavorites();
         let numFavorites = favorites.length;
         
+        let origPos = children.indexOf(source.actor);
+        
+        let pos = this.closestSibling(x, children, this.actor.width);
         if (this._dragPlaceholder) {
-            boxWidth -= this._dragPlaceholder.actor.width;
-            numChildren--;
+            let dragPos = children.indexOf(this._dragPlaceholder.actor);
+            
+            if(dragPos < pos){
+                    pos--;
+            }
+            if(dragPos < origPos)
+                origPos--;
         }
-        let windowPos = children.indexOf(source.actor);
 
-        let pos = Math.round(x * numChildren / boxWidth);
 
         if (pos != this._dragPlaceholderPos && pos <= numFavorites) {
-            if (this._animatingPlaceholdersCount > 0) {
-                let appChildren = children.filter(function(actor) {
-                    return (actor._delegate instanceof Applet.AppGroup);
-                });
-                this._dragPlaceholderPos = children.indexOf(appChildren[pos]);
-            } else {
-                this._dragPlaceholderPos = pos;
-            }
+            this._dragPlaceholderPos = pos;
             // Don't allow positioning before or after self
-            if (windowPos != -1 && (pos == windowPos || pos == windowPos + 1)) {
+            if (origPos != -1 && (pos == origPos || pos == origPos + 1)) {
                 if (this._dragPlaceholder) {
-                    this._dragPlaceholder.animateOutAndDestroy();
                     this._animatingPlaceholdersCount++;
                     this._dragPlaceholder.actor.connect('destroy', Lang.bind(this, function () {
                         this._animatingPlaceholdersCount--;
                     }));
+                    this._dragPlaceholder.animateOutAndDestroy();
                 }
                 this._dragPlaceholder = null;
 
@@ -740,7 +738,7 @@ MyAppletBox.prototype = {
                 childWidth = source.actor.width;
                 childHeight = source.actor.height;
             }
-            this._dragPlaceholder = new DND.GenericDragPlaceholderItem();
+            this._dragPlaceholder = new GenericDragPlaceholderItem();
             this._dragPlaceholder.child.width = childWidth;
             this._dragPlaceholder.child.height = childHeight;
             this.actor.insert_actor(this._dragPlaceholder.actor, this._dragPlaceholderPos);
@@ -749,9 +747,33 @@ MyAppletBox.prototype = {
 
         return DND.DragMotionResult.MOVE_DROP;
     },
+    
+    closestSibling: function (num, arr, max) {
+        let curr = 0;
+        let diff = Math.abs (num - curr);
+        let newdiff;
+        for (let val = 1; val < arr.length; val++) {
+            newdiff = Math.abs (num - (arr[val].get_position()[0]));
+            if (newdiff < diff) {
+                diff = newdiff;
+                curr = val;
+            }
+        }
+        newdiff = Math.abs (num - max);
+        if (newdiff < diff) {
+            diff = newdiff;
+            curr = arr.length;
+        }
+        return curr;
+    },
 
     acceptDrop: function (source, actor, x, y, time) {
         if (!(source.isDraggableApp || (source instanceof DND.LauncherDraggable))) return false;
+        
+        // Don't allow positioning before or after self
+        let children = this.actor.get_children();
+        let origPos = children.indexOf(source.actor);
+        if(this._dragPlaceholderPos == origPos || this._dragPlaceholderPos == origPos + 1) return false;
 
         if (!(source.isFavapp || source.wasFavapp || source.isDraggableApp || (source instanceof DND.LauncherDraggable)) || source.isNotFavapp) {
             this.actor.move_child(source.actor, this._dragPlaceholderPos);
@@ -805,6 +827,7 @@ GenericDragPlaceholderItem.prototype = {
     _init: function() {
         DND.GenericDragItemContainer.prototype._init.call(this);
         this.setChild(new St.Bin({ style_class: 'drag-placeholder' }));
+        this.animationInProgress = false;
     },
     
     animateIn: function() {
