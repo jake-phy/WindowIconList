@@ -354,7 +354,6 @@ AppGroup.prototype = {
         // Set up the hover menu for this._appButton
         this.hoverMenu = new SpecialMenus.AppThumbnailHoverMenu(this);
         this._hoverMenuManager = new SpecialMenus.HoverMenuController(this);
-        this._hoverMenuManager.addMenu(this.hoverMenu);
 
         this._draggable = SpecialButtons.makeDraggable(this.actor);
         this._draggable.connect("drag-cancelled", Lang.bind(this, this._onDragCancelled));
