@@ -1244,6 +1244,7 @@ WindowThumbnail.prototype = {
     _onFocusChange: function () {
         if (this._hasFocus()) {
             this.actor.remove_style_class_name("thumbnail-alerts");
+            this._needsAttention = false;
         }
     },
     

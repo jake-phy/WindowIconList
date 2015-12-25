@@ -368,26 +368,28 @@ AppButton.prototype = {
     
     _allocate: function (actor, box, flags) {
         IconLabelButton.prototype._allocate.call(this, actor, box, flags);
-        this.updateGeometry(false);
+        this.updateGeometry();
     },
     
-    updateGeometry: function(refresh) {
+    updateGeometry: function() {
         let rect = new Meta.Rectangle();
         [rect.x, rect.y] = this.actor.get_transformed_position();
         [rect.width, rect.height] = this.actor.get_transformed_size();
-        if(this.rect && this.rect.x == rect.x && this.rect.y == rect.y && this.rect.height == rect.height && this.rect.width == rect.width && !refresh) {
+        if(this.rect && this.rect.x == rect.x && this.rect.y == rect.y && this.rect.height == rect.height && this.rect.width == rect.width && !this.forceUpdateGeometry) {
             return;
         }else {
+            log("test");
             for(let win in this.metaWindows){
                 this.metaWindows[win].win.set_icon_geometry(rect);
             }
             this.rect = rect;
+            this.forceUpdateGeometry = false;
         }
     },
     
     updateMetaWindows: function(metaWindows) {
         this.metaWindows = metaWindows;
-        this.updateGeometry(true);
+        this.forceUpdateGeometry = true;
     },
 
     destroy: function () {

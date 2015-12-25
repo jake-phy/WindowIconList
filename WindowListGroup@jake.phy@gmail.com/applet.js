@@ -673,10 +673,10 @@ AppGroup.prototype = {
                 this._isFavorite(false);
             }
             this._calcWindowNumber(metaWorkspace);
+            this._appButton.updateMetaWindows(this.metaWindows);
             //log(metaWindow.get_wm_class());
             //log(metaWindow.get_wm_class_instance());
         }
-        this._appButton.updateMetaWindows(this.metaWindows);
         if(app && app.wmClass && !this.isFavapp)
             this._calcWindowNumber(metaWorkspace);
     },
@@ -708,7 +708,6 @@ AppGroup.prototype = {
             }
             this._calcWindowNumber(metaWorkspace);
         }
-        this._appButton.updateMetaWindows(this.metaWindows);
         let tracker = Cinnamon.WindowTracker.get_default();
         let app = AppFromWMClass(this.appList._appsys, this.appList.specialApps, metaWindow);;
         if(app && app.wmClass && !this.isFavapp)
