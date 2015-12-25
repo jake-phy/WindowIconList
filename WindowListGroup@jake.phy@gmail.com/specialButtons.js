@@ -269,6 +269,7 @@ AppButton.prototype = {
         this.icon = this.app.create_icon_texture(this.icon_size);
         this._applet = parent._applet;       
         this._parent = parent;
+        this.metaWindows = parent.metaWindows;
         this.isFavapp = parent.isFavapp;
         IconLabelButton.prototype._init.call(this, this);
         if (this.isFavapp) this._isFavorite(true);
@@ -364,7 +365,30 @@ AppButton.prototype = {
                 this.actor.add_style_class_name('window-list-item-box-bottom');
         }
     },
-
+    
+    _allocate: function (actor, box, flags) {
+        IconLabelButton.prototype._allocate.call(this, actor, box, flags);
+        this.updateGeometry(false);
+    },
+    
+    updateGeometry: function(refresh) {
+        let rect = new Meta.Rectangle();
+        [rect.x, rect.y] = this.actor.get_transformed_position();
+        [rect.width, rect.height] = this.actor.get_transformed_size();
+        if(this.rect && this.rect.x == rect.x && this.rect.y == rect.y && this.rect.height == rect.height && this.rect.width == rect.width && !refresh) {
+            return;
+        }else {
+            for(let win in this.metaWindows){
+                this.metaWindows[win].win.set_icon_geometry(rect);
+            }
+            this.rect = rect;
+        }
+    },
+    
+    updateMetaWindows: function(metaWindows) {
+        this.metaWindows = metaWindows;
+        this.updateGeometry(true);
+    },
 
     destroy: function () {
         let tracker = Cinnamon.WindowTracker.get_default();
@@ -378,276 +402,6 @@ AppButton.prototype = {
         if (this._attention_signal) {
             global.display.disconnect(this._attention_signal);
         }
-    }
-};
-
-// Button tied to a particular metaWindow.  Will raise
-// the metaWindow when clicked and the label will change
-// when the title changes.
-
-
-function WindowButton() {
-    this._init.apply(this, arguments);
-}
-
-WindowButton.prototype = {
-    __proto__: IconLabelButton.prototype,
-
-    _init: function (params) {
-        params = Params.parse(params, {
-            parent: null,
-            isFavapp: false,
-            metaWindow: null,
-        });
-        let parent = params.parent;
-        this._applet = parent._applet;
-        this.appList = parent.appList;
-        this.metaWindow = params.metaWindow;
-        this.app = parent.app;
-        this.isFavapp = params.isFavapp;
-        this.orientation = parent.orientation;
-        if (!this.app) {
-            let tracker = Cinnamom.WindowTracker.get_default();
-            this.app = tracker.get_window_app(metaWindow);
-        }
-        this.icon_size = Math.floor(this._applet._panelHeight - 4);
-        this.icon = this.app.create_icon_texture(this.icon_size);
-        IconLabelButton.prototype._init.call(this, this);
-        this.signals = [];
-        this._numLabel.hide();
-        if (this.isFavapp) this.setStyle('panel-launcher');
-
-        this.actor.connect('button-release-event', Lang.bind(this, this._onButtonRelease));
-        // We need to keep track of the signals we add to metaWindow so we can delete them when we are
-        // destroyed. Signals we add to any of our actors will get destroyed in the destroy() function automatically
-        if (this.metaWindow) {
-            this.signals.push(this.metaWindow.connect('notify::appears-focused', Lang.bind(this, this._onFocusChange)));
-            this.signals.push(this.metaWindow.connect('notify::title', Lang.bind(this, this._onTitleChange)));
-            this._updateAttentionGrabber(null,null,this._applet.showAlerts);
-            this._applet.settings.connect("changed::show-alerts", Lang.bind(this, this._updateAttentionGrabber));
-            this._applet.settings.connect("changed::title-display", Lang.bind(this, function () {
-                this._onTitleChange();
-            }));
-
-            this._onFocusChange();
-        }
-        this._onTitleChange();
-        // Set up the right click menu
-        this.rightClickMenu = new AppletDir.specialMenus.AppMenuButtonRightClickMenu(this, this.actor);
-        this._menuManager = new PopupMenu.PopupMenuManager(this);
-        this._menuManager.addMenu(this.rightClickMenu);
-    },
-
-    destroy: function () {
-        if (this.metaWindow) {
-            this.signals.forEach(Lang.bind(this, function (s) {
-                this.metaWindow.disconnect(s);
-            }));
-            if (this._urgent_signal) {
-                global.display.disconnect(this._urgent_signal);
-            }
-            if (this._attention_signal) {
-                global.display.disconnect(this._attention_signal);
-            }
-        }
-        this.rightClickMenu.destroy();
-        this._container.destroy_children();
-        this._container.destroy();
-        this.actor.destroy();
-    },
-    
-    _updateAttentionGrabber: function(obj, oldVal, newVal) {
-        if (newVal) {
-            this._urgent_signal = global.display.connect("window-marked-urgent", Lang.bind(this, this._onWindowDemandsAttention));
-            this._attention_signal = global.display.connect('window-demands-attention', Lang.bind(this, this._onWindowDemandsAttention));
-        } else {
-            if (this._urgent_signal) {
-                global.display.disconnect(this._urgent_signal);
-            }
-            if (this._attention_signal) {
-                global.display.disconnect(this._attention_signal);
-            }
-        }
-    },
-
-    _onWindowDemandsAttention : function(display, window) {
-        if ( this.metaWindow == window ) {
-            this.getAttention();
-            return true;
-        }
-        return false;
-    },
-
-    _onButtonRelease: function (actor, event) {
-        if (event.get_state() & Clutter.ModifierType.BUTTON1_MASK && this.isFavapp || event.get_state() & Clutter.ModifierType.SHIFT_MASK && event.get_state() & Clutter.ModifierType.BUTTON1_MASK) {
-            this.app.open_new_window(-1);
-            this._animate();
-            return;
-        }
-        if (event.get_state() & Clutter.ModifierType.BUTTON1_MASK) {
-            this._windowHandle(false);
-        }
-        if (event.get_state() & Clutter.ModifierType.BUTTON2_MASK && !this.isFavapp) {
-            if (this.rightClickMenu && this.rightClickMenu.isOpen) {
-                this.rightClickMenu.toggle();
-            }
-            this.app.open_new_window(-1);
-        }
-    },
-
-    handleDragOver: function (source, actor, x, y, time) {
-        if (this.isFavapp)
-            return false;
-        else if (source instanceof WindowButton)
-            return DND.DragMotionResult.CONTINUE;
-
-        if (typeof (this.appList.dragEnterTime) == 'undefined') {
-            this.appList.dragEnterTime = time;
-        } else {
-            if (time > (this.appList.dragEnterTime + 3000)) {
-                this.appList.dragEnterTime = time;
-            }
-        }
-
-        if (time > (this.appList.dragEnterTime + 300)) {
-            this._windowHandle(true);
-        }
-        return false;
-    },
-
-    acceptDrop: function (source, actor, x, y, time) {
-        return false;
-    },
-
-    _windowHandle: function (fromDrag) {
-        if (this.metaWindow.has_focus()) {
-            if (fromDrag) {
-                return;
-            }
-            this.metaWindow.minimize(global.get_current_time());
-        } else {
-            if (this.metaWindow.minimized) {
-                this.metaWindow.unminimize(global.get_current_time());
-            }
-            this.metaWindow.activate(global.get_current_time());
-        }
-    },
-
-    _onFocusChange: function () {
-        if (this._hasFocus()) {
-            this.actor.add_style_pseudo_class('focus');
-            this.actor.remove_style_class_name("window-list-item-demands-attention");
-            this.actor.remove_style_class_name("window-list-item-demands-attention-top");
-        } else {
-            this.actor.remove_style_pseudo_class('focus');
-        }
-    },
-    
-    _hasFocus: function() {
-        if (this.metaWindow.minimized)
-            return false;
-
-        if (this.metaWindow.has_focus())
-            return true;
-
-        let transientHasFocus = false;
-        this.metaWindow.foreach_transient(function(transient) {
-            if (transient.has_focus()) {
-                transientHasFocus = true;
-                return false;
-            }
-            return true;
-        });
-        return transientHasFocus;
-    },
-
-    _animate: function () {
-        //this.actor.set_z_rotation_from_gravity(0.0, Clutter.Gravity.CENTER)
-        Tweener.addTween(this.actor, {
-            opacity: 70,
-            time: 1.0,
-            transition: "linear",
-            onCompleteScope: this,
-            onComplete: function () {
-                Tweener.addTween(this.actor, {
-                    opacity: 255,
-                    time: 0.5,
-                    transition: "linear"
-                });
-            }
-        });
-    },
-
-    _onTitleChange: function () {
-        let [title, appName] = [null, null];
-        if (this.isFavapp)[title, appName] = ['', ''];
-        else [title, appName] = [this.metaWindow.get_title(), this.app.get_name()];
-        let titleType = this._applet.settings.getValue("title-display");
-        if (titleType == TitleDisplay.title) {
-            // Some apps take a long time to set a valid title.  We don't want to error
-            // if title is null
-            if (title) {
-                this.setText(title);
-            } else {
-                this.setText(appName);
-            }
-            return;
-        } else if (titleType == TitleDisplay.app) {
-            if (appName) {
-                this.setText(appName);
-                return;
-            }
-        } else
-            this.setText('');
-    }
-};
-
-
-// A box that will hold a bunch of buttons
-
-
-function ButtonBox() {
-    this._init.apply(this, arguments);
-}
-
-ButtonBox.prototype = {
-    _init: function (params) {
-        params = Params.parse(params, {});
-        this.actor = new St.BoxLayout({
-           style_class: "window-icon-list-buttonbox"
-        });
-        this.actor._delegate = this;
-    },
-
-    add: function (button) {
-        this.actor.add_actor(button.actor);
-        this.hidefav();
-    },
-
-    remove: function (button) {
-        this.actor.remove_actor(button.actor);
-        this.hidefav();
-    },
-
-    clear: function () {
-        this.actor.destroy_children();
-    },
-
-    hidefav: function () {
-        let child = this.actor.get_children();
-        if (child.length == 1) {
-            child[0].show();
-        } else {
-            child[0].hide();
-        }
-    },
-
-    destroy: function () {
-        this.actor.get_children().forEach(Lang.bind(this, function (button) {
-            button._delegate.destroy();
-        }));
-        this.actor.destroy();
-        this.actor = null;
     }
 };
 
