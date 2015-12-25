@@ -336,14 +336,17 @@ AppGroup.prototype = {
             reactive: true
         });
         this.actor.set_child(this.myactor);
+        
+        this._draggable = SpecialButtons.makeDraggable(this.actor);
+        this._draggable.connect("drag-cancelled", Lang.bind(this, this._onDragCancelled));
+        this._draggable.connect("drag-end", Lang.bind(this, this._onDragEnd));
+        this.actor.connect('leave-event', Lang.bind(this, this._RemovePossibleDrag));
+        this.isDraggableApp = true;
 
         this._appButton = new SpecialButtons.AppButton(this);
-
         this.myactor.add(this._appButton.actor);
-
         this._appButton.actor.connect('button-release-event', Lang.bind(this, this._onAppButtonRelease));
         this._appButton.actor.connect('button-press-event', Lang.bind(this, this._onAppButtonPress));
-        this.actor.connect('leave-event', Lang.bind(this, this._RemovePossibleDrag));
         //global.screen.connect('event', Lang.bind(this, this._onAppKeyPress));
         //        global.screen.connect('key-release-event', Lang.bind(this, this._onAppKeyReleased));
         // Set up the right click menu for this._appButton
@@ -356,11 +359,6 @@ AppGroup.prototype = {
         this._hoverMenuManager = new SpecialMenus.HoverMenuController(this);
         this._hoverMenuManager.addMenu(this.hoverMenu);
 
-        this._draggable = SpecialButtons.makeDraggable(this.actor);
-        this._draggable.connect("drag-cancelled", Lang.bind(this, this._onDragCancelled));
-        this._draggable.connect("drag-end", Lang.bind(this, this._onDragEnd));
-        this.isDraggableApp = true;
-
         this.on_panel_edit_mode_changed();
         this.on_arrange_pinned(null,null,null,this._applet.arrangePinned);
         global.settings.connect('changed::panel-edit-mode', Lang.bind(this, this.on_panel_edit_mode_changed));
@@ -368,11 +366,11 @@ AppGroup.prototype = {
     },
     
     _onDragCancelled: function () {
-        this.appList.myactorbox._clearDragPlaceholder();
+        this.actor.get_parent()._delegate._clearDragPlaceholder();
     },
     
     _onDragEnd: function () {
-        this.actor.get_parent()._delegate._clearDragPlaceholder()
+        this.actor.get_parent()._delegate._clearDragPlaceholder();
     },
 
     getId: function() {

@@ -378,7 +378,6 @@ AppButton.prototype = {
         if(this.rect && this.rect.x == rect.x && this.rect.y == rect.y && this.rect.height == rect.height && this.rect.width == rect.width && !this.forceUpdateGeometry) {
             return;
         }else {
-            log("test");
             for(let win in this.metaWindows){
                 this.metaWindows[win].win.set_icon_geometry(rect);
             }
@@ -390,6 +389,10 @@ AppButton.prototype = {
     updateMetaWindows: function(metaWindows) {
         this.metaWindows = metaWindows;
         this.forceUpdateGeometry = true;
+    },
+    
+    setIsInDrag: function(value){
+        this.isInDrag = value;
     },
 
     destroy: function () {
