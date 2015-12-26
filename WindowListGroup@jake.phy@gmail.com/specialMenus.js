@@ -652,18 +652,6 @@ AppMenuButtonRightClickMenu.prototype = {
     }
 };
 
-function HoverMenuController(owner) {
-    this._init(owner);
-}
-
-HoverMenuController.prototype = {
-    __proto__: PopupMenu.PopupMenuManager.prototype,
-
-    _onEventCapture: function (actor, event) {
-        return false;
-    }
-};
-
 function AppThumbnailHoverMenu() {
     this._init.apply(this, arguments);
 }
@@ -1364,7 +1352,7 @@ WindowThumbnail.prototype = {
 			let parent = this._parent._parentContainer;
 		    parent.shouldOpen = false;
 		    parent.shouldClose = true;
-		    Mainloop.timeout_add(Math.min(parent.hoverTime, 100), Lang.bind(parent, parent.hoverClose));
+		    parent.hoverClose();
         }else if (event.get_state() & Clutter.ModifierType.BUTTON2_MASK && !this.stopClick) {
         	this.stopClick = true;
 			this.destroy();

@@ -356,7 +356,6 @@ AppGroup.prototype = {
 
         // Set up the hover menu for this._appButton
         this.hoverMenu = new SpecialMenus.AppThumbnailHoverMenu(this);
-        this._hoverMenuManager = new SpecialMenus.HoverMenuController(this);
 
         this.on_panel_edit_mode_changed();
         this.on_arrange_pinned(null,null,null,this._applet.arrangePinned);
