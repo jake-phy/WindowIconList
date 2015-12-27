@@ -1273,12 +1273,11 @@ WindowThumbnail.prototype = {
             //this.thumbnailActor.width = 0;
             this.thumbnailActor.child = null;
             let apptext = this.app.get_name();
-            // not sure why it's 7
-            this.ThumbnailWidth = THUMBNAIL_ICON_SIZE + Math.floor(apptext.length * 7.0);
+            this.ThumbnailWidth = Math.floor((Main.layoutManager.primaryMonitor.width / 70) * this._applet.thumbSize);
             this._label.text = apptext;
             this.isFavapp = true;
 			this.actor.style = "border-width:2px;padding: 2px";
-			this._container.style = "width: " + this.ThumbnailWidth + "px";
+			this._container.style = "max-width: " + this.ThumbnailWidth + "px";
         } else {
 			this.actor.style = null;
 			// HACK used to make sure everything is on the stage
