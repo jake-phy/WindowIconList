@@ -79,7 +79,6 @@ IconLabelButton.prototype = {
         this._container.connect('get-preferred-height', Lang.bind(this, this._getPreferredHeight));
         this._container.connect('allocate', Lang.bind(this, this._allocate));
 
-        //this._icon.set_child(parent.icon);
         this._label = new St.Label();
         this._numLabel = new St.Label({
             style_class: "window-list-item-label window-icon-list-numlabel"
@@ -136,15 +135,15 @@ IconLabelButton.prototype = {
     },
 
     _getPreferredWidth: function (actor, forHeight, alloc) {
-        let [iconMinSize, iconNaturalSize] = this._icon.get_preferred_width(forHeight);
+        let [iconMinSize, iconNaturalSize] = this._icon.get_preferred_width(forHeight - 4);
         let [labelMinSize, labelNaturalSize] = this._label.get_preferred_width(forHeight);
         // The label text is starts in the center of the icon, so we should allocate the space
         // needed for the icon plus the space needed for(label - icon/2)
-        alloc.min_size = iconMinSize;
         if(this._applet.titleDisplay == 3 && !this._parent.isFavapp)
             alloc.natural_size = MAX_BUTTON_WIDTH;
         else
             alloc.natural_size = Math.min(iconNaturalSize + Math.max(0, labelNaturalSize), MAX_BUTTON_WIDTH);
+        alloc.min_size = alloc.natural_size + 1;
     },
 
     _getPreferredHeight: function (actor, forWidth, alloc) {
@@ -174,7 +173,7 @@ IconLabelButton.prototype = {
         let [iconMinWidth, iconMinHeight, iconNaturalWidth, iconNaturalHeight] = this._icon.get_preferred_size();
         [childBox.y1, childBox.y2] = center(allocHeight, iconNaturalHeight);
         if (direction == Clutter.TextDirection.LTR) {
-            [childBox.x1, childBox.x2] = [0, Math.min(iconNaturalWidth, allocWidth)];
+            [childBox.x1, childBox.x2] = [0.0, Math.min(iconNaturalWidth, allocWidth)];
         } else {
             [childBox.x1, childBox.x2] = [Math.max(0, allocWidth - iconNaturalWidth), allocWidth];
         }
@@ -218,7 +217,7 @@ IconLabelButton.prototype = {
         let [minWidth, naturalWidth] = this._label.get_preferred_width(-1);
         let width = Math.min(targetWidth || naturalWidth, 150)
         if(setToZero)
-            this._label.width = 1;
+            this._label.width = 0.0;
         if (!animate) {
             this._label.width = width;
             return;
@@ -233,13 +232,13 @@ IconLabelButton.prototype = {
 
     hideLabel: function (animate) {
         if (!animate) {
-            this._label.width = 1;
+            this._label.width = 0.0;
             this._label.hide();
             return;
         }
 
         Tweener.addTween(this._label, {
-            width: 1,
+            width: 0.0,
             // FIXME: if this is set to 0, a whole bunch of "Clutter-CRITICAL **: clutter_paint_volume_set_width: assertion `width >= 0.0f' failed" messages appear
             time: BUTTON_BOX_ANIMATION_TIME,
             transition: "easeOutQuad",
@@ -592,7 +591,7 @@ GenericDragPlaceholderItem.prototype = {
         if (this.child == null)
             return;
 
-        this.childScale = 0;
+        this.childScale = 0.0;
         this.childOpacity = 0;
         this.animationInProgress = true;
         Tweener.addTween(this,
