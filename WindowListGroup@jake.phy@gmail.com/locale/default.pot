@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-07-16 23:04+0800\n"
+"POT-Creation-Date: 2016-01-11 22:16+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,98 +17,98 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Language: \n"
 
-#: specialMenus.js:74
+#: specialMenus.js:75
 #, c-format
 msgid "Move to monitor %d"
 msgstr ""
 
-#: specialMenus.js:91
+#: specialMenus.js:92
 msgid "Close All"
 msgstr ""
 
-#: specialMenus.js:94
+#: specialMenus.js:95
 msgid "Close"
 msgstr ""
 
-#: specialMenus.js:97 specialMenus.js:492
+#: specialMenus.js:98 specialMenus.js:520
 msgid "Minimize"
 msgstr ""
 
-#: specialMenus.js:100 specialMenus.js:489
+#: specialMenus.js:101 specialMenus.js:517
 msgid "Maximize"
 msgstr ""
 
-#: specialMenus.js:103
+#: specialMenus.js:104
 msgid "Move to left workspace"
 msgstr ""
 
-#: specialMenus.js:106
+#: specialMenus.js:107
 msgid "Move to right workspace"
 msgstr ""
 
-#: specialMenus.js:109 specialMenus.js:479
+#: specialMenus.js:110 specialMenus.js:507
 msgid "Visible on all workspaces"
 msgstr ""
 
-#: specialMenus.js:134
+#: specialMenus.js:135
 msgid "Unpin from Panel"
 msgstr ""
 
-#: specialMenus.js:137
+#: specialMenus.js:138
 msgid "Pin to Panel"
 msgstr ""
 
-#: specialMenus.js:146
+#: specialMenus.js:147
 msgid "Settings"
 msgstr ""
 
-#: specialMenus.js:149
+#: specialMenus.js:150
 msgid "ReArrange"
 msgstr ""
 
-#: specialMenus.js:153
+#: specialMenus.js:154
 msgid "Show Pinned"
 msgstr ""
 
-#: specialMenus.js:157
+#: specialMenus.js:162
 msgid "Show Thumbs"
 msgstr ""
 
-#: specialMenus.js:161
+#: specialMenus.js:170
 msgid "Stack Thumbs"
 msgstr ""
 
-#: specialMenus.js:165
+#: specialMenus.js:178
 msgid "Hover to Peek"
 msgstr ""
 
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->show-
 #. recent->description
-#: specialMenus.js:169
+#: specialMenus.js:186
 msgid "Show Recent"
 msgstr ""
 
-#: specialMenus.js:173
+#: specialMenus.js:194
 msgid "Vertical Thumbs"
 msgstr ""
 
-#: specialMenus.js:177
+#: specialMenus.js:202
 msgid "   Go to Settings"
 msgstr ""
 
-#: specialMenus.js:263
+#: specialMenus.js:291
 msgid "Install Gda"
 msgstr ""
 
-#: specialMenus.js:475
+#: specialMenus.js:503
 msgid "Only on this workspace"
 msgstr ""
 
-#: specialMenus.js:487
+#: specialMenus.js:515
 msgid "Unmaximize"
 msgstr ""
 
-#: specialMenus.js:491
+#: specialMenus.js:519
 msgid "Restore"
 msgstr ""
 
@@ -223,6 +223,13 @@ msgstr ""
 #. WindowListGroup@jake.phy@gmail.com->settings-schema.json->title-
 #. display->options
 msgid "title"
+msgstr ""
+
+#. WindowListGroup@jake.phy@gmail.com->settings-schema.json->show-
+#. alerts->description
+#. WindowListGroup@jake.phy@gmail.com->settings-schema.json->show-
+#. alerts->tooltip
+msgid "Show app alerts and notifications"
 msgstr ""
 
 #. WindowListGroup@jake.phy@gmail.com->settings-
