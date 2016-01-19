@@ -381,11 +381,14 @@ AppMenuButtonRightClickMenu.prototype = {
 		let num = this._applet.appMenuNum - pinnedLength;
 		if(itemsLength > num)
 			itemsLength = num;
-		for(let i = 0; i < itemsLength; i++){
-			let item = items[i];
-			let recentMenuItem = new SpecialMenuItems.RecentMenuItem(this, item, 'list-add');
-            this.specialSection.add(recentMenuItem.actor);
-			this.RecentMenuItems.push(recentMenuItem);
+		try {
+			for(let i = 0; i < itemsLength; i++){
+				let item = items[i];
+				let recentMenuItem = new SpecialMenuItems.RecentMenuItem(this, item, 'list-add');
+		        this.specialSection.add(recentMenuItem.actor);
+				this.RecentMenuItems.push(recentMenuItem);
+			}
+		}catch (e) {
 		}
 	},
 

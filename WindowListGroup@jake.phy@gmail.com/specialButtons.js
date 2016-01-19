@@ -58,7 +58,7 @@ IconLabelButton.prototype = {
             style_class: 'window-list-item-box app-list-item-box',
             reactive: true,
             can_focus: true,
-            x_fill: true,
+            x_fill: false,
             y_fill: false,
             track_hover: true
         });
