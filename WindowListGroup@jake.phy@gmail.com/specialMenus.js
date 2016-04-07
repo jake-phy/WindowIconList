@@ -351,18 +351,20 @@ AppMenuButtonRightClickMenu.prototype = {
 			pinnedLength = Object.keys(this.pinnedItems).length;
 		}
 		if(this.pinnedItems){
-			for(let i in this.pinnedItems){
-				let item = this.pinnedItems[i];
-				//log(item.title)
-				let recentMenuItem;
-				if (item.title)
-				 	recentMenuItem = new SpecialMenuItems.PinnedRecentItem(this, item.uri, "list-remove", item.title);
-				else
-					recentMenuItem = new SpecialMenuItems.PinnedRecentItem(this, item.uri, "list-remove");
-            	this.specialSection.add(recentMenuItem.actor);
-				this.pinnedItemsUris.push(recentMenuItem.uri);
-				this.RecentMenuItems.push(recentMenuItem);
-			}
+		 	try{
+				for(let i in this.pinnedItems){
+					let item = this.pinnedItems[i];
+					//log(item.title)
+					let recentMenuItem;
+					if (item.title)
+					 	recentMenuItem = new SpecialMenuItems.PinnedRecentItem(this, item.uri, "list-remove", item.title);
+					else
+						recentMenuItem = new SpecialMenuItems.PinnedRecentItem(this, item.uri, "list-remove");
+		        	this.specialSection.add(recentMenuItem.actor);
+					this.pinnedItemsUris.push(recentMenuItem.uri);
+					this.RecentMenuItems.push(recentMenuItem);
+				}
+			}catch(ex){}
 		}
 		return pinnedLength;
 	},

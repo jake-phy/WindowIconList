@@ -901,9 +901,19 @@ AppList.prototype = {
 
     // Gets a list of every app on the current workspace
     _refreshApps: function () {
+		let tracker = this._tracker;
         // For each window, let's make sure we add it!
         this.metaWorkspace.list_windows().forEach(Lang.bind(this, function (win) {
-            this._windowAdded(this.metaWorkspace, win);
+			let app = AppFromWMClass(this._appsys, this.specialApps, win);
+			if(!app)
+				app = tracker.get_window_app(win);
+			if(!app) 
+				return;
+			if (this._appList[app]) {
+				this._appList[app].appGroup._updateMetaWindows(this.metaWorkspace);
+			}else{
+				this._windowAdded(this.metaWorkspace, win);
+			}
         }));
     },
     
@@ -1334,18 +1344,19 @@ MyApplet.prototype = {
         let metaWorkspace = global.screen.get_workspace_by_index(currentWorkspaceIndex);
         // If the workspace we switched to isn't in our list,
         // we need to create an AppList for it
-        if (!this.metaWorkspaces[metaWorkspace]) {
+        let workspace = this.metaWorkspaces[metaWorkspace];
+        let hadWorkspace = workspace;
+        if (!workspace) {
             let appList = new AppList(this, metaWorkspace);
-            this.metaWorkspaces[metaWorkspace] = {
+            workspace = this.metaWorkspaces[metaWorkspace] = {
                 ws: metaWorkspace,
                 appList: appList
             };
         }
-
         // this.actor can only have one child, so setting the child
         // will automatically unparent anything that was previously there, which
         // is exactly what we want.
-        let list = this.metaWorkspaces[metaWorkspace].appList;
+        let list = workspace.appList;
         this._box.set_child(list.actor);
         list._refreshApps();
     },
