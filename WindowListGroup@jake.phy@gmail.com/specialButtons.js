@@ -26,7 +26,8 @@ const Applet = AppletDir.applet;
 const TitleDisplay = {
     none: 1,
     app: 2,
-    title: 3
+    title: 3,
+    focused: 4
 };
 
 
@@ -406,6 +407,280 @@ AppButton.prototype = {
         if (this._attention_signal) {
             global.display.disconnect(this._attention_signal);
         }
+    }
+};
+
+// Button tied to a particular metaWindow.  Will raise
+// the metaWindow when clicked and the label will change
+// when the title changes.
+
+
+function WindowButton() {
+    this._init.apply(this, arguments);
+}
+
+WindowButton.prototype = {
+    __proto__: IconLabelButton.prototype,
+
+    _init: function (params) {
+        params = Params.parse(params, {
+            parent: null,
+            isFavapp: false,
+            metaWindow: null,
+        });
+        let parent = params.parent;
+        this._applet = parent._applet;
+        this.appList = parent.appList;
+        this.metaWindow = params.metaWindow;
+        this.app = parent.app;
+        this.isFavapp = params.isFavapp;
+        this.orientation = parent.orientation;
+        if (!this.app) {
+            let tracker = Cinnamom.WindowTracker.get_default();
+            this.app = tracker.get_window_app(metaWindow);
+        }
+        this.icon_size = Math.floor(this._applet._panelHeight - 4);
+        this.icon = this.app.create_icon_texture(this.icon_size);
+        IconLabelButton.prototype._init.call(this, this);
+        this.signals = [];
+        this._numLabel.hide();
+        if (this.isFavapp) this.setStyle('panel-launcher');
+
+        this.actor.connect('button-release-event', Lang.bind(this, this._onButtonRelease));
+        // We need to keep track of the signals we add to metaWindow so we can delete them when we are
+        // destroyed. Signals we add to any of our actors will get destroyed in the destroy() function automatically
+        if (this.metaWindow) {
+            this.signals.push(this.metaWindow.connect('notify::appears-focused', Lang.bind(this, this._onFocusChange)));
+            this.signals.push(this.metaWindow.connect('notify::title', Lang.bind(this, this._onTitleChange)));
+            this._attention = global.settings.connect('changed::window-list-applet-alert', Lang.bind(this, this._onAttentionRequest));
+            this._applet.settings.connect("changed::title-display", Lang.bind(this, function () {
+                this._onTitleChange();
+            }));
+
+            this._onFocusChange();
+        }
+        this._onTitleChange();
+        // Set up the right click menu
+        this.rightClickMenu = new AppletDir.specialMenus.AppMenuButtonRightClickMenu(this, this.actor);
+        this._menuManager = new PopupMenu.PopupMenuManager(this);
+        this._menuManager.addMenu(this.rightClickMenu);
+    },
+
+    destroy: function () {
+        if (this.metaWindow) {
+            this.signals.forEach(Lang.bind(this, function (s) {
+                this.metaWindow.disconnect(s);
+            }));
+            global.settings.disconnect(this._attention);
+        }
+        this.rightClickMenu.destroy();
+        this._container.destroy_children();
+        this._container.destroy();
+        this.actor.destroy();
+    },
+
+    _onAttentionRequest: function () {
+        if (this.isFavapp) return true;
+        let active = global.settings.get_boolean('window-list-applet-alert');
+        if (active) {
+            this._urgent_signal = global.display.connect('window-marked-urgent', Lang.bind(this, this._onWindowDemandsAttention));
+        } else {
+            if (this._urgent_signal) {
+                global.display.disconnect(this._urgent_signal);
+            }
+        }
+        return true;
+    },
+
+    _onWindowDemandsAttention : function(display, window) {
+        if (this._needsAttention) {
+            return false;
+        }
+        if ( this.metaWindow == window ) {
+            this._needsAttention = true;
+            this.actor.add_style_class_name('window-list-item-demands-attention');
+            return true;
+        }
+        return false;
+    },
+
+    _onButtonRelease: function (actor, event) {
+        if (event.get_state() & Clutter.ModifierType.BUTTON1_MASK && this.isFavapp || event.get_state() & Clutter.ModifierType.SHIFT_MASK && event.get_state() & Clutter.ModifierType.BUTTON1_MASK) {
+            this.app.open_new_window(-1);
+            this._animate();
+            return;
+        }
+        if (event.get_state() & Clutter.ModifierType.BUTTON1_MASK) {
+            this._windowHandle(false);
+        }
+        if (event.get_state() & Clutter.ModifierType.BUTTON2_MASK && !this.isFavapp) {
+            if (this.rightClickMenu && this.rightClickMenu.isOpen) {
+                this.rightClickMenu.toggle();
+            }
+            this.app.open_new_window(-1);
+        }
+    },
+
+    handleDragOver: function (source, actor, x, y, time) {
+        if (this.isFavapp)
+            return false;
+        else if (source instanceof WindowButton)
+            return DND.DragMotionResult.CONTINUE;
+
+        if (typeof (this.appList.dragEnterTime) == 'undefined') {
+            this.appList.dragEnterTime = time;
+        } else {
+            if (time > (this.appList.dragEnterTime + 3000)) {
+                this.appList.dragEnterTime = time;
+            }
+        }
+
+        if (time > (this.appList.dragEnterTime + 300)) {
+            this._windowHandle(true);
+        }
+        return false;
+    },
+
+    acceptDrop: function (source, actor, x, y, time) {
+        return false;
+    },
+
+    _windowHandle: function (fromDrag) {
+        if (this.metaWindow.has_focus()) {
+            if (fromDrag) {
+                return;
+            }
+            this.metaWindow.minimize(global.get_current_time());
+        } else {
+            if (this.metaWindow.minimized) {
+                this.metaWindow.unminimize(global.get_current_time());
+            }
+            this.metaWindow.activate(global.get_current_time());
+        }
+    },
+
+    _onFocusChange: function () {
+        let focused = this.metaWindow.appears_focused;
+        if (focused) {
+            this.actor.add_style_pseudo_class('focus');
+            this.actor.remove_style_class_name("window-list-item-demands-attention");
+            this.actor.remove_style_class_name("window-list-item-demands-attention-top");
+        } else {
+            this.actor.remove_style_pseudo_class('focus');
+        }
+		if (this._applet.settings.getValue("title-display") == TitleDisplay.focused)
+            this._updateFocusedStatus();
+    },
+
+    _animate: function () {
+        //this.actor.set_z_rotation_from_gravity(0.0, Clutter.Gravity.CENTER)
+        Tweener.addTween(this.actor, {
+            opacity: 70,
+            time: 1.0,
+            transition: "linear",
+            onCompleteScope: this,
+            onComplete: function () {
+                Tweener.addTween(this.actor, {
+                    opacity: 255,
+                    time: 0.5,
+                    transition: "linear"
+                });
+            }
+        });
+    },
+
+    _onTitleChange: function () {
+        let [title, appName] = [null, null];
+        if (this.isFavapp)[title, appName] = ['', ''];
+        else [title, appName] = [this.metaWindow.get_title(), this.app.get_name()];
+        let titleType = this._applet.settings.getValue("title-display");
+        if (titleType == TitleDisplay.title) {
+            // Some apps take a long time to set a valid title.  We don't want to error
+            // if title is null
+            if (title) {
+                this.setText(title);
+            } else {
+                this.setText(appName);
+            }          
+			this.showLabel(true);
+            return;
+            
+        } else if (titleType == TitleDisplay.focused) {
+            if (title) {
+                this.setText(title);
+                this._updateFocusedStatus(true);
+            }
+        } else if (titleType == TitleDisplay.app) {
+            if (appName) {
+                this.setText(appName);
+                this.showLabel(true);
+                return;
+            }
+        } else
+            this.hideLabel();
+    },
+    _updateFocusedStatus: function (force) {
+        let focusState;
+		if(this.metaWindow.appears_focused)
+			focusState = this.metaWindow;
+        if (this.focusState != focusState || force)
+            this._focusedLabel(focusState);
+        this.focusState = focusState;
+    },
+    _focusedLabel: function (focusState) {
+        if (focusState) {
+            this.showLabel(true);
+        } else {
+            this.hideLabel(false);
+        }
+    }  
+};
+
+
+// A box that will hold a bunch of buttons
+
+
+function ButtonBox() {
+    this._init.apply(this, arguments);
+}
+
+ButtonBox.prototype = {
+    _init: function (params) {
+        params = Params.parse(params, {});
+        this.actor = new St.BoxLayout();
+        this.actor._delegate = this;
+        this.actor.style = "spacing: 2px;";
+    },
+
+    add: function (button) {
+        this.actor.add_actor(button.actor);
+        this.hidefav();
+    },
+
+    remove: function (button) {
+        this.actor.remove_actor(button.actor);
+        this.hidefav();
+    },
+
+    clear: function () {
+        this.actor.destroy_children();
+    },
+
+    hidefav: function () {
+        let child = this.actor.get_children();
+        if (child.length == 1) {
+            child[0].show();
+        } else {
+            child[0].hide();
+        }
+    },
+
+    destroy: function () {
+        this.actor.get_children().forEach(Lang.bind(this, function (button) {
+            button._delegate.destroy();
+        }));
+        this.actor.destroy();
+        this.actor = null;
     }
 };
 

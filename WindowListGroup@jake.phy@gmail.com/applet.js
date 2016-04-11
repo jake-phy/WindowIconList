@@ -4,7 +4,7 @@
 // Authors:
 //   Kurt Rottmann <kurtrottmann@gmail.com>
 //   Jason Siefken
-//   Josh hess <jake.phy@gmail.com>
+//   Josh Hess <jake.phy@gmail.com>
 // Taking code from
 // Copyright (C) 2011 R M Yorston
 // Licence: GPLv2+
@@ -342,9 +342,13 @@ AppGroup.prototype = {
         this._draggable.connect("drag-end", Lang.bind(this, this._onDragEnd));
         this.actor.connect('leave-event', Lang.bind(this, this._RemovePossibleDrag));
         this.isDraggableApp = true;
-
+        
+		this._windowButtonBox = new SpecialButtons.ButtonBox();
         this._appButton = new SpecialButtons.AppButton(this);
+        
         this.myactor.add(this._appButton.actor);
+        this.myactor.add(this._windowButtonBox.actor);
+        
         this._appButton.actor.connect('button-release-event', Lang.bind(this, this._onAppButtonRelease));
         this._appButton.actor.connect('button-press-event', Lang.bind(this, this._onAppButtonPress));
         //global.screen.connect('event', Lang.bind(this, this._onAppKeyPress));
@@ -361,6 +365,13 @@ AppGroup.prototype = {
         this.on_arrange_pinned(null,null,null,this._applet.arrangePinned);
         global.settings.connect('changed::panel-edit-mode', Lang.bind(this, this.on_panel_edit_mode_changed));
         this._applet.settings.connect("changed::arrange-pinnedApps", Lang.bind(this, this.on_arrange_pinned));
+        if(this._applet.settings.getValue("group-apps")){
+			this.showAppButton();
+			this.hideWindowButtons();
+		}else{
+			this.showWindowButtons();
+			this.hideAppButton();
+		}
     },
     
     _onDragCancelled: function () {
@@ -410,7 +421,7 @@ AppGroup.prototype = {
             }
         }
 
-        if (time > (this.appList.dragEnterTime + 300) && !(this.isFavapp || source.isDraggableApp)) {
+        if (time > (this.appList.dragEnterTime + 300) && !(this.isFavapp || source.isDraggableApp) && this._applet.settings.getValue("group-apps")) {
             this._windowHandle(true);
         }
         return true;
@@ -493,6 +504,14 @@ AppGroup.prototype = {
 
     showAppButton: function () {
         this._appButton.actor.show();
+    },
+    
+    hideWindowButtons: function () {
+        this._windowButtonBox.actor.hide();
+    },
+
+    showWindowButtons: function () {
+        this._windowButtonBox.actor.show();
     },
 
     hideAppButtonLabel: function (animate) {
@@ -628,6 +647,8 @@ AppGroup.prototype = {
             }
         }));
         this.metaWindows = {};
+        this._windowButtonBox.clear();
+        this._loadWinBoxFavs();
         windowList.forEach(Lang.bind(this, function (win) {
             this._windowAdded(metaWorkspace, win);
         }));
@@ -649,6 +670,16 @@ AppGroup.prototype = {
         if(!app)
             app = tracker.get_window_app(metaWindow)
         if (app == this.app && !this.metaWindows[metaWindow] && tracker.is_window_interesting(metaWindow)) {
+			let button = null;
+			if(this._applet.settings.getValue("group-apps") == false){
+                button = new SpecialButtons.WindowButton({    
+                    parent: this,
+                    isFavapp: false,
+                    metaWindow: metaWindow,
+                });
+                this._windowButtonBox.add(button);
+            }
+			
             if (metaWindow) {
                 this.lastFocused = metaWindow;
                 this.rightClickMenu.setMetaWindow(this.lastFocused);
@@ -663,6 +694,7 @@ AppGroup.prototype = {
             signals.push(metaWindow.connect('notify::appears-focused', Lang.bind(this, this._focusWindowChange)));
             let data = {
                 signals: signals,
+                windowButton: button
             };
             this.metaWindows[metaWindow] = {win: metaWindow, data: data};
             if (this.isFavapp) {
@@ -683,10 +715,15 @@ AppGroup.prototype = {
             deleted = this.metaWindows[metaWindow].data;
         if (deleted) {
             let signals = deleted.signals;
+            let button = deleted.windowButton;
             // Clean up all the signals we've connected
             for(let i = 0; i < signals.length; i++) {
                 metaWindow.disconnect(signals[i]);
             }  
+            if(button){
+                this._windowButtonBox.remove(button);
+                button.destroy();
+            }
             delete this.metaWindows[metaWindow];
 
             // Make sure we don't leave our appButton hanging!
@@ -708,6 +745,17 @@ AppGroup.prototype = {
         let app = AppFromWMClass(this.appList._appsys, this.appList.specialApps, metaWindow);;
         if(app && app.wmClass && !this.isFavapp)
             this._calcWindowNumber(metaWorkspace);
+    },
+    
+	_loadWinBoxFavs: function () {
+        if (this._applet.settings.getValue("group-apps") == false && this.isFavapp || this.wasFavapp ) {
+            let button = new SpecialButtons.WindowButton({
+                parent: this,
+                isFavapp: true,
+                metaWindow: null,
+            });
+            this._windowButtonBox.add(button);
+        }
     },
 
     _windowTitleChanged: function (metaWindow) {
@@ -843,6 +891,7 @@ AppGroup.prototype = {
         this.rightClickMenu.destroy();
         this.hoverMenu.destroy();
         this._appButton.destroy();
+        this._windowButtonBox.destroy
         this.myactor.destroy();
         this.actor.destroy();
         /*this._appButton = null;
@@ -896,6 +945,7 @@ AppList.prototype = {
         this.signals.push(this.metaWorkspace.connect_after('window-removed', Lang.bind(this, this._windowRemoved)));
         this._applet.pinned_app_contr().connect("changed", Lang.bind(this, this._refreshList));
         this._applet.settings.connect("changed::show-pinned", Lang.bind(this, this._refreshList));
+        this._applet.settings.connect("changed::group-apps", Lang.bind(this, this._refreshList));
         global.settings.connect("changed::panel-edit-mode", Lang.bind(this, this.on_panel_edit_mode_changed));
     },
 
@@ -1042,7 +1092,7 @@ AppList.prototype = {
     },
 
     _loadFavorites: function () {
-        if (!this._applet.settings.getValue("show-pinned")) return;
+        if (!this._applet.settings.getValue("show-pinned")|| this._applet.settings.getValue("group-apps")) return;
         let launchers = this._applet.settings.getValue("pinned-apps")
         for (let i = 0; i < launchers.length; ++i) {
             let app = this._appsys.lookup_app(launchers[i]);
@@ -1109,6 +1159,7 @@ MyApplet.prototype = {
             Gettext.bindtextdomain(this._uuid, GLib.get_home_dir() + "/.local/share/locale");
             this.settings = new Settings.AppletSettings(this, "WindowListGroup@jake.phy@gmail.com", instance_id);
             this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "show-pinned", "showPinned", null, null);
+			this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "group-apps", "groupApps", null, null);
             this.settings.bindProperty(Settings.BindingDirection.IN, "show-alerts", "showAlerts", null, null);
             this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "arrange-pinnedApps", "arrangePinned", null, null);
             this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "enable-hover-peek", "enablePeek", null, null);

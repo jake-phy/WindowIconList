@@ -1410,8 +1410,6 @@ WindowThumbnail.prototype = {
             if (metaWin == meta_win) return;
 
             if (meta_win.get_window_type() != Meta.WindowType.DESKTOP) setOpacity(wa, opacity);
-
-
         });
     }
 };
