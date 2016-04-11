@@ -141,10 +141,10 @@ IconLabelButton.prototype = {
         // The label text is starts in the center of the icon, so we should allocate the space
         // needed for the icon plus the space needed for(label - icon/2)
         if(this._applet.titleDisplay == 3 && !this._parent.isFavapp)
-            alloc.natural_size = MAX_BUTTON_WIDTH;
+            alloc.natural_size = MAX_BUTTON_WIDTH * global.ui_scale;
         else
-            alloc.natural_size = Math.min(iconNaturalSize + Math.max(0, labelNaturalSize), MAX_BUTTON_WIDTH);
-        alloc.min_size = alloc.natural_size + 1;
+            alloc.natural_size = Math.min(iconNaturalSize + Math.max(0, labelNaturalSize), MAX_BUTTON_WIDTH) * global.ui_scale;
+        alloc.min_size = iconNaturalSize + 1 * 3 * global.ui_scale;
     },
 
     _getPreferredHeight: function (actor, forWidth, alloc) {
@@ -212,7 +212,7 @@ IconLabelButton.prototype = {
         if(this._label.width < 2) {
             this._label.set_width(-1);
             setToZero = true;
-        } else if(this._label.width < (this._label.text.length * 7) - 5 || this._label.width > (this._label.text.length * 7) + 5) {
+        } else if(this._label.text && (this._label.width < (this._label.text.length * 7) - 5 || this._label.width > (this._label.text.length * 7) + 5)) {
             this._label.set_width(-1);
         }
         let [minWidth, naturalWidth] = this._label.get_preferred_width(-1);
@@ -464,6 +464,7 @@ WindowButton.prototype = {
         this.rightClickMenu = new AppletDir.specialMenus.AppMenuButtonRightClickMenu(this, this.actor);
         this._menuManager = new PopupMenu.PopupMenuManager(this);
         this._menuManager.addMenu(this.rightClickMenu);
+        this.actor._delegate = this;
     },
 
     destroy: function () {
@@ -646,7 +647,14 @@ function ButtonBox() {
 
 ButtonBox.prototype = {
     _init: function (params) {
-        params = Params.parse(params, {});
+        params = Params.parse(params, {
+			appListCont: null,
+			app: null,
+			workspace: null
+		});
+		this.appListCont = params.appListCont;
+		this.app = params.app;
+		this.workspace = params.workspace;
         this.actor = new St.BoxLayout();
         this.actor._delegate = this;
         this.actor.style = "spacing: 2px;";
@@ -671,7 +679,9 @@ ButtonBox.prototype = {
         if (child.length == 1) {
             child[0].show();
         } else {
-            child[0].hide();
+			if(child[0]._delegate.isFavapp){
+				child[0].hide();
+			}
         }
     },
 

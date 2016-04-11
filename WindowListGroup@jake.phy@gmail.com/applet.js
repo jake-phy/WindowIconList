@@ -344,7 +344,11 @@ AppGroup.prototype = {
         this.actor.connect('leave-event', Lang.bind(this, this._RemovePossibleDrag));
         this.isDraggableApp = true;
         
-		this._windowButtonBox = new SpecialButtons.ButtonBox();
+		this._windowButtonBox = new SpecialButtons.ButtonBox({
+			appListCont: appList,
+			app: app,
+			workspace: appList.metaWorkspace
+		});
         this._appButton = new SpecialButtons.AppButton(this);
         
         this.myactor.add(this._appButton.actor);
@@ -749,7 +753,7 @@ AppGroup.prototype = {
     },
     
 	_loadWinBoxFavs: function () {
-        if (this._applet.settings.getValue("group-apps") == false && this.isFavapp || this.wasFavapp ) {
+        if (!this._applet.settings.getValue("group-apps") && this.isFavapp || this.wasFavapp ) {
             let button = new SpecialButtons.WindowButton({
                 parent: this,
                 isFavapp: true,
@@ -860,6 +864,13 @@ AppGroup.prototype = {
             this._appButton._numLabel.hide();
         }
     },
+    
+    getAllButtonBoxItems: function() {
+		if(this._windowButtonBox && this._windowButtonBox.actor)
+			return this._windowButtonBox.actor.get_children().length;
+		else 
+			return 0;
+	},
 
     _animate: function () {
         this.actor.set_z_rotation_from_gravity(0.0, Clutter.Gravity.CENTER);
@@ -1025,9 +1036,9 @@ AppList.prototype = {
             return;
         if (!this._appList[app]) {
             let appGroup = new AppGroup(this._applet, this, app, isFavapp);
-            appGroup._updateMetaWindows(metaWorkspace);
-            appGroup.watchWorkspace(metaWorkspace);
             this.actor.add_actor(appGroup.actor);
+            appGroup.watchWorkspace(metaWorkspace);
+            appGroup._updateMetaWindows(metaWorkspace);
 
             app.connect('windows-changed', Lang.bind(this, this._onAppWindowsChanged, app));
 
@@ -1055,6 +1066,15 @@ AppList.prototype = {
             let list = this._appList[l];
             list.appGroup._calcWindowNumber(this.metaWorkspace);
         }
+    },
+    
+    getAllChildItems: function(){
+		let num = 0;
+        for(let l in this._appList) {
+            let list = this._appList[l];
+            num += list.appGroup.getAllButtonBoxItems();
+        }
+        return num;
     },
 
     _getNumberOfAppWindowsInWorkspace: function (app, workspace) {
@@ -1092,7 +1112,7 @@ AppList.prototype = {
     },
 
     _loadFavorites: function () {
-        if (!this._applet.settings.getValue("show-pinned") || !this._applet.settings.getValue("group-apps")) return;
+        if (!this._applet.settings.getValue("show-pinned")) return;
         let launchers = this._applet.settings.getValue("pinned-apps")
         for (let i = 0; i < launchers.length; ++i) {		        
             let app = this._appsys.lookup_app(launchers[i]);
