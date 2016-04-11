@@ -156,7 +156,8 @@ PinnedFavs.prototype = {
         this._applet = applet;
         this._favorites = {};
         this._applet.settings.connect('changed::pinned-apps', Lang.bind(this, this._onFavsChanged ));
-        this._reload(applet.pinnedApps);
+        var ids = applet.settings.getValue("pinned-apps");
+        this._reload(ids);
     },
 
     _onFavsChanged: function (obj,signal,old,val) {
@@ -917,7 +918,6 @@ AppList.prototype = {
         this._appList = {};
         this._tracker = Cinnamon.WindowTracker.get_default();
         this._appsys = Cinnamon.AppSystem.get_default();
-        this.registeredApps = this._getSpecialApps();
         // Connect all the signals
         this._setSignals();
         this._refreshList();
@@ -1092,9 +1092,9 @@ AppList.prototype = {
     },
 
     _loadFavorites: function () {
-        if (!this._applet.settings.getValue("show-pinned")|| this._applet.settings.getValue("group-apps")) return;
+        if (!this._applet.settings.getValue("show-pinned") || !this._applet.settings.getValue("group-apps")) return;
         let launchers = this._applet.settings.getValue("pinned-apps")
-        for (let i = 0; i < launchers.length; ++i) {
+        for (let i = 0; i < launchers.length; ++i) {		        
             let app = this._appsys.lookup_app(launchers[i]);
             if (!app) app = this._appsys.lookup_settings_app(launchers[i]);
             if (!app) continue;
