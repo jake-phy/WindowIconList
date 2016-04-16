@@ -547,11 +547,16 @@ WindowButton.prototype = {
     },
 
     _windowHandle: function (fromDrag) {
-        if (this.metaWindow.has_focus()) {
+        if (this.metaWindow.appears_focused) {
             if (fromDrag) {
                 return;
             }
             this.metaWindow.minimize(global.get_current_time());
+            let titleType = this._applet.settings.getValue("title-display");
+            if(titleType == TitleDisplay.focused){
+				this.hideLabel(false);
+				this.focusState = null;
+			}				
         } else {
             if (this.metaWindow.minimized) {
                 this.metaWindow.unminimize(global.get_current_time());
@@ -571,6 +576,21 @@ WindowButton.prototype = {
         }
 		if (this._applet.settings.getValue("title-display") == TitleDisplay.focused)
             this._updateFocusedStatus();
+    },
+    
+	_allocate: function (actor, box, flags) {
+        IconLabelButton.prototype._allocate.call(this, actor, box, flags);
+        if(this.metaWindow){
+			this._updateIconBoxClipAndGeometry();
+		}
+    },
+    
+	_updateIconBoxClipAndGeometry: function() {
+        let rect = new Meta.Rectangle();
+        [rect.x, rect.y] = this.actor.get_transformed_position();
+        [rect.width, rect.height] = this.actor.get_transformed_size();
+
+        this.metaWindow.set_icon_geometry(rect);
     },
 
     _animate: function () {
@@ -609,8 +629,8 @@ WindowButton.prototype = {
         } else if (titleType == TitleDisplay.focused) {
             if (title) {
                 this.setText(title);
-                this._updateFocusedStatus(true);
             }
+			this._updateFocusedStatus(true);
         } else if (titleType == TitleDisplay.app) {
             if (appName) {
                 this.setText(appName);
@@ -621,9 +641,9 @@ WindowButton.prototype = {
             this.hideLabel();
     },
     _updateFocusedStatus: function (force) {
-        let focusState;
-		if(this.metaWindow.appears_focused)
-			focusState = this.metaWindow;
+        let focusState = false;
+		if(this.metaWindow && this.metaWindow.appears_focused)
+			focusState = true;
         if (this.focusState != focusState || force)
             this._focusedLabel(focusState);
         this.focusState = focusState;

@@ -622,15 +622,15 @@ AppMenuButtonRightClickMenu.prototype = {
 		let children = this.subMenuItem.menu._getMenuItems();
         for (let i = 0; i < children.length; i++) {
             let item = children[i];
-            this.box.remove_actor(item.actor);
+            this.subMenuItem.menu.box.remove_actor(item.actor);
 			item.destroy();
         }
 		this.subMenuItem.menu.destroy();
         children = this._getMenuItems();
         for (let i = 0; i < children.length; i++) {
             let item = children[i];
-            //this.box.remove_actor(item.actor);
-			//item.destroy();
+            this.box.remove_actor(item.actor);
+			item.destroy();
         }
 		this.box.destroy();
 		this.actor.destroy();
@@ -1373,8 +1373,8 @@ WindowThumbnail.prototype = {
     _refresh: function () {
         // Turn favorite tooltip into a normal thumbnail
 		let moniter = Main.layoutManager.monitors[this.metaWindow.get_monitor()];
-        this.ThumbnailHeight = Math.floor(moniter.height / 70) * this._applet.thumbSize;
-        this.ThumbnailWidth = Math.floor(moniter.width / 70) * this._applet.thumbSize;
+        this.ThumbnailHeight = Math.floor(moniter.height / 70) * this._applet.thumbSize * global.ui_scale;
+        this.ThumbnailWidth = Math.floor(moniter.width / 70) * this._applet.thumbSize * global.ui_scale;
         //this.thumbnailActor.height = this.ThumbnailHeight;
         this.thumbnailActor.width = this.ThumbnailWidth;
 		this._container.style = "width: " + Math.floor(this.ThumbnailWidth - 16 ) + "px";
