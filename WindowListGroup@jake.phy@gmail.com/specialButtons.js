@@ -90,12 +90,18 @@ IconLabelButton.prototype = {
         this._container.add_actor(this._numLabel);
 
         this.setIconPadding(null,null,null,this._applet.iconPadding);
+        this.setIconSize(null,null,null,this._applet.iconSize);
 
         this._applet.settings.connect("changed::icon-padding", Lang.bind(this, this.setIconPadding));
+        this._applet.settings.connect("changed::icon-size", Lang.bind(this, this.setIconSize));
     },
 
     setIconPadding: function (obj,signal,old,val) {
         this.actor.style = "padding-bottom: 0px;padding-top:0px; padding-left: " + val + "px;padding-right:" + val + "px;";
+    },
+
+    setIconSize: function (obj,signal,old,val) {
+        this._icon.set_size(val, val);
     },
 
     setText: function (text) {
@@ -107,7 +113,7 @@ IconLabelButton.prototype = {
         if (name)
             this.actor.set_style_class_name(name);
     },
-    
+
     getAttention: function() {
         if (this._needsAttention)
             return false;
@@ -267,13 +273,13 @@ AppButton.prototype = {
         this.icon_size = Math.floor(parent._applet._panelHeight - 4);
         this.app = parent.app;
         this.icon = this.app.create_icon_texture(this.icon_size);
-        this._applet = parent._applet;       
+        this._applet = parent._applet;
         this._parent = parent;
         this.metaWindows = parent.metaWindows;
         this.isFavapp = parent.isFavapp;
         IconLabelButton.prototype._init.call(this, this);
         if (this.isFavapp) this._isFavorite(true);
-        
+
         this.metaWorkspaces = {};
 
         let tracker = Cinnamon.WindowTracker.get_default();
@@ -294,17 +300,17 @@ AppButton.prototype = {
         } else {
             this.actor.remove_style_pseudo_class('focus');
         }
-    },   
-    
+    },
+
     _setWatchedWorkspaces:function(workspaces){
         this.metaWorkspaces = workspaces;
     },
-    
+
     _hasFocus: function() {
         var workspaceIds = [];
         for(let w in this.metaWorkspaces) {
             workspaceIds.push(this.metaWorkspaces[w].workspace.index());
-        }     
+        }
         let windows = this.app.get_windows().filter(function (win) {
                 return workspaceIds.indexOf(win.get_workspace().index()) >= 0;
             });
@@ -326,7 +332,7 @@ AppButton.prototype = {
         }
         return hasTransient;
     },
-    
+
     _updateAttentionGrabber: function(obj, oldVal, newVal) {
         if (newVal) {
             this._urgent_signal = global.display.connect("window-marked-urgent", Lang.bind(this, this._onWindowDemandsAttention));
@@ -365,12 +371,12 @@ AppButton.prototype = {
                 this.actor.add_style_class_name('window-list-item-box-bottom');
         }
     },
-    
+
     _allocate: function (actor, box, flags) {
         IconLabelButton.prototype._allocate.call(this, actor, box, flags);
         this.updateGeometry();
     },
-    
+
     updateGeometry: function() {
         let rect = new Meta.Rectangle();
         [rect.x, rect.y] = this.actor.get_transformed_position();
@@ -385,12 +391,12 @@ AppButton.prototype = {
             this.forceUpdateGeometry = false;
         }
     },
-    
+
     updateMetaWindows: function(metaWindows) {
         this.metaWindows = metaWindows;
         this.forceUpdateGeometry = true;
     },
-    
+
     setIsInDrag: function(value){
         this.isInDrag = value;
     },
@@ -556,7 +562,7 @@ WindowButton.prototype = {
             if(titleType == TitleDisplay.focused){
 				this.hideLabel(false);
 				this.focusState = null;
-			}				
+			}
         } else {
             if (this.metaWindow.minimized) {
                 this.metaWindow.unminimize(global.get_current_time());
@@ -577,14 +583,14 @@ WindowButton.prototype = {
 		if (this._applet.settings.getValue("title-display") == TitleDisplay.focused)
             this._updateFocusedStatus();
     },
-    
+
 	_allocate: function (actor, box, flags) {
         IconLabelButton.prototype._allocate.call(this, actor, box, flags);
         if(this.metaWindow){
 			this._updateIconBoxClipAndGeometry();
 		}
     },
-    
+
 	_updateIconBoxClipAndGeometry: function() {
         let rect = new Meta.Rectangle();
         [rect.x, rect.y] = this.actor.get_transformed_position();
@@ -622,10 +628,10 @@ WindowButton.prototype = {
                 this.setText(title);
             } else {
                 this.setText(appName);
-            }          
+            }
 			this.showLabel(true);
             return;
-            
+
         } else if (titleType == TitleDisplay.focused) {
             if (title) {
                 this.setText(title);
@@ -654,7 +660,7 @@ WindowButton.prototype = {
         } else {
             this.hideLabel(false);
         }
-    }  
+    }
 };
 
 
@@ -754,16 +760,16 @@ MyAppletBox.prototype = {
         if(this._dragPlaceholder && this._dragPlaceholder.animationInProgress) return DND.DragMotionResult.CONTINUE;
         let children = this.actor.get_children();
         let numChildren = children.length;
-        
+
         let favorites = this._applet.pinned_app_contr().getFavorites();
         let numFavorites = favorites.length;
-        
+
         let origPos = children.indexOf(source.actor);
-        
+
         let pos = this.closestSibling(x, children, this.actor.width);
         if (this._dragPlaceholder) {
             let dragPos = children.indexOf(this._dragPlaceholder.actor);
-            
+
             if(dragPos < pos){
                     pos--;
             }
@@ -786,7 +792,7 @@ MyAppletBox.prototype = {
 
                 return DND.DragMotionResult.CONTINUE;
             }
-            
+
             if (this._dragPlaceholder) {
                 this._dragPlaceholder.actor.destroy();
             }
@@ -809,7 +815,7 @@ MyAppletBox.prototype = {
 
         return DND.DragMotionResult.MOVE_DROP;
     },
-    
+
     closestSibling: function (num, arr, max) {
         let curr = 0;
         let diff = Math.abs (num - curr);
@@ -831,7 +837,7 @@ MyAppletBox.prototype = {
 
     acceptDrop: function (source, actor, x, y, time) {
         if (!(source.isDraggableApp || (source instanceof DND.LauncherDraggable))) return false;
-        
+
         // Don't allow positioning before or after self
         let children = this.actor.get_children();
         let origPos = children.indexOf(source.actor);
@@ -891,7 +897,7 @@ GenericDragPlaceholderItem.prototype = {
         this.setChild(new St.Bin({ style_class: 'drag-placeholder' }));
         this.animationInProgress = false;
     },
-    
+
     animateIn: function() {
         if (this.child == null)
             return;
