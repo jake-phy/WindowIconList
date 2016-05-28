@@ -90,12 +90,18 @@ IconLabelButton.prototype = {
         this._container.add_actor(this._numLabel);
 
         this.setIconPadding(null,null,null,this._applet.iconPadding);
+        this.setIconSize(null,null,null,this._applet.iconSize);
 
         this._applet.settings.connect("changed::icon-padding", Lang.bind(this, this.setIconPadding));
+        this._applet.settings.connect("changed::icon-size", Lang.bind(this, this.setIconSize));
     },
 
     setIconPadding: function (obj,signal,old,val) {
         this.actor.style = "padding-bottom: 0px;padding-top:0px; padding-left: " + val + "px;padding-right:" + val + "px;";
+    },
+
+    setIconSize: function (obj,signal,old,val) {
+        this._icon.set_size(val, val);
     },
 
     setText: function (text) {
@@ -107,7 +113,7 @@ IconLabelButton.prototype = {
         if (name)
             this.actor.set_style_class_name(name);
     },
-    
+
     getAttention: function() {
         if (this._needsAttention)
             return false;

@@ -72,6 +72,16 @@
     "description" : "Icon Padding:",
     "tooltip" : "How much Padding is between the icons"
  },
+ "icon-size" : {
+   "type": "spinbutton",
+   "default" : 36,
+   "min" : 0,
+   "max" : 150,
+   "step" : 1,
+   "units" : "px",
+   "description" : "Icon Size:",
+   "tooltip" : "Set icon size"
+},
  "Space1" : {
     "type" : "header",
     "description": " "
