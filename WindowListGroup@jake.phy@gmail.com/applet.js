@@ -314,7 +314,7 @@ AppGroup.prototype = {
             DND.LauncherDraggable.prototype._init.call(this);
         this._applet = applet;
         this.appList = appList;
-        
+
         this._deligate = this;
         this.launchersBox = applet; //This convert the applet class in a launcherBox(is requiere to be a launcher dragable object)
                                     //but you have duplicate object this._applet then...
@@ -337,23 +337,23 @@ AppGroup.prototype = {
             reactive: true
         });
         this.actor.set_child(this.myactor);
-        
+
         this._draggable = SpecialButtons.makeDraggable(this.actor);
         this._draggable.connect("drag-cancelled", Lang.bind(this, this._onDragCancelled));
         this._draggable.connect("drag-end", Lang.bind(this, this._onDragEnd));
         this.actor.connect('leave-event', Lang.bind(this, this._RemovePossibleDrag));
         this.isDraggableApp = true;
-        
+
 		this._windowButtonBox = new SpecialButtons.ButtonBox({
 			appListCont: appList,
 			app: app,
 			workspace: appList.metaWorkspace
 		});
         this._appButton = new SpecialButtons.AppButton(this);
-        
+
         this.myactor.add(this._appButton.actor);
         this.myactor.add(this._windowButtonBox.actor);
-        
+
         this._appButton.actor.connect('button-release-event', Lang.bind(this, this._onAppButtonRelease));
         this._appButton.actor.connect('button-press-event', Lang.bind(this, this._onAppButtonPress));
         //global.screen.connect('event', Lang.bind(this, this._onAppKeyPress));
@@ -378,11 +378,11 @@ AppGroup.prototype = {
 			this.hideAppButton();
 		}
     },
-    
+
     _onDragCancelled: function () {
         this.actor.get_parent()._delegate._clearDragPlaceholder();
     },
-    
+
     _onDragEnd: function () {
         this.actor.get_parent()._delegate._clearDragPlaceholder();
     },
@@ -431,7 +431,7 @@ AppGroup.prototype = {
         }
         return true;
     },
-    
+
     _RemovePossibleDrag: function(){
         if (this._draggable._dragInProgress) {
                 return true;
@@ -455,7 +455,7 @@ AppGroup.prototype = {
     getDragActorSource: function () {
         return this.actor;
     },
-    
+
     _setWatchedWorkspaces: function(){
         this._appButton._setWatchedWorkspaces(this.metaWorkspaces);
     },
@@ -510,7 +510,7 @@ AppGroup.prototype = {
     showAppButton: function () {
         this._appButton.actor.show();
     },
-    
+
     hideWindowButtons: function () {
         this._windowButtonBox.actor.hide();
     },
@@ -526,7 +526,7 @@ AppGroup.prototype = {
     showAppButtonLabel: function (animate, targetWidth) {
         this._appButton.showLabel(animate, targetWidth);
     },
-    
+
     _onAppButtonPress: function (actor, event) {
     },
 
@@ -534,12 +534,12 @@ AppGroup.prototype = {
 
 // 	    global.log(event.get_button());
 	    if ((event.get_button() == 0x01) && this.isFavapp) {
-// 		global.log('create window'); 
+// 		global.log('create window');
             this.app.open_new_window(-1);
             this._animate();
             return;
         }
-	
+
         let windowNum = this.app.get_windows().filter(function (win) {
             let workspaces = [global.screen.get_workspace_by_index(i) for each(i in range(global.screen.n_workspaces))];
             for (let i = 0; i < workspaces.length; i++) {
@@ -563,10 +563,10 @@ AppGroup.prototype = {
                 this.hoverMenu.hoverClose();
 		        this._windowHandle(false);
 	    }
-               
+
     },
 
-    _newAppKeyNumber: function (number) {   
+    _newAppKeyNumber: function (number) {
         if(this.hotKeyId)
             Main.keybindingManager.removeHotKey(this.hotKeyId);
         if (number < 10){
@@ -609,7 +609,7 @@ AppGroup.prototype = {
         }
         else {
             if (this.lastFocused.minimized) {
-                this.lastFocused.unminimize(global.get_current_time()); 
+                this.lastFocused.unminimize(global.get_current_time());
             }
             let ws = this.lastFocused.get_workspace().index();
             if (ws != global.screen.get_active_workspace_index()) {
@@ -677,14 +677,14 @@ AppGroup.prototype = {
         if (app == this.app && !this.metaWindows[metaWindow] && tracker.is_window_interesting(metaWindow)) {
 			let button = null;
 			if(this._applet.settings.getValue("group-apps") == false){
-                button = new SpecialButtons.WindowButton({    
+                button = new SpecialButtons.WindowButton({
                     parent: this,
                     isFavapp: false,
                     metaWindow: metaWindow,
                 });
                 this._windowButtonBox.add(button);
             }
-			
+
             if (metaWindow) {
                 this.lastFocused = metaWindow;
                 this.rightClickMenu.setMetaWindow(this.lastFocused);
@@ -724,7 +724,7 @@ AppGroup.prototype = {
             // Clean up all the signals we've connected
             for(let i = 0; i < signals.length; i++) {
                 metaWindow.disconnect(signals[i]);
-            }  
+            }
             if(button){
                 this._windowButtonBox.remove(button);
                 button.destroy();
@@ -751,7 +751,7 @@ AppGroup.prototype = {
         if(app && app.wmClass && !this.isFavapp)
             this._calcWindowNumber(metaWorkspace);
     },
-    
+
 	_loadWinBoxFavs: function () {
         if (!this._applet.settings.getValue("group-apps") && this.isFavapp || this.wasFavapp ) {
             let button = new SpecialButtons.WindowButton({
@@ -864,11 +864,11 @@ AppGroup.prototype = {
             this._appButton._numLabel.hide();
         }
     },
-    
+
     getAllButtonBoxItems: function() {
 		if(this._windowButtonBox && this._windowButtonBox.actor)
 			return this._windowButtonBox.actor.get_children().length;
-		else 
+		else
 			return 0;
 	},
 
@@ -937,7 +937,7 @@ AppList.prototype = {
     on_panel_edit_mode_changed: function () {
         this.actor.reactive = global.settings.get_boolean("panel-edit-mode");
     },
-    
+
     on_orientation_changed: function(orientation) {
        this._refreshList();
        if (this._applet.orientation == St.Side.TOP) {
@@ -968,7 +968,7 @@ AppList.prototype = {
 			let app = AppFromWMClass(this._appsys, this.specialApps, win);
 			if(!app)
 				app = tracker.get_window_app(win);
-			if(!app) 
+			if(!app)
 				return;
 			if (this._appList[app]) {
 				this._appList[app].appGroup._updateMetaWindows(this.metaWorkspace);
@@ -977,7 +977,7 @@ AppList.prototype = {
 			}
         }));
     },
-    
+
     _getSpecialApps: function() {
         this.specialApps = {};
         let apps = Gio.app_info_get_all();
@@ -986,7 +986,7 @@ AppList.prototype = {
             if(wmClass) {
                 let id = apps[i].get_id();
                 this.specialApps[id] = { id: id, wmClass: wmClass };
-            }    
+            }
         }
     },
 
@@ -1032,7 +1032,7 @@ AppList.prototype = {
         else app = AppFromWMClass(this._appsys, this.specialApps, metaWindow);
         if(!app)
             app = tracker.get_window_app(metaWindow);
-        if(!app) 
+        if(!app)
             return;
         if (!this._appList[app]) {
             let appGroup = new AppGroup(this._applet, this, app, isFavapp);
@@ -1060,14 +1060,14 @@ AppList.prototype = {
             this._calcAllWindowNumbers();
         }
     },
-    
+
     _calcAllWindowNumbers: function(){
         for(let l in this._appList) {
             let list = this._appList[l];
             list.appGroup._calcWindowNumber(this.metaWorkspace);
         }
     },
-    
+
     getAllChildItems: function(){
 		let num = 0;
         for(let l in this._appList) {
@@ -1097,7 +1097,7 @@ AppList.prototype = {
             if (appGroup.appGroup.wasFavapp || appGroup.appGroup.isFavapp) {
                 appGroup.appGroup._isFavorite(true);
                 appGroup.appGroup.hideAppButtonLabel(true);
-                // have to delay to fix openoffice start-center bug 
+                // have to delay to fix openoffice start-center bug
                 Mainloop.timeout_add(0, Lang.bind(this, this._refreshApps));
                 return;
             }
@@ -1105,7 +1105,7 @@ AppList.prototype = {
             appGroup.appGroup.destroy();
             Mainloop.timeout_add(15, Lang.bind(this, function () {
                 this._refreshApps();
-                this._refreshAppGroupNumber(); 
+                this._refreshAppGroupNumber();
             }));
         }
 
@@ -1114,7 +1114,7 @@ AppList.prototype = {
     _loadFavorites: function () {
         if (!this._applet.settings.getValue("show-pinned")) return;
         let launchers = this._applet.settings.getValue("pinned-apps")
-        for (let i = 0; i < launchers.length; ++i) {		        
+        for (let i = 0; i < launchers.length; ++i) {
             let app = this._appsys.lookup_app(launchers[i]);
             if (!app) app = this._appsys.lookup_settings_app(launchers[i]);
             if (!app) continue;
@@ -1284,7 +1284,7 @@ MyApplet.prototype = {
             let children = _moFolder.enumerate_children('standard::name,standard::type,time::modified',
                                                        Gio.FileQueryInfoFlags.NONE, null);
             let info, child, _moFile, _moLocale, _moPath;
-                   
+
             while ((info = children.next_file(null)) !== null) {
                 let type = info.get_file_type();
                 let modified = info.get_modification_time().tv_sec;
@@ -1340,7 +1340,7 @@ MyApplet.prototype = {
         this.actor.reactive = global.settings.get_boolean("panel-edit-mode");
         this.panelEditModeEnabled = global.settings.get_boolean("panel-edit-mode");
     },
-    
+
     _onButtonPressEvent: function (actor, event) {
         if(!this.panelEditModeEnabled)
             this._applet_context_menu.isOpen = true;
@@ -1378,7 +1378,7 @@ MyApplet.prototype = {
     removeLauncher: function (appGroup) {
         //Add code here to remove the launcher if you want.
     },
-    
+
     recent_items_contr: function () {
         return this.recentItems;
     },
