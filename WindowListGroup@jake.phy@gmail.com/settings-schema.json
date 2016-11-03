@@ -26,7 +26,9 @@
         "none" : 1,
         "app" : 2,
         "title" : 3,
-        "focused" : 4
+        "focused" : 4,
+        "nonpinned" : 5,
+        "pinned" : 6
     },
     "tooltip" : "focused: show focused window title, title: display the window title, app: diplay app name, none: don't display anything"
  },

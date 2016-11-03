@@ -47,7 +47,9 @@ const TitleDisplay = {
     none: 1,
     app: 2,
     title: 3,
-    focused: 4
+    focused: 4,
+    nonpinned: 5,
+    pinned: 6
 };
 const NumberDisplay = {
     smart: 1,
