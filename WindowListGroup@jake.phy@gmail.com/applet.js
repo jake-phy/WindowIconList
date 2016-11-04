@@ -47,7 +47,9 @@ const TitleDisplay = {
     none: 1,
     app: 2,
     title: 3,
-    focused: 4
+    focused: 4,
+    nonpinned: 5,
+    pinned: 6
 };
 const NumberDisplay = {
     smart: 1,
@@ -390,6 +392,17 @@ AppGroup.prototype = {
     getId: function() {
         return this.app.get_id();
     },
+    
+    /**
+     * Checks whether the id of this app is listed among pinned-apps.
+     * @return True if the id is listed.
+     */
+    isPinned: function() {
+        let name = this.getId();
+        let pinnedApps = this._applet.settings.getValue("pinned-apps");
+        let pinned = pinnedApps.indexOf(name)>=0;
+        return pinned;
+    },
 
     on_arrange_pinned: function (obj,signal,old,val) {
         this._draggable.inhibit = !val;
@@ -407,7 +420,11 @@ AppGroup.prototype = {
             this.showAppButtonLabel(true);
         } else if (titleType == TitleDisplay.app) {
             this.showAppButtonLabel(true);
-        } else if (titleType == TitleDisplay.none) {
+        } else if (titleType == TitleDisplay.nonpinned && !this.isPinned()) {
+            this.showAppButtonLabel(true);
+        } else if (titleType == TitleDisplay.pinned && this.isPinned) {
+            this.showAppButtonLabel(true);
+        } else {
             this.hideAppButtonLabel(true);
         }
     },
@@ -772,7 +789,10 @@ AppGroup.prototype = {
 
         let titleType = this._applet.settings.getValue("title-display");
         let [title, appName] = [metaWindow.get_title(), this.app.get_name()];
-        if (titleType == TitleDisplay.title) {
+        
+        if (titleType == TitleDisplay.title
+                || (titleType == TitleDisplay.nonpinned && !this.isPinned())
+                || titleType == TitleDisplay.pinned && this.isPinned()) {
             if (title) {
                 this._appButton.setText(title);
                 this.showAppButtonLabel(true);
@@ -787,8 +807,9 @@ AppGroup.prototype = {
                 this._appButton.setText(appName);
                 this.showAppButtonLabel(true);
             }
-        } else if (titleType == TitleDisplay.none) {
+        } else {
             this._appButton.setText("");
+            this.hideAppButtonLabel(true);
         }
     },
 
